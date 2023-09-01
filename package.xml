@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>digiforest_registration</name>
+  <version>0.0.0</version>
+  <description>The digiforest_registration package</description>
+
+  <maintainer email="benoit@robots.ox.ac.uk">Benoit Casseau</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
+  <depend>digiforest_analysis</depend>
+
+  <export>
+  </export>
+</package>
