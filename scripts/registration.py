@@ -34,6 +34,7 @@ if __name__ == "__main__":
     vertical_registration = VerticalRegistration(uav_cloud, frontier_cloud)
     # (uav_groud_plane, frontier_ground_plane) = vertical_registration.process()
 
+    # results of the vertical registration, use them directly to save time
     uav_groud_plane = [
         -0.028127017612793577,
         0.03713812538079706,
