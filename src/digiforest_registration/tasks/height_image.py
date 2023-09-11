@@ -7,7 +7,7 @@ class HeightImage:
         self.kernel_size = (3, 3)
 
     def remove_small_objects(self, img):
-        # remove small objects from a float image
+        # remove small non-black objects from a float image
         grayscale_image = (img * 255).astype(np.uint8)
 
         threshold = 1
@@ -18,15 +18,13 @@ class HeightImage:
         kernel = np.ones(self.kernel_size, np.uint8)
         opening = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel)
         opening = opening.astype(np.float32)
+        opening = opening / 255.0
+
+        # remove extra dimension
+        img = np.squeeze(img)
 
         filtered_img = np.multiply(img, opening)
-        filtered_img = filtered_img[:, :, 0]
-        cv2.imshow("img", img)
-        cv2.imshow("opening", opening)
-        cv2.imshow("filtered_img", filtered_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        return opening
+        return filtered_img
 
     def find_local_maxima(self, img):
         def distance_to_border(img, y, x):
@@ -37,7 +35,7 @@ class HeightImage:
         # find local maxima in the image
 
         # preprocessing the image by remove noise
-        # img = self.remove_small_objects(img)
+        img = self.remove_small_objects(img)
 
         kernel_size = (25, 25)
         kernel = np.ones(kernel_size, np.uint8)
