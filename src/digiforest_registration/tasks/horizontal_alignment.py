@@ -4,8 +4,10 @@ from numpy import float64
 import cv2
 import open3d as o3d
 import copy
+import networkx as nx
 
 from digiforest_registration.tasks.height_image import HeightImage
+from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
 
 
 class HorizontalRegistration:
@@ -138,14 +140,29 @@ class HorizontalRegistration:
         self.draw_registration_result(cloud, ref_cloud, reg_p2p.transformation)
 
     def process(self):
-        reference_image = self.compute_canopy_image(
+        uav_image = self.compute_canopy_image(
             self.reference_cloud, *self.reference_ground_plane
         )
         image = self.compute_canopy_image(self.cloud, *self.cloud_ground_plane)
 
+        # find maxima in the heigh image
         proc = HeightImage()
-        _ = proc.find_local_maxima(image)
+        image_height_pts = proc.find_local_maxima(image)
 
-        _ = proc.find_local_maxima(reference_image)
+        uav_height_pts = proc.find_local_maxima(uav_image)
 
-        # self.registration(center_pts1, center_pts2)
+        # create feature graphs
+        G = Graph(image_height_pts, node_prefix="f")
+        H = Graph(uav_height_pts, node_prefix="uav")
+
+        correspondence_graph = CorrespondenceGraph(G, H)
+        print("Computing the maximum clique")
+        max_clique = nx.algorithms.approximation.max_clique(correspondence_graph.graph)
+
+        # Print the maximum cliques
+        print(max_clique)
+
+        # mcs = nx.algorithms.isomorphism.ISMAGS(G.graph, H.graph, edge_match=compare_edge)
+        # generator = mcs.largest_common_subgraph()
+        # for v in generator:
+        #     print(v)
