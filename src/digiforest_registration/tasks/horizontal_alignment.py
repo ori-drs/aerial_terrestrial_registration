@@ -4,9 +4,8 @@ from numpy import float64
 import cv2
 import open3d as o3d
 import copy
-import networkx as nx
 
-from digiforest_registration.tasks.height_image import HeightImage
+from digiforest_registration.tasks.height_image import HeightImage, draw_correspondences
 from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
 
 
@@ -140,29 +139,26 @@ class HorizontalRegistration:
         self.draw_registration_result(cloud, ref_cloud, reg_p2p.transformation)
 
     def process(self):
-        uav_image = self.compute_canopy_image(
+        uav_canopy = self.compute_canopy_image(
             self.reference_cloud, *self.reference_ground_plane
         )
-        image = self.compute_canopy_image(self.cloud, *self.cloud_ground_plane)
+        bls_canopy = self.compute_canopy_image(self.cloud, *self.cloud_ground_plane)
 
         # find maxima in the heigh image
         proc = HeightImage()
-        image_height_pts = proc.find_local_maxima(image)
+        bls_height_pts, bls_height_img = proc.find_local_maxima(bls_canopy)
 
-        uav_height_pts = proc.find_local_maxima(uav_image)
+        uav_height_pts, uav_height_img = proc.find_local_maxima(uav_canopy)
 
         # create feature graphs
-        G = Graph(image_height_pts, node_prefix="f")
+        G = Graph(bls_height_pts, node_prefix="f")
         H = Graph(uav_height_pts, node_prefix="uav")
 
         correspondence_graph = CorrespondenceGraph(G, H)
         print("Computing the maximum clique")
-        max_clique = nx.algorithms.approximation.max_clique(correspondence_graph.graph)
+        edges = correspondence_graph.maximum_clique()
+        print(edges)
 
-        # Print the maximum cliques
-        print(max_clique)
-
-        # mcs = nx.algorithms.isomorphism.ISMAGS(G.graph, H.graph, edge_match=compare_edge)
-        # generator = mcs.largest_common_subgraph()
-        # for v in generator:
-        #     print(v)
+        draw_correspondences(
+            bls_height_img, bls_height_pts, uav_height_img, uav_height_pts, edges
+        )

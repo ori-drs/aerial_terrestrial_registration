@@ -9,4 +9,4 @@ max-complexity = 18
 exclude=_*,.vscode,.git
 
 ignore=BLK100 #E402,E501,W503
-#extend-ignore = E203
+extend-ignore = E203

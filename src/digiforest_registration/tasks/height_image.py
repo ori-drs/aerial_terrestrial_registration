@@ -53,7 +53,7 @@ class HeightImage:
         grayscale_image = (img * 255).astype(np.uint8)
         maxima_img = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2RGB)
 
-        valid_points = []
+        valid_points = []  # (x, y)
         threshold_distance_to_border = 20
         for point in white_points_coordinates:
             if (
@@ -67,4 +67,35 @@ class HeightImage:
         # cv2.imshow("Image", maxima_img)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        return np.array(valid_points)
+        return np.array(valid_points), img
+
+
+def draw_correspondences(height_img1, height_pts1, height_img2, height_pts2, edges):
+    grayscale_image = (height_img1 * 255).astype(np.uint8)
+    img1 = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2RGB)
+
+    grayscale_image = (height_img2 * 255).astype(np.uint8)
+    img2 = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2RGB)
+
+    # Combining the two images
+    h1, w1 = img1.shape[:2]
+    h2, w2 = img2.shape[:2]
+
+    img = np.zeros((max(h1, h2), w1 + w2, 3), img1.dtype)
+    img[:h1, :w1, :3] = img1
+    img[:h2, w1 : (w1 + w2), :3] = img2
+
+    # Draw the height points
+    for point in height_pts1:
+        cv2.circle(img, (point[0], point[1]), 3, (0, 0, 255), -1)
+    for point in height_pts2:
+        cv2.circle(img, (point[0] + w1, point[1]), 3, (0, 0, 255), -1)
+    # Draw the edges
+    for edge in edges:
+        cv2.line(
+            img, (edge[0][0], edge[0][1]), (edge[1][0] + w1, edge[1][1]), (0, 255, 0), 1
+        )
+
+    cv2.imshow("Image", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

@@ -70,7 +70,8 @@ class Graph:
 class CorrespondenceGraph:
     def __init__(self, graph1: Graph, graph2: Graph):
         self.graph = nx.cartesian_product(graph1.graph, graph2.graph)
-
+        self.g1 = graph1
+        self.g2 = graph2
         self.graph.remove_edges_from(list(self.graph.edges()))
 
         # Creating the edges
@@ -91,3 +92,36 @@ class CorrespondenceGraph:
         if abs(w1 - w2) / w2 > 0.1:
             return False
         return True
+
+    def maximum_clique(self):
+        max_clique = nx.algorithms.approximation.max_clique(self.graph)
+        # max_clique = {('f_2', 'uav_51'), ('f_9', 'uav_65'), ('f_6', 'uav_61'), ('f_8', 'uav_64'), ('f_3', 'uav_53'), ('f_1', 'uav_48')}
+
+        # Print the maximum cliques
+        print(max_clique)
+
+        # Create the edges
+        edges = []
+        for c in max_clique:
+            edges.append((self.g1.pos[c[0]], self.g2.pos[c[1]]))
+        return edges
+
+    def display_graph(self, display_weights: bool = False):
+        nx.draw(
+            self.graph,
+            with_labels=True,
+            node_color="skyblue",
+            font_weight="bold",
+            edge_color="white",
+        )
+
+        # Draw edge labels
+        if display_weights:
+            edge_labels = {
+                (u, v): f'{d["weight"]}' for u, v, d in self.graph.edges(data=True)
+            }
+            pos = nx.circular_layout(self.graph)
+            nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
+
+        plt.gca().invert_yaxis()
+        plt.show()
