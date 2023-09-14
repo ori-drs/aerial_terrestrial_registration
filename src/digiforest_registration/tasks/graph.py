@@ -94,8 +94,11 @@ class CorrespondenceGraph:
         return True
 
     def maximum_clique(self):
-        max_clique = nx.algorithms.approximation.max_clique(self.graph)
-        # max_clique = {('f_2', 'uav_51'), ('f_9', 'uav_65'), ('f_6', 'uav_61'), ('f_8', 'uav_64'), ('f_3', 'uav_53'), ('f_1', 'uav_48')}
+        max_clique_size = 0
+        for clique in nx.enumerate_all_cliques(self.graph):
+            if len(clique) > max_clique_size:
+                max_clique_size = len(clique)
+                max_clique = clique
 
         # Print the maximum cliques
         print(max_clique)
