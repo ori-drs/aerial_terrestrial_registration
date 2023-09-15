@@ -3,13 +3,14 @@ from digiforest_analysis.tasks import GroundSegmentation
 
 
 class VerticalRegistration:
-    def __init__(self, reference_cloud, cloud):
+    def __init__(self, reference_cloud, cloud, ground_segmentation_method):
         self._max_distance_to_plane = 0.5
         self.ground_segmentation = GroundSegmentation(
             max_distance_to_plane=self._max_distance_to_plane,
             cell_size=4.0,
             normal_thr=0.92,
             box_size=80,
+            method=ground_segmentation_method,
         )
         self.reference_cloud = reference_cloud
         self.cloud = cloud
@@ -48,6 +49,7 @@ class VerticalRegistration:
         inlier_cloud_r = ground_reference_cloud.select_by_index(inliers_r)
         inlier_cloud_r.paint_uniform_color([1.0, 0.0, 0])
 
+        # uncomment to visualize the ground planes
         # import open3d as o3d
         # o3d.visualization.draw_geometries(
         #     [inlier_cloud.to_legacy(), inlier_cloud_r.to_legacy()]

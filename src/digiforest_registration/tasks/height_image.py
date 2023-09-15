@@ -5,6 +5,7 @@ import cv2
 class HeightImage:
     def __init__(self):
         self.kernel_size = (3, 3)
+        self.debug = False
 
     def remove_small_objects(self, img):
         # remove small non-black objects from a float image
@@ -22,8 +23,15 @@ class HeightImage:
 
         # remove extra dimension
         img = np.squeeze(img)
-
         filtered_img = np.multiply(img, opening)
+
+        if self.debug:
+            cv2.imshow("img", img)
+            cv2.imshow("grayscale_image", grayscale_image)
+            cv2.imshow("filtered_img", filtered_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
         return filtered_img
 
     def find_local_maxima(self, img):
@@ -96,6 +104,7 @@ def draw_correspondences(height_img1, height_pts1, height_img2, height_pts2, edg
             img, (edge[0][0], edge[0][1]), (edge[1][0] + w1, edge[1][1]), (0, 255, 0), 1
         )
 
+    cv2.imwrite("/home/benoit/data/digiforest/test/tile_39/correspondances.png", img)
     cv2.imshow("Image", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

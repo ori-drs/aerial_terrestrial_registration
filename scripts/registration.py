@@ -15,6 +15,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("uav_cloud")
     parser.add_argument("frontier_cloud")
+    parser.add_argument("ground_segmentation_method", default="default")
     args = parser.parse_args()
 
     # Check validity of inputs
@@ -31,22 +32,26 @@ if __name__ == "__main__":
     uav_cloud = loader.load_cloud(str(uav_cloud_filename))
     frontier_cloud = loader.load_cloud(str(frontier_cloud_filename))
 
-    vertical_registration = VerticalRegistration(uav_cloud, frontier_cloud)
-    # (uav_groud_plane, frontier_ground_plane) = vertical_registration.process()
+    vertical_registration = VerticalRegistration(
+        uav_cloud,
+        frontier_cloud,
+        ground_segmentation_method=args.ground_segmentation_method,
+    )
+    (uav_groud_plane, frontier_ground_plane) = vertical_registration.process()
 
     # results of the vertical registration, use them directly to save time
-    uav_groud_plane = [
-        -0.028127017612793577,
-        0.03713812538079706,
-        0.9989142258089079,
-        19.434460578098562,
-    ]
-    frontier_ground_plane = [
-        -0.027477370673811043,
-        0.0419955118046868,
-        0.9987398916079784,
-        9.787417210868085,
-    ]
+    # uav_groud_plane = [
+    #     -0.028127017612793577,
+    #     0.03713812538079706,
+    #     0.9989142258089079,
+    #     19.434460578098562,
+    # ]
+    # frontier_ground_plane = [
+    #     -0.027477370673811043,
+    #     0.0419955118046868,
+    #     0.9987398916079784,
+    #     9.787417210868085,
+    # ]
 
     horizontal_registration = HorizontalRegistration(
         uav_cloud, uav_groud_plane, frontier_cloud, frontier_ground_plane

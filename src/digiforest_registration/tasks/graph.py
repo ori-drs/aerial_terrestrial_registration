@@ -17,22 +17,12 @@ class Graph:
         # adding edges
         for i in range(len(points)):
             for j in range(i + 1, len(points)):
+                # todo review the weight
                 self.graph.add_edge(
                     self.node_name(i),
                     self.node_name(j),
-                    weight=np.linalg.norm(points[i] - points[j]),
+                    weight=np.linalg.norm(points[i][0:2] - points[j][0:2]),
                 )
-
-        # k_neighbors = len(points)
-        # cloud = o3d.geometry.PointCloud()
-        # cloud.points = o3d.utility.Vector3dVector(points)
-        # kd_tree = o3d.geometry.KDTreeFlann(cloud)
-
-        # for i in range(len(points)):
-        #     [k, idx, _] = kd_tree.search_knn_vector_3d(cloud.points[i], k_neighbors)
-        #     for idx_j in idx:
-        #         if idx_j != i:
-        #             self.graph.add_edge(self.node_name(i), self.node_name(idx_j), weight=np.linalg.norm(points[i] - points[idx_j]))
 
     def display_graph(self, display_weights: bool = False, display_edges: bool = True):
         if display_edges:
