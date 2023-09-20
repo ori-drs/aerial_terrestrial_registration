@@ -10,6 +10,16 @@ class HeightImage:
         self.debug = False
         self.min_distance_to_ground = 3.0
         self.image_resolution = 0.1
+        # coordinates of the top left corner of the image in the utm frame
+        self.top_left_corner = [0, 0, 0]
+
+    def pixel_to_utm(self, x, y):
+        """
+        Convert pixel coordinates to utm coordinates"""
+
+        x_utm = x * self.image_resolution + self.top_left_corner[0]
+        y_utm = y * self.image_resolution + self.top_left_corner[1]
+        return [x_utm, y_utm]
 
     def _point_plane_distance(self, a, b, c, d, array: NDArray[float64]) -> float:
         """
@@ -53,6 +63,7 @@ class HeightImage:
         # Get the minimum and maximum points of the bounding box
         min_bound = bounding_box.min_bound.numpy()
         max_bound = bounding_box.max_bound.numpy()
+        self.top_left_corner = min_bound
 
         # Create the canopy image
         height = int(np.ceil((max_bound[1] - min_bound[1]) / self.image_resolution))
