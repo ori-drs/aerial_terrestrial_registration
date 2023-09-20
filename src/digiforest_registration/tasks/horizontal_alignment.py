@@ -11,7 +11,7 @@ class HorizontalRegistration:
         self.uav_ground_plane = uav_ground_plane
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
-        self.debug = False
+        self.debug = True
 
     def process(self):
         uav_proc = HeightImage()
@@ -52,15 +52,15 @@ class HorizontalRegistration:
         M = cv2.estimateAffine2D(bls_pts, uav_pts)[0]
         tx = M[0, 2]
         ty = M[1, 2]
-        theta = np.arctan2(M[1, 0], M[0, 0])
+        yaw = np.arctan2(M[1, 0], M[0, 0])
         scale = np.sqrt(M[0, 0] ** 2 + M[1, 0] ** 2)
 
         print(
-            "Transformation from bls cloud to uav (x, y, theta, scale):",
+            "Transformation from bls cloud to uav (x, y, yaw, scale):",
             tx,
             ty,
-            theta,
+            yaw,
             scale,
         )
 
-        return tx, ty, theta
+        return tx, ty, yaw

@@ -63,18 +63,19 @@ if __name__ == "__main__":
     horizontal_registration = HorizontalRegistration(
         uav_cloud, uav_groud_plane, frontier_cloud, frontier_ground_plane
     )
-    (tx, ty, theta) = horizontal_registration.process()
+    (tx, ty, yaw) = horizontal_registration.process()
 
-    R = euler_to_rotation_matrix(0, 0, theta)
+    R = euler_to_rotation_matrix(yaw, 0, 0)
     transform[0:3, 0:3] = R
     transform[0, 3] = tx
     transform[1, 3] = ty
 
-    print("Transformation matrix:", transform)
+    print("Transformation matrix:")
+    print(transform)
 
     # Visualize the results
     frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
-    uav_cloud.paint_uniform_color([1.0, 0.0, 0])
+    uav_cloud.paint_uniform_color([0.0, 1.0, 0])
     o3d.visualization.draw_geometries(
         [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
     )
