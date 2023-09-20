@@ -103,4 +103,4 @@ class HorizontalRegistration:
             bls_pts, uav_pts
         )
 
-        print("Transformation from bls cloud to uav:", tx, ty, theta)
+        print("Transformation from bls cloud to uav (x, y, theta):", tx, ty, theta)

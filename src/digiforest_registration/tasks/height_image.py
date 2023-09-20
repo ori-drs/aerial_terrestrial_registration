@@ -21,7 +21,9 @@ class HeightImage:
         y_utm = y * self.image_resolution + self.top_left_corner[1]
         return [x_utm, y_utm]
 
-    def _point_plane_distance(self, a, b, c, d, array: NDArray[float64]) -> float:
+    def _point_plane_distance(
+        self, a: float, b: float, c: float, d: float, array: NDArray[float64]
+    ) -> float:
         """
         Calculate the distance between a point and a plane
         ax + by + cz + d = 0
@@ -38,7 +40,9 @@ class HeightImage:
         distance = numerator / denominator
         return distance
 
-    def compute_canopy_image(self, cloud, a, b, c, d) -> np.ndarray:
+    def compute_canopy_image(
+        self, cloud, a: float, b: float, c: float, d: float
+    ) -> np.ndarray:
         """
         Compute the canopy image from a point cloud and a plane
         A canopy image is a 2D float image where the value of each pixel is the height of the canopy at this pixel
@@ -85,8 +89,10 @@ class HeightImage:
 
         return image
 
-    def remove_small_objects(self, img):
-        # remove small non-black objects from a float image
+    def _remove_small_objects(self, img: np.ndarray) -> np.ndarray:
+        """
+        remove small non-black objects from a float image"""
+
         grayscale_image = (img * 255).astype(np.uint8)
 
         threshold = 1
@@ -112,16 +118,18 @@ class HeightImage:
 
         return filtered_img
 
-    def find_local_maxima(self, img):
+    def find_local_maxima(self, img: np.ndarray):
+        """
+        Find peaks in a float image.
+        Return the coordinates of the peaks and the filtered image
+        used to find the peaks"""
+
         def distance_to_border(img, y, x):
             """Distance from to the nearest border"""
             return min(y, img.shape[0] - y, x, img.shape[1] - x)
 
-        # the input image is a float image
-        # find local maxima in the image
-
         # preprocessing the image by remove noise
-        img = self.remove_small_objects(img)
+        img = self._remove_small_objects(img)
 
         kernel_size = (25, 25)
         kernel = np.ones(kernel_size, np.uint8)
@@ -150,13 +158,20 @@ class HeightImage:
                 cv2.circle(maxima_img, point, 3, (0, 0, 255), -1)
                 valid_points.append([point[0], point[1], 0])
 
-        # cv2.imshow("Image", maxima_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        if self.debug:
+            cv2.imshow("Image", maxima_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
         return np.array(valid_points), img
 
 
-def draw_correspondences(height_img1, height_pts1, height_img2, height_pts2, edges):
+def draw_correspondences(
+    height_img1: np.ndarray,
+    height_pts1: np.ndarray,
+    height_img2: np.ndarray,
+    height_pts2: np.ndarray,
+    edges: list,
+):
     grayscale_image = (height_img1 * 255).astype(np.uint8)
     img1 = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2RGB)
 
@@ -182,7 +197,6 @@ def draw_correspondences(height_img1, height_pts1, height_img2, height_pts2, edg
             img, (edge[0][0], edge[0][1]), (edge[1][0] + w1, edge[1][1]), (0, 255, 0), 1
         )
 
-    cv2.imwrite("/home/benoit/data/digiforest/test/tile_39/correspondances.png", img)
     cv2.imshow("Image", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
