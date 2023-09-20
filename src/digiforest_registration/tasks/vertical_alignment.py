@@ -60,5 +60,6 @@ class VerticalRegistration:
         print([a_r, b_r, c_r, d_r], [a, b, c, d])
         print("dot product of normals: ", np.dot(n_r, n))
         print("Distance between planes: ", np.abs(d_r / norm_r - d / norm))
-        print("z offset bls cloud to uav cloud: ", -(d_r / norm_r - d / norm))
-        return [a_r, b_r, c_r, d_r], [a, b, c, d]
+        z_offset = -(d_r / norm_r - d / norm)
+        print("z offset bls cloud to uav cloud: ", z_offset)
+        return [a_r, b_r, c_r, d_r], [a, b, c, d], z_offset

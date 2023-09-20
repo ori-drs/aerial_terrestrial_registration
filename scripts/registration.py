@@ -2,9 +2,12 @@
 from digiforest_registration.tasks.vertical_alignment import VerticalRegistration
 from digiforest_registration.tasks.horizontal_alignment import HorizontalRegistration
 from digiforest_registration.utils import CloudLoader
+from digiforest_registration.utils import euler_to_rotation_matrix
 from pathlib import Path
 
 import argparse
+import numpy as np
+import open3d as o3d
 
 if __name__ == "__main__":
 
@@ -27,17 +30,21 @@ if __name__ == "__main__":
     if not frontier_cloud_filename.exists():
         raise ValueError(f"Input file [{frontier_cloud_filename}] does not exist")
 
+    # loading the data
     loader = CloudLoader()
-
     uav_cloud = loader.load_cloud(str(uav_cloud_filename))
     frontier_cloud = loader.load_cloud(str(frontier_cloud_filename))
+
+    # transformation matrix from frontier cloud to uav cloud that we are estimating
+    transform = np.identity(4)
 
     vertical_registration = VerticalRegistration(
         uav_cloud,
         frontier_cloud,
         ground_segmentation_method=args.ground_segmentation_method,
     )
-    (uav_groud_plane, frontier_ground_plane) = vertical_registration.process()
+    (uav_groud_plane, frontier_ground_plane, tz) = vertical_registration.process()
+    transform[2, 3] = tz
 
     # results of the vertical registration, use them directly to save time
     # uav_groud_plane = [
@@ -56,4 +63,24 @@ if __name__ == "__main__":
     horizontal_registration = HorizontalRegistration(
         uav_cloud, uav_groud_plane, frontier_cloud, frontier_ground_plane
     )
-    horizontal_registration.process()
+    (tx, ty, theta) = horizontal_registration.process()
+
+    R = euler_to_rotation_matrix(0, 0, theta)
+    transform[0:3, 0:3] = R
+    transform[0, 3] = tx
+    transform[1, 3] = ty
+
+    print("Transformation matrix:", transform)
+
+    # Visualize the results
+    frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+    uav_cloud.paint_uniform_color([1.0, 0.0, 0])
+    o3d.visualization.draw_geometries(
+        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
+    )
+
+    frontier_cloud.transform(transform)
+
+    o3d.visualization.draw_geometries(
+        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
+    )

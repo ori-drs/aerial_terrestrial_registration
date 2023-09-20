@@ -11,6 +11,7 @@ class HorizontalRegistration:
         self.uav_ground_plane = uav_ground_plane
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
+        self.debug = False
 
     def process(self):
         uav_proc = HeightImage()
@@ -36,9 +37,10 @@ class HorizontalRegistration:
         edges = correspondence_graph.maximum_clique()
         print(edges)
 
-        draw_correspondences(
-            bls_height_img, bls_height_pts, uav_height_img, uav_height_pts, edges
-        )
+        if self.debug:
+            draw_correspondences(
+                bls_height_img, bls_height_pts, uav_height_img, uav_height_pts, edges
+            )
 
         # find transformation using maximum clique
         bls_pts = np.zeros((len(edges), 2))
@@ -60,3 +62,5 @@ class HorizontalRegistration:
             theta,
             scale,
         )
+
+        return tx, ty, theta
