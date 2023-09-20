@@ -15,7 +15,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("uav_cloud")
     parser.add_argument("frontier_cloud")
-    parser.add_argument("ground_segmentation_method", default="default")
+    parser.add_argument("ground_segmentation_method", nargs="?", default="default")
     args = parser.parse_args()
 
     # Check validity of inputs
