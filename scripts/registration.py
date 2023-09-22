@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from digiforest_registration.tasks.vertical_alignment import VerticalRegistration
 from digiforest_registration.tasks.horizontal_alignment import HorizontalRegistration
+from digiforest_registration.tasks.icp import icp
 from digiforest_registration.utils import CloudLoader
 from digiforest_registration.utils import euler_to_rotation_matrix
 from pathlib import Path
@@ -76,12 +77,22 @@ if __name__ == "__main__":
     # Visualize the results
     frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
     uav_cloud.paint_uniform_color([0.0, 1.0, 0])
-    o3d.visualization.draw_geometries(
-        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
-    )
+    # o3d.visualization.draw_geometries(
+    #     [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
+    # )
 
     frontier_cloud.transform(transform)
 
     o3d.visualization.draw_geometries(
         [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
     )
+
+    # Apply final icp registration
+    icp_transform = icp(frontier_cloud, uav_cloud)
+    frontier_cloud.transform(icp_transform)
+    o3d.visualization.draw_geometries(
+        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
+    )
+
+    print("Final transformation matrix:")
+    print(icp_transform @ transform)
