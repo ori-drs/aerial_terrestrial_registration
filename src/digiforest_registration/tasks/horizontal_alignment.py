@@ -28,6 +28,7 @@ class HorizontalRegistration:
         uav_height_pts, uav_height_img = bls_proc.find_local_maxima(uav_canopy)
 
         # create feature graphs
+        print("Creating the feature graphs")
         G = Graph(bls_height_pts, node_prefix="f")
         H = Graph(uav_height_pts, node_prefix="uav")
 

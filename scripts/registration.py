@@ -84,14 +84,16 @@ if __name__ == "__main__":
     frontier_cloud.transform(transform)
 
     o3d.visualization.draw_geometries(
-        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
+        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()],
+        window_name="Result before ICP",
     )
 
     # Apply final icp registration
     icp_transform = icp(frontier_cloud, uav_cloud)
     frontier_cloud.transform(icp_transform)
     o3d.visualization.draw_geometries(
-        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
+        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()],
+        window_name="Final registration",
     )
 
     print("Final transformation matrix:")

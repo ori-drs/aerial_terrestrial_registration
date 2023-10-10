@@ -73,6 +73,15 @@ class CorrespondenceGraph:
                     if self.compare_edge(edge1, edge2):
                         self.graph.add_edge(node1, node2, weight=0)
 
+        print(
+            "Number of nodes in the correspondence graph: ",
+            self.graph.number_of_nodes(),
+        )
+        print(
+            "Number of edges in the correspondence graph: ",
+            self.graph.number_of_edges(),
+        )
+
     def compare_edge(self, edge1, edge2) -> bool:
         if edge1 is None or edge2 is None:
             return False
@@ -85,7 +94,9 @@ class CorrespondenceGraph:
 
     def maximum_clique(self):
         max_clique_size = 0
-        for clique in nx.enumerate_all_cliques(self.graph):
+        # max_clique = nx.algorithms.approximation.max_clique(self.graph)
+        # for clique in nx.enumerate_all_cliques(self.graph):
+        for clique in nx.find_cliques(self.graph):
             if len(clique) > max_clique_size:
                 max_clique_size = len(clique)
                 max_clique = clique
