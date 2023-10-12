@@ -32,6 +32,11 @@ class HorizontalRegistration:
         G = Graph(bls_height_pts, node_prefix="f")
         H = Graph(uav_height_pts, node_prefix="uav")
 
+        print("Number of nodes of the frontier graph", G.graph.number_of_nodes())
+        print("Number of nodes of the uav graph", H.graph.number_of_nodes())
+
+        # np.savetxt('/tmp/frontier_peaks.txt', bls_height_pts, delimiter=",", fmt='%.4f')
+
         # find maximum clique in the correspondence graph
         correspondence_graph = CorrespondenceGraph(G, H)
         print("Computing the maximum clique")

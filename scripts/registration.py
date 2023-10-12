@@ -47,19 +47,7 @@ if __name__ == "__main__":
     (uav_groud_plane, frontier_ground_plane, tz) = vertical_registration.process()
     transform[2, 3] = tz
 
-    # results of the vertical registration, use them directly to save time
-    # uav_groud_plane = [
-    #     -0.028127017612793577,
-    #     0.03713812538079706,
-    #     0.9989142258089079,
-    #     19.434460578098562,
-    # ]
-    # frontier_ground_plane = [
-    #     -0.027477370673811043,
-    #     0.0419955118046868,
-    #     0.9987398916079784,
-    #     9.787417210868085,
-    # ]
+    ##############################
 
     horizontal_registration = HorizontalRegistration(
         uav_cloud, uav_groud_plane, frontier_cloud, frontier_ground_plane
@@ -77,22 +65,54 @@ if __name__ == "__main__":
     # Visualize the results
     frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
     uav_cloud.paint_uniform_color([0.0, 1.0, 0])
+
+    frontier_cloud.transform(transform)
     # o3d.visualization.draw_geometries(
     #     [frontier_cloud.to_legacy(), uav_cloud.to_legacy()]
     # )
 
-    frontier_cloud.transform(transform)
+    # Crop the uav cloud around the frontier cloud and reestimate the transformation
+    # along the z axis
+    bbox = frontier_cloud.get_axis_aligned_bounding_box()
+    frontier_min_bound = bbox.min_bound.numpy()
+    frontier_max_bound = bbox.max_bound.numpy()
+
+    padding = 4
+    min_bound = o3d.core.Tensor(
+        [frontier_min_bound[0] - padding, frontier_min_bound[1] - padding, -(10**10)],
+        dtype=o3d.core.Dtype.Float32,
+    )
+    max_bound = o3d.core.Tensor(
+        [frontier_max_bound[0] + padding, frontier_max_bound[1] + padding, 10**10],
+        dtype=o3d.core.Dtype.Float32,
+    )
+    crop_box = o3d.t.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+
+    cropped_uav_cloud = uav_cloud.crop(crop_box)
+    vertical_registration = VerticalRegistration(
+        cropped_uav_cloud,
+        frontier_cloud,
+        ground_segmentation_method=args.ground_segmentation_method,
+    )
+    (_, _, tz) = vertical_registration.process()
+    vertical_transform = np.identity(4)
+    vertical_transform[2, 3] = tz
+    print("Old z offset", transform[2, 3], ", new z offset", tz + transform[2, 3])
+    frontier_cloud.transform(vertical_transform)
+    transform[2, 3] = tz + transform[2, 3]
+
+    # Use cropped uav cloud in the rest of the code
 
     o3d.visualization.draw_geometries(
-        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()],
+        [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
         window_name="Result before ICP",
     )
 
     # Apply final icp registration
-    icp_transform = icp(frontier_cloud, uav_cloud)
+    icp_transform = icp(frontier_cloud, cropped_uav_cloud)
     frontier_cloud.transform(icp_transform)
     o3d.visualization.draw_geometries(
-        [frontier_cloud.to_legacy(), uav_cloud.to_legacy()],
+        [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
         window_name="Final registration",
     )
 

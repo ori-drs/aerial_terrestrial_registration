@@ -95,14 +95,14 @@ class CorrespondenceGraph:
     def maximum_clique(self):
         max_clique_size = 0
         # max_clique = nx.algorithms.approximation.max_clique(self.graph)
-        # for clique in nx.enumerate_all_cliques(self.graph):
-        for clique in nx.find_cliques(self.graph):
+        for clique in nx.enumerate_all_cliques(self.graph):
+            # for clique in nx.find_cliques(self.graph):
             if len(clique) > max_clique_size:
                 max_clique_size = len(clique)
                 max_clique = clique
 
         # Print the maximum cliques
-        print(max_clique)
+        print(len(max_clique), max_clique)
 
         # Create the edges
         edges = []
