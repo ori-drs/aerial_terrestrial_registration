@@ -4,7 +4,7 @@ import numpy as np
 
 def icp(source, target):
     # Search distance for Nearest Neighbour Search [Hybrid-Search is used].
-    max_correspondence_distance = 0.07
+    max_correspondence_distance = 0.5
 
     # Select the `Estimation Method`, and `Robust Kernel` (for outlier-rejection).
     estimation = o3d.pipelines.registration.TransformationEstimationPointToPlane()
@@ -26,6 +26,6 @@ def icp(source, target):
 
     print("Inlier Fitness: ", registration_icp.fitness)
     print("Inlier RMSE: ", registration_icp.inlier_rmse)
-    print("Transformation is:")
+    print("ICP transform is:")
     print(registration_icp.transformation)
     return registration_icp.transformation
