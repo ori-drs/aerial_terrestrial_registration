@@ -28,4 +28,4 @@ def icp(source, target):
     print("Inlier RMSE: ", registration_icp.inlier_rmse)
     print("ICP transform is:")
     print(registration_icp.transformation)
-    return registration_icp.transformation
+    return registration_icp.transformation, registration_icp.fitness

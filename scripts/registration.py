@@ -109,7 +109,7 @@ if __name__ == "__main__":
     )
 
     # Apply final icp registration
-    icp_transform = icp(frontier_cloud, cropped_uav_cloud)
+    icp_transform, icp_fitness = icp(frontier_cloud, cropped_uav_cloud)
     frontier_cloud.transform(icp_transform)
     o3d.visualization.draw_geometries(
         [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
