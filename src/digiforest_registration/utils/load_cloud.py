@@ -3,8 +3,8 @@ import numpy as np
 
 
 class CloudLoader:
-    def __init__(self):
-        self.offset = None
+    def __init__(self, offset):
+        self.offset = offset
 
     def load_cloud(self, filename):
         """

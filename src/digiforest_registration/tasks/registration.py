@@ -2,11 +2,8 @@
 from digiforest_registration.tasks.vertical_alignment import VerticalRegistration
 from digiforest_registration.tasks.horizontal_alignment import HorizontalRegistration
 from digiforest_registration.tasks.icp import icp
-from digiforest_registration.utils import CloudLoader
 from digiforest_registration.utils import euler_to_rotation_matrix
-from pathlib import Path
 
-import argparse
 import numpy as np
 import open3d as o3d
 
@@ -87,7 +84,7 @@ class Registration:
         vertical_registration = VerticalRegistration(
             cropped_uav_cloud,
             self.frontier_cloud,
-            ground_segmentation_method=args.ground_segmentation_method,
+            ground_segmentation_method=self.ground_segmentation_method,
         )
         (_, _, tz) = vertical_registration.process()
         vertical_transform = np.identity(4)
@@ -119,35 +116,3 @@ class Registration:
         if icp_fitness < 0.5:
             return False
         return True
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(
-        prog="cloud_registration",
-        description="Registers a frontier cloud to a reference UAV cloud",
-        epilog="Text at the bottom of help",
-    )
-    parser.add_argument("uav_cloud")
-    parser.add_argument("frontier_cloud")
-    parser.add_argument("ground_segmentation_method", nargs="?", default="default")
-    args = parser.parse_args()
-
-    # Check validity of inputs
-    uav_cloud_filename = Path(args.uav_cloud)
-    if not uav_cloud_filename.exists():
-        raise ValueError(f"Input file [{uav_cloud_filename}] does not exist")
-
-    frontier_cloud_filename = Path(args.frontier_cloud)
-    if not frontier_cloud_filename.exists():
-        raise ValueError(f"Input file [{frontier_cloud_filename}] does not exist")
-
-    # loading the data
-    loader = CloudLoader()
-    uav_cloud = loader.load_cloud(str(uav_cloud_filename))
-    frontier_cloud = loader.load_cloud(str(frontier_cloud_filename))
-
-    registration = Registration(
-        uav_cloud, frontier_cloud, args.ground_segmentation_method
-    )
-    success = registration.registration()

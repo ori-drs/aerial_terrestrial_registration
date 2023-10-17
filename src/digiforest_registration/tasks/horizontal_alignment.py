@@ -11,7 +11,7 @@ class HorizontalRegistration:
         self.uav_ground_plane = uav_ground_plane
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
-        self.debug = True
+        self.debug = False
 
     def process(self):
         uav_proc = HeightImage()
