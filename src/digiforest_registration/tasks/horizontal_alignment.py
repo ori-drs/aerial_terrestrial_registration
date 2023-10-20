@@ -52,8 +52,8 @@ class HorizontalRegistration:
         bls_pts = np.zeros((len(edges), 2))
         uav_pts = np.zeros((len(edges), 2))
         for i in range(len(edges)):
-            bls_pts[i] = bls_proc.pixel_to_utm(edges[i][0][0], edges[i][0][1])
-            uav_pts[i] = uav_proc.pixel_to_utm(edges[i][1][0], edges[i][1][1])
+            bls_pts[i] = bls_proc.pixel_to_cloud(edges[i][0][0], edges[i][0][1])
+            uav_pts[i] = uav_proc.pixel_to_cloud(edges[i][1][0], edges[i][1][1])
 
         M = cv2.estimateAffine2D(bls_pts, uav_pts)[0]
         tx = M[0, 2]

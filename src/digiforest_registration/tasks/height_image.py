@@ -13,13 +13,13 @@ class HeightImage:
         # coordinates of the top left corner of the image in the utm frame
         self.top_left_corner = [0, 0, 0]
 
-    def pixel_to_utm(self, x, y):
+    def pixel_to_cloud(self, x, y):
         """
-        Convert pixel coordinates to utm coordinates"""
+        Convert pixel coordinates to cloud coordinates"""
 
-        x_utm = x * self.image_resolution + self.top_left_corner[0]
-        y_utm = y * self.image_resolution + self.top_left_corner[1]
-        return [x_utm, y_utm]
+        x_cloud = x * self.image_resolution + self.top_left_corner[0]
+        y_cloud = y * self.image_resolution + self.top_left_corner[1]
+        return [x_cloud, y_cloud]
 
     def _point_plane_distance(
         self, a: float, b: float, c: float, d: float, array: NDArray[float64]

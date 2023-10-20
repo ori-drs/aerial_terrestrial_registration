@@ -2,11 +2,12 @@
 from digiforest_registration.tasks.registration import Registration
 from digiforest_registration.utils import CloudLoader
 from pathlib import Path
+import numpy as np
 
 import argparse
 
 if __name__ == "__main__":
-
+    np.set_printoptions(suppress=True)
     parser = argparse.ArgumentParser(
         prog="cloud_registration",
         description="Registers a frontier cloud to a reference UAV cloud",

@@ -21,7 +21,8 @@ class CloudLoader:
                 or (np.abs(point[1]) > threshold)
                 or (np.abs(point[2]) > threshold)
             ):
-                cloud = cloud.translate(-point)
                 self.offset = -point
+                print("Offset", self.offset)
+                cloud = cloud.translate(self.offset)
 
         return cloud

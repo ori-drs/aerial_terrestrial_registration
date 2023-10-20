@@ -111,7 +111,6 @@ class Registration:
         )
 
         print("Final transformation matrix:")
-        np.set_printoptions(suppress=True)
         print(icp_transform @ transform)
         if icp_fitness < 0.5:
             return False
