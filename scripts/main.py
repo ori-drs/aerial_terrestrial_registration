@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from digiforest_registration.tasks.registration import Registration
-from digiforest_registration.utils import CloudLoader
+from digiforest_registration.utils import CloudIO
 from pathlib import Path
 import numpy as np
+import os
 
 import argparse
 
@@ -17,6 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--frontier_cloud")
     parser.add_argument("--ground_segmentation_method", nargs="?", default="default")
     parser.add_argument("--offset", nargs="+", type=float, default=None)
+    parser.add_argument("--output_folder", default=None)
     args = parser.parse_args()
 
     # Check validity of inputs
@@ -29,11 +31,19 @@ if __name__ == "__main__":
         raise ValueError(f"Input file [{frontier_cloud_filename}] does not exist")
 
     # loading the data
-    loader = CloudLoader(args.offset)
-    uav_cloud = loader.load_cloud(str(uav_cloud_filename))
-    frontier_cloud = loader.load_cloud(str(frontier_cloud_filename))
+    cloud_io = CloudIO(
+        np.array([args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32)
+        if args.offset is not None and len(args.offset)
+        else None
+    )
+    uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
+    frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
 
     registration = Registration(
         uav_cloud, frontier_cloud, args.ground_segmentation_method
     )
-    success = registration.registration()
+    transform, success = registration.registration()
+
+    if success and args.output_folder is not None:
+        output_filename = os.path.join(args.output_folder, frontier_cloud_filename.name)
+        cloud_io.save_cloud(frontier_cloud, output_filename)

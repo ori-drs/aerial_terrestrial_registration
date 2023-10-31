@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 
 
-class CloudLoader:
+class CloudIO:
     def __init__(self, offset):
         self.offset = offset
 
@@ -26,3 +26,9 @@ class CloudLoader:
                 cloud = cloud.translate(self.offset)
 
         return cloud
+
+    def save_cloud(self, cloud, filename):
+        """
+        Saves a point cloud to a file."""
+
+        o3d.t.io.write_point_cloud(filename, cloud)

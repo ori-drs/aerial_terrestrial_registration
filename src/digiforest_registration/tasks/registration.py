@@ -13,6 +13,7 @@ class Registration:
         self.uav_cloud = uav_cloud
         self.frontier_cloud = frontier_cloud
         self.ground_segmentation_method = ground_segmentation_method
+        self.debug = False
 
     def crop_cloud(self, uav_cloud, frontier_cloud, padding):
         """
@@ -96,22 +97,23 @@ class Registration:
         print(transform)
 
         # Use cropped uav cloud in the rest of the code
-
-        o3d.visualization.draw_geometries(
-            [self.frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
-            window_name="Result before ICP",
-        )
+        if self.debug:
+            o3d.visualization.draw_geometries(
+                [self.frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
+                window_name="Result before ICP",
+            )
 
         # Apply final icp registration
         icp_transform, icp_fitness = icp(self.frontier_cloud, cropped_uav_cloud)
         self.frontier_cloud.transform(icp_transform)
-        o3d.visualization.draw_geometries(
-            [self.frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
-            window_name="Final registration",
-        )
+        if self.debug:
+            o3d.visualization.draw_geometries(
+                [self.frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
+                window_name="Final registration",
+            )
 
         print("Final transformation matrix:")
         print(icp_transform @ transform)
         if icp_fitness < 0.5:
             return False
-        return True
+        return icp_transform @ transform, True
