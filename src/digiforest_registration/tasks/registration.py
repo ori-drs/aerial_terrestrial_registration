@@ -16,7 +16,7 @@ class Registration:
         self.ground_segmentation_method = ground_segmentation_method
         self.debug = False
 
-    def registration(self) -> bool:
+    def registration(self):
         # transformation matrix from frontier cloud to uav cloud that we are estimating
         transform = np.identity(4)
         vertical_registration = VerticalRegistration(
@@ -32,7 +32,9 @@ class Registration:
         horizontal_registration = HorizontalRegistration(
             self.uav_cloud, uav_groud_plane, self.frontier_cloud, frontier_ground_plane
         )
-        (tx, ty, yaw) = horizontal_registration.process()
+        success, tx, ty, yaw = horizontal_registration.process()
+        if not success:
+            return None, False
 
         R = euler_to_rotation_matrix(yaw, 0, 0)
         transform[0:3, 0:3] = R
@@ -83,6 +85,5 @@ class Registration:
 
         print("Final transformation matrix:")
         print(icp_transform @ transform)
-        if icp_fitness < 0.5:
-            return False
-        return icp_transform @ transform, True
+
+        return icp_transform @ transform, icp_fitness > 0.5

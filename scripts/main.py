@@ -53,10 +53,10 @@ if __name__ == "__main__":
             raise ValueError(f"Input folder [{frontier_cloud_folder}] does not exist")
         else:
             # Get all the ply files in the folder
-            for _, _, files in frontier_cloud_folder.walk(on_error=print):
-                for file in files:
-                    if file.suffix == ".ply":
-                        frontier_cloud_filenames.append(file)
+            for entry in frontier_cloud_folder.iterdir():
+                if entry.is_file():
+                    if entry.suffix == ".ply" and entry.name[:4] == "tile":
+                        frontier_cloud_filenames.append(entry)
 
     # loading the data
     cloud_io = CloudIO(
@@ -65,17 +65,35 @@ if __name__ == "__main__":
         else None
     )
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
+    failure_count = 0
 
     for frontier_cloud_filename in frontier_cloud_filenames:
+        print("Processing file: ", frontier_cloud_filename.name)
         frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
         cropped_uav_cloud = crop_uav_cloud(uav_cloud, frontier_cloud)
+
+        # import open3d as o3d
+        # frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+        # cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
+        # o3d.visualization.draw_geometries(
+        #     [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
+        #     window_name="Initial data",
+        # )
+        #
+
         registration = Registration(
             cropped_uav_cloud, frontier_cloud, args.ground_segmentation_method
         )
         transform, success = registration.registration()
+        print("File: ", frontier_cloud_filename.name, success)
+        if not success:
+            failure_count += 1
 
         if success and args.output_folder is not None:
             output_filename = os.path.join(
                 args.output_folder, frontier_cloud_filename.name
             )
             cloud_io.save_cloud(frontier_cloud, output_filename)
+
+    print("Total number of failures: ", failure_count)
+    print("Total number of clouds: ", len(frontier_cloud_filenames))
