@@ -3,6 +3,7 @@ from digiforest_registration.tasks.vertical_alignment import VerticalRegistratio
 from digiforest_registration.tasks.horizontal_alignment import HorizontalRegistration
 from digiforest_registration.tasks.icp import icp
 from digiforest_registration.utils import euler_to_rotation_matrix
+from digiforest_registration.utils import crop_cloud
 
 import numpy as np
 import open3d as o3d
@@ -14,36 +15,6 @@ class Registration:
         self.frontier_cloud = frontier_cloud
         self.ground_segmentation_method = ground_segmentation_method
         self.debug = False
-
-    def crop_cloud(self, uav_cloud, frontier_cloud, padding):
-        """
-        Crop the uav cloud around the frontier cloud and return the cropped cloud
-        """
-        bbox = frontier_cloud.get_axis_aligned_bounding_box()
-        frontier_min_bound = bbox.min_bound.numpy()
-        frontier_max_bound = bbox.max_bound.numpy()
-
-        large_z_padding = 10**10
-        min_bound = o3d.core.Tensor(
-            [
-                frontier_min_bound[0] - padding,
-                frontier_min_bound[1] - padding,
-                -large_z_padding,
-            ],
-            dtype=o3d.core.Dtype.Float32,
-        )
-        max_bound = o3d.core.Tensor(
-            [
-                frontier_max_bound[0] + padding,
-                frontier_max_bound[1] + padding,
-                large_z_padding,
-            ],
-            dtype=o3d.core.Dtype.Float32,
-        )
-        crop_box = o3d.t.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
-
-        cropped_uav_cloud = uav_cloud.crop(crop_box)
-        return cropped_uav_cloud
 
     def registration(self) -> bool:
         # transformation matrix from frontier cloud to uav cloud that we are estimating
@@ -79,9 +50,7 @@ class Registration:
 
         # Crop the uav cloud around the frontier cloud and reestimate the transformation
         # along the z axis
-        cropped_uav_cloud = self.crop_cloud(
-            self.uav_cloud, self.frontier_cloud, padding=4
-        )
+        cropped_uav_cloud = crop_cloud(self.uav_cloud, self.frontier_cloud, padding=4)
         vertical_registration = VerticalRegistration(
             cropped_uav_cloud,
             self.frontier_cloud,
