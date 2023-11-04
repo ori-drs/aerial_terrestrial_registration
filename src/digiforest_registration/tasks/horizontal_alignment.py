@@ -7,12 +7,14 @@ from typing import Tuple
 
 
 class HorizontalRegistration:
-    def __init__(self, uav_cloud, uav_ground_plane, cloud, cloud_ground_plane):
+    def __init__(
+        self, uav_cloud, uav_ground_plane, cloud, cloud_ground_plane, debug=False
+    ):
         self.uav_cloud = uav_cloud
         self.uav_ground_plane = uav_ground_plane
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
-        self.debug = False
+        self.debug = debug
 
     def find_transform(self, src, dst, estimate_scale=False):
         """Estimate N-D similarity transformation with or without scaling.

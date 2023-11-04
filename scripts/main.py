@@ -5,6 +5,7 @@ from digiforest_registration.utils import crop_cloud
 from pathlib import Path
 import numpy as np
 import os
+import open3d as o3d
 
 import argparse
 
@@ -17,6 +18,9 @@ def crop_uav_cloud(uav_cloud, frontier_cloud):
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
+    # set seed for deterministic results
+    o3d.utility.random.seed(12345)
+
     parser = argparse.ArgumentParser(
         prog="cloud_registration",
         description="Registers a frontier cloud to a reference UAV cloud",
@@ -28,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--ground_segmentation_method", nargs="?", default="default")
     parser.add_argument("--offset", nargs="+", type=float, default=None)
     parser.add_argument("--output_folder", default=None)
+    parser.add_argument("--debug", type=bool, default=False)
     args = parser.parse_args()
 
     # Check validity of inputs
@@ -65,7 +70,9 @@ if __name__ == "__main__":
         else None
     )
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
-    failure_count = 0
+
+    # Registration
+    failures = []
 
     for frontier_cloud_filename in frontier_cloud_filenames:
         print("Processing file: ", frontier_cloud_filename.name)
@@ -82,12 +89,15 @@ if __name__ == "__main__":
         #
 
         registration = Registration(
-            cropped_uav_cloud, frontier_cloud, args.ground_segmentation_method
+            cropped_uav_cloud,
+            frontier_cloud,
+            args.ground_segmentation_method,
+            debug=args.debug,
         )
         transform, success = registration.registration()
         print("File: ", frontier_cloud_filename.name, success)
         if not success:
-            failure_count += 1
+            failures.append(frontier_cloud_filename.name)
 
         if success and args.output_folder is not None:
             output_filename = os.path.join(
@@ -95,5 +105,6 @@ if __name__ == "__main__":
             )
             cloud_io.save_cloud(frontier_cloud, output_filename)
 
-    print("Total number of failures: ", failure_count)
+    print("Total number of failures: ", len(failures))
     print("Total number of clouds: ", len(frontier_cloud_filenames))
+    print("Failures: ", failures)
