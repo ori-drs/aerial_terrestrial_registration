@@ -118,7 +118,6 @@ class HorizontalRegistration:
         correspondence_graph = CorrespondenceGraph(G, H)
         print("Computing the maximum clique")
         edges = correspondence_graph.maximum_clique()
-        print(edges)
 
         if self.debug:
             draw_correspondences(

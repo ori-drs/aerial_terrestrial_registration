@@ -17,9 +17,10 @@ class Registration:
         self.frontier_cloud = frontier_cloud
         self.ground_segmentation_method = ground_segmentation_method
         self.debug = debug
-        self.icp_fitness_threshold = 0.8
+        self.icp_fitness_threshold = 0.65
+        self.transform = None
 
-    def registration(self):
+    def registration(self) -> bool:
         # transformation matrix from frontier cloud to uav cloud that we are estimating
         transform = np.identity(4)
         vertical_registration = VerticalRegistration(
@@ -42,7 +43,7 @@ class Registration:
         )
         success, tx, ty, yaw = horizontal_registration.process()
         if not success:
-            return None, False
+            return False
 
         R = euler_to_rotation_matrix(yaw, 0, 0)
         transform[0:3, 0:3] = R
@@ -93,5 +94,5 @@ class Registration:
 
         print("Final transformation matrix:")
         print(icp_transform @ transform)
-
-        return icp_transform @ transform, icp_fitness > self.icp_fitness_threshold
+        self.transform = icp_transform @ transform
+        return icp_fitness > self.icp_fitness_threshold

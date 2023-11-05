@@ -79,14 +79,13 @@ if __name__ == "__main__":
         frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
         cropped_uav_cloud = crop_uav_cloud(uav_cloud, frontier_cloud)
 
-        # import open3d as o3d
-        # frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
-        # cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
-        # o3d.visualization.draw_geometries(
-        #     [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
-        #     window_name="Initial data",
-        # )
-        #
+        if args.debug:
+            frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+            cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
+            o3d.visualization.draw_geometries(
+                [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
+                window_name="Initial data",
+            )
 
         registration = Registration(
             cropped_uav_cloud,
@@ -94,7 +93,8 @@ if __name__ == "__main__":
             args.ground_segmentation_method,
             debug=args.debug,
         )
-        transform, success = registration.registration()
+        success = registration.registration()
+        transform = registration.transform
         print("File: ", frontier_cloud_filename.name, success)
         if not success:
             failures.append(frontier_cloud_filename.name)
