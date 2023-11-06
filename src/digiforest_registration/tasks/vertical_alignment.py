@@ -50,7 +50,6 @@ class VerticalRegistration:
         )
         [a_r, b_r, c_r, d_r] = plane_model_uav
         n_r = np.array([a_r, b_r, c_r])
-        norm_r = np.linalg.norm(n_r)
         n_r = n_r / np.linalg.norm(n_r)
 
         plane_model, inliers = ground.to_legacy().segment_plane(
@@ -60,7 +59,6 @@ class VerticalRegistration:
         )
         [a, b, c, d] = plane_model
         n = np.array([a, b, c])
-        norm = np.linalg.norm(n)
         n = n / np.linalg.norm(n)
 
         if self.debug:
@@ -80,14 +78,11 @@ class VerticalRegistration:
 
         print([a_r, b_r, c_r, d_r], [a, b, c, d])
         print("dot product of normals: ", np.dot(n_r, n))
-        # print("Distance between planes: ", np.abs(d_r / norm_r - d / norm))
-        # z_offset = -(d_r / norm_r - d / norm)
-        # print("z offset bls cloud to uav cloud: ", z_offset)
 
         uav_point = ground_uav_cloud.point.positions[inliers_uav[0]].numpy()
         p_proj = self.project_point_onto_plane(uav_point, n, d)
         print("Distance between planes", np.linalg.norm(p_proj - uav_point))
-        z_offset = np.sign(-(d_r / norm_r - d / norm)) * np.linalg.norm(
+        z_offset = np.sign(uav_point[2] - p_proj[2]) * np.linalg.norm(
             p_proj - uav_point
         )
         return [a_r, b_r, c_r, d_r], [a, b, c, d], z_offset
