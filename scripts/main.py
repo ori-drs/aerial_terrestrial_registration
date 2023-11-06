@@ -97,7 +97,7 @@ if __name__ == "__main__":
         transform = registration.transform
         print("File: ", frontier_cloud_filename.name, success)
         if not success:
-            failures.append(frontier_cloud_filename.name)
+            failures.append((frontier_cloud_filename.name, registration.report))
 
         if success and args.output_folder is not None:
             output_filename = os.path.join(

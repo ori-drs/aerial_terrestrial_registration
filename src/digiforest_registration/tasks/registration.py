@@ -19,9 +19,10 @@ class Registration:
         self.debug = debug
         self.icp_fitness_threshold = 0.65
         self.transform = None
+        self.report = {}
 
     def registration(self) -> bool:
-        # transformation matrix from frontier cloud to uav cloud that we are estimating
+        # we are estimating the transformation matrix from frontier cloud to uav cloud
         transform = np.identity(4)
         vertical_registration = VerticalRegistration(
             self.uav_cloud,
@@ -41,9 +42,14 @@ class Registration:
             frontier_ground_plane,
             debug=self.debug,
         )
-        success, tx, ty, yaw = horizontal_registration.process()
+        success = horizontal_registration.process()
         if not success:
             return False
+
+        M = horizontal_registration.transform
+        tx = M[0, 2]
+        ty = M[1, 2]
+        yaw = np.arctan2(M[1, 0], M[0, 0])
 
         R = euler_to_rotation_matrix(yaw, 0, 0)
         transform[0:3, 0:3] = R
@@ -56,7 +62,8 @@ class Registration:
             self.frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
             self.uav_cloud.paint_uniform_color([0.0, 1.0, 0])
             o3d.visualization.draw_geometries(
-                [self.frontier_cloud.to_legacy(), self.uav_cloud.to_legacy()]
+                [self.frontier_cloud.to_legacy(), self.uav_cloud.to_legacy()],
+                window_name="Result after horizontal alignment",
             )
 
         # Crop the uav cloud around the frontier cloud and reestimate the transformation
@@ -66,11 +73,19 @@ class Registration:
             cropped_uav_cloud,
             self.frontier_cloud,
             ground_segmentation_method=self.ground_segmentation_method,
+            debug=self.debug,
         )
         (_, _, tz) = vertical_registration.process()
         vertical_transform = np.identity(4)
         vertical_transform[2, 3] = tz
-        print("Old z offset", transform[2, 3], ", new z offset", tz + transform[2, 3])
+        print(
+            "Old z offset",
+            transform[2, 3],
+            ", new z offset",
+            tz + transform[2, 3],
+            ", new: ",
+            tz,
+        )
         self.frontier_cloud.transform(vertical_transform)
         transform[2, 3] = tz + transform[2, 3]
         print("Transformation matrix before icp:")
@@ -95,4 +110,9 @@ class Registration:
         print("Final transformation matrix:")
         print(icp_transform @ transform)
         self.transform = icp_transform @ transform
+
+        self.report["icp_fitness"] = icp_fitness
+        self.report["clique_size"] = horizontal_registration.clique_size
+        self.report["frontier_peaks_size"] = horizontal_registration.frontier_peaks_size
+
         return icp_fitness > self.icp_fitness_threshold

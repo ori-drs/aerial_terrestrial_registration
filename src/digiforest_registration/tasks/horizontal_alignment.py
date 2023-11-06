@@ -3,8 +3,6 @@ from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
 
 import numpy as np
 
-from typing import Tuple
-
 
 class HorizontalRegistration:
     def __init__(
@@ -15,6 +13,9 @@ class HorizontalRegistration:
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
         self.debug = debug
+        self.transform = None
+        self.clique_size = 0
+        self.frontier_peaks_size = 0
 
     def find_transform(self, src, dst, estimate_scale=False):
         """Estimate N-D similarity transformation with or without scaling.
@@ -90,7 +91,7 @@ class HorizontalRegistration:
 
         return T
 
-    def process(self) -> Tuple[bool, float, float, float]:
+    def process(self) -> bool:
         uav_proc = HeightImage()
         bls_proc = HeightImage()
 
@@ -119,6 +120,9 @@ class HorizontalRegistration:
         print("Computing the maximum clique")
         edges = correspondence_graph.maximum_clique()
 
+        self.clique_size = len(edges)
+        self.frontier_peaks_size = len(bls_height_pts)
+
         if self.debug:
             draw_correspondences(
                 bls_height_img, bls_height_pts, uav_height_img, uav_height_pts, edges
@@ -132,13 +136,14 @@ class HorizontalRegistration:
             uav_pts[i] = uav_proc.pixel_to_cloud(edges[i][1][0], edges[i][1][1])
 
         if bls_pts.shape[0] < 3:
-            return False, 0, 0, 0
+            return False
 
         M = self.find_transform(bls_pts, uav_pts)
+        self.transform = M
         tx = M[0, 2]
         ty = M[1, 2]
         yaw = np.arctan2(M[1, 0], M[0, 0])
 
         print("Transformation from bls cloud to uav (x, y, yaw, scale):", tx, ty, yaw)
 
-        return True, tx, ty, yaw
+        return True
