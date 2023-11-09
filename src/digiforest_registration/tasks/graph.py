@@ -17,12 +17,15 @@ class Graph:
         # adding edges
         for i in range(len(points)):
             for j in range(i + 1, len(points)):
-                # todo review the weight
                 self.graph.add_edge(
                     self.node_name(i),
                     self.node_name(j),
-                    weight=np.linalg.norm(points[i][0:2] - points[j][0:2]),
+                    distance=np.linalg.norm(points[i][0:2] - points[j][0:2]),
+                    angle=self.get_angle(points[i][0:2], points[j][0:2]),
                 )
+
+    def get_angle(self, p1, p2):
+        return np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
 
     def display_graph(self, display_weights: bool = False, display_edges: bool = True):
         if display_edges:
@@ -42,7 +45,7 @@ class Graph:
         # Draw edge labels
         if display_weights:
             edge_labels = {
-                (u, v): f'{d["weight"]}' for u, v, d in self.graph.edges(data=True)
+                (u, v): f'{d["distance"]}' for u, v, d in self.graph.edges(data=True)
             }
             pos = nx.circular_layout(self.graph)
             nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
@@ -70,7 +73,7 @@ class CorrespondenceGraph:
                 if node1[0] != node2[0] and node1[1] != node2[1]:  # nodes are different
                     edge1 = graph1.graph.get_edge_data(node1[0], node2[0])
                     edge2 = graph2.graph.get_edge_data(node1[1], node2[1])
-                    if self.compare_edge(edge1, edge2):
+                    if self.compare_edge(edge1, edge2, use_angle=True):
                         self.graph.add_edge(node1, node2, weight=0)
 
         print(
@@ -82,14 +85,20 @@ class CorrespondenceGraph:
             self.graph.number_of_edges(),
         )
 
-    def compare_edge(self, edge1, edge2) -> bool:
+    def compare_edge(self, edge1, edge2, use_angle=False) -> bool:
         if edge1 is None or edge2 is None:
             return False
 
-        w1 = edge1["weight"]
-        w2 = edge2["weight"]
+        w1 = edge1["distance"]
+        w2 = edge2["distance"]
         if abs(w1 - w2) / w2 > 0.1:
             return False
+
+        if use_angle:
+            a1 = edge1["angle"]
+            a2 = edge2["angle"]
+            if abs(a1 - a2) > 0.1:
+                return False
         return True
 
     def maximum_clique(self):
@@ -122,7 +131,7 @@ class CorrespondenceGraph:
         # Draw edge labels
         if display_weights:
             edge_labels = {
-                (u, v): f'{d["weight"]}' for u, v, d in self.graph.edges(data=True)
+                (u, v): f'{d["distance"]}' for u, v, d in self.graph.edges(data=True)
             }
             pos = nx.circular_layout(self.graph)
             nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
