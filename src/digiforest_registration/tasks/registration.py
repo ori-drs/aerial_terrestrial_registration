@@ -17,7 +17,7 @@ class Registration:
         self.frontier_cloud = frontier_cloud
         self.ground_segmentation_method = ground_segmentation_method
         self.debug = debug
-        self.icp_fitness_threshold = 0.65
+        self.icp_fitness_threshold = 0.85
         self.transform = None
         self.report = {}
 
@@ -114,5 +114,18 @@ class Registration:
         self.report["icp_fitness"] = icp_fitness
         self.report["clique_size"] = horizontal_registration.clique_size
         self.report["frontier_peaks_size"] = horizontal_registration.frontier_peaks_size
+        self.colorize_cloud(self.frontier_cloud, icp_fitness)
 
         return icp_fitness > self.icp_fitness_threshold
+
+    def colorize_cloud(self, cloud, icp_fitness):
+        import matplotlib.pyplot as plt
+
+        colormap = plt.get_cmap("coolwarm")
+
+        num_colors = 10
+        values = np.linspace(0, 1, num_colors)
+        values = np.flip(values)  # to have the blue color for the best fitness
+
+        index = np.floor(icp_fitness * num_colors).astype(int)
+        cloud.paint_uniform_color(colormap(values[index])[:3])
