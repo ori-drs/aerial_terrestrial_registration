@@ -99,7 +99,7 @@ if __name__ == "__main__":
         if not success:
             failures.append((frontier_cloud_filename.name, registration.report))
 
-        if success and args.output_folder is not None:
+        if args.output_folder is not None:
             output_filename = os.path.join(
                 args.output_folder, frontier_cloud_filename.name
             )

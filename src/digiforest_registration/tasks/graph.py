@@ -85,38 +85,55 @@ class CorrespondenceGraph:
             self.graph.number_of_edges(),
         )
 
-    def compare_edge(self, edge1, edge2, use_angle=False) -> bool:
+    def compare_edge(self, edge1, edge2, use_angle=False, debug=False) -> bool:
         if edge1 is None or edge2 is None:
             return False
 
         w1 = edge1["distance"]
         w2 = edge2["distance"]
-        if abs(w1 - w2) / w2 > 0.1:
+        distance_threshold = 0.2
+        if debug:
+            print(w1, w2, abs(w1 - w2) / w2)
+        if abs(w1 - w2) / w2 > distance_threshold:
             return False
 
         if use_angle:
             a1 = edge1["angle"]
             a2 = edge2["angle"]
-            if abs(a1 - a2) > 0.1:
+            angle_threshold = 0.25
+            if debug:
+                print(a1, a2, abs(a1 - a2))
+            if abs(a1 - a2) > angle_threshold:
                 return False
         return True
 
     def maximum_clique(self):
+        """
+        Compute the maximum cliques.
+        Returns the edges of the maximum cliques.
+        """
         max_clique_size = 0
+        max_cliques = []
         # max_clique = nx.algorithms.approximation.max_clique(self.graph)
         for clique in nx.enumerate_all_cliques(self.graph):
             # for clique in nx.find_cliques(self.graph):
             if len(clique) > max_clique_size:
                 max_clique_size = len(clique)
-                max_clique = clique
+                max_cliques.clear()
+
+            if len(clique) == max_clique_size:
+                max_cliques.append(clique)
 
         # Print the maximum cliques
-        print(len(max_clique), max_clique)
+        print("Length of the maximum clique", len(max_cliques[0]))
+        print("Number of maximum cliques: ", len(max_cliques))
 
         # Create the edges
         edges = []
-        for c in max_clique:
-            edges.append((self.g1.pos[c[0]], self.g2.pos[c[1]]))
+        for i in range(len(max_cliques)):
+            edges.append([])  # edges is a list of list
+            for c in max_cliques[i]:
+                edges[i].append((self.g1.pos[c[0]], self.g2.pos[c[1]]))
         return edges
 
     def display_graph(self, display_weights: bool = False):

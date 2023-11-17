@@ -13,7 +13,8 @@ class HorizontalRegistration:
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
         self.debug = debug
-        self.transform = None
+        self.transforms = []
+        self.max_number_of_clique = 8
         self.clique_size = 0
         self.frontier_peaks_size = 0
 
@@ -108,6 +109,7 @@ class HorizontalRegistration:
         # create feature graphs
         print("Creating the feature graphs")
         G = Graph(bls_height_pts, node_prefix="f")
+        # edge1 = G.graph.get_edge_data('f_1', 'f_7')
         H = Graph(uav_height_pts, node_prefix="uav")
 
         print("Number of nodes of the frontier graph", G.graph.number_of_nodes())
@@ -117,33 +119,36 @@ class HorizontalRegistration:
 
         # find maximum clique in the correspondence graph
         correspondence_graph = CorrespondenceGraph(G, H)
+
         print("Computing the maximum clique")
-        edges = correspondence_graph.maximum_clique()
+        edges_list = correspondence_graph.maximum_clique()
 
-        self.clique_size = len(edges)
-        self.frontier_peaks_size = len(bls_height_pts)
-
-        if self.debug:
-            draw_correspondences(
-                bls_height_img, bls_height_pts, uav_height_img, uav_height_pts, edges
-            )
-
-        # find transformation using maximum clique
-        bls_pts = np.zeros((len(edges), 2))
-        uav_pts = np.zeros((len(edges), 2))
-        for i in range(len(edges)):
-            bls_pts[i] = bls_proc.pixel_to_cloud(edges[i][0][0], edges[i][0][1])
-            uav_pts[i] = uav_proc.pixel_to_cloud(edges[i][1][0], edges[i][1][1])
-
-        if bls_pts.shape[0] < 3:
+        if len(edges_list) > self.max_number_of_clique:
+            # too many cliques, something is wrong
             return False
 
-        M = self.find_transform(bls_pts, uav_pts)
-        self.transform = M
-        tx = M[0, 2]
-        ty = M[1, 2]
-        yaw = np.arctan2(M[1, 0], M[0, 0])
+        for i in range(len(edges_list)):
+            edges = edges_list[i]
+            if self.debug:
+                draw_correspondences(
+                    bls_height_img,
+                    bls_height_pts,
+                    uav_height_img,
+                    uav_height_pts,
+                    edges,
+                )
 
-        print("Transformation from bls cloud to uav (x, y, yaw, scale):", tx, ty, yaw)
+            # find transformation using maximum clique
+            bls_pts = np.zeros((len(edges), 2))
+            uav_pts = np.zeros((len(edges), 2))
+            for i in range(len(edges)):
+                bls_pts[i] = bls_proc.pixel_to_cloud(edges[i][0][0], edges[i][0][1])
+                uav_pts[i] = uav_proc.pixel_to_cloud(edges[i][1][0], edges[i][1][1])
+
+            if bls_pts.shape[0] < 3:
+                return False
+
+            M = self.find_transform(bls_pts, uav_pts)
+            self.transforms.append(M)
 
         return True
