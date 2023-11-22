@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 from digiforest_registration.tasks.registration import Registration
 from digiforest_registration.utils import CloudIO
-from digiforest_registration.utils import crop_cloud
+from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from pathlib import Path
 import numpy as np
 import os
 import open3d as o3d
 
 import argparse
-
-
-def crop_uav_cloud(uav_cloud, frontier_cloud):
-    padding = 20
-    cropped_uav_cloud = crop_cloud(uav_cloud, frontier_cloud, padding=padding)
-    return cropped_uav_cloud
 
 
 if __name__ == "__main__":
@@ -32,7 +26,15 @@ if __name__ == "__main__":
     parser.add_argument("--ground_segmentation_method", nargs="?", default="default")
     parser.add_argument("--offset", nargs="+", type=float, default=None)
     parser.add_argument("--output_folder", default=None)
-    parser.add_argument("--debug", type=bool, default=False)
+    parser.add_argument(
+        "--debug", default=False, action="store_true", help="debug mode"
+    )
+    parser.add_argument(
+        "--crop_frontier_cloud",
+        default=False,
+        action="store_true",
+        help="crop frontier cloud",
+    )
     args = parser.parse_args()
 
     # Check validity of inputs
@@ -60,7 +62,7 @@ if __name__ == "__main__":
             # Get all the ply files in the folder
             for entry in frontier_cloud_folder.iterdir():
                 if entry.is_file():
-                    if entry.suffix == ".ply" and entry.name[:4] == "tile":
+                    if entry.suffix == ".ply":
                         frontier_cloud_filenames.append(entry)
 
     # loading the data
@@ -77,8 +79,9 @@ if __name__ == "__main__":
     for frontier_cloud_filename in frontier_cloud_filenames:
         print("Processing file: ", frontier_cloud_filename.name)
         frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
-        cropped_uav_cloud = crop_uav_cloud(uav_cloud, frontier_cloud)
-
+        if args.crop_frontier_cloud:
+            frontier_cloud = crop_cloud_to_size(frontier_cloud, size=30)
+        cropped_uav_cloud = crop_cloud(uav_cloud, frontier_cloud, padding=20)
         if args.debug:
             frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
             cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])

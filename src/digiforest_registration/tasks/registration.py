@@ -33,8 +33,7 @@ class Registration:
         (uav_groud_plane, frontier_ground_plane, tz) = vertical_registration.process()
         transform[2, 3] = tz
 
-        ##############################
-
+        # find the x, y, yaw transformation
         horizontal_registration = HorizontalRegistration(
             self.uav_cloud,
             uav_groud_plane,
@@ -44,6 +43,7 @@ class Registration:
         )
         success = horizontal_registration.process()
         if not success:
+            self.colorize_cloud(self.frontier_cloud, 0.0)
             return False
 
         best_icp_fitness_score = 0
