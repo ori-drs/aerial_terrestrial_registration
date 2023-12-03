@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from digiforest_registration.tasks.registration import Registration
+from digiforest_registration.tasks.registration import Registration, RegistrationResult
+from digiforest_registration.optimization.io import write_tiles_to_pose_graph_file
 from digiforest_registration.utils import CloudIO
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from pathlib import Path
@@ -28,6 +29,9 @@ if __name__ == "__main__":
     parser.add_argument("--output_folder", default=None)
     parser.add_argument(
         "--debug", default=False, action="store_true", help="debug mode"
+    )
+    parser.add_argument(
+        "--save-pose-graph", default=False, action="store_true", help="save pose graph"
     )
     parser.add_argument(
         "--crop_frontier_cloud",
@@ -66,16 +70,18 @@ if __name__ == "__main__":
                         frontier_cloud_filenames.append(entry)
 
     # loading the data
-    cloud_io = CloudIO(
-        np.array([args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32)
-        if args.offset is not None and len(args.offset)
-        else None
-    )
+    offset = None
+    if args.offset is not None and len(args.offset) == 3:
+        offset = np.array(
+            [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
+        )
+
+    cloud_io = CloudIO(offset)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
 
     # Registration
     failures = []
-
+    registration_results = {}
     for frontier_cloud_filename in frontier_cloud_filenames:
         print("Processing file: ", frontier_cloud_filename.name)
         frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
@@ -98,9 +104,28 @@ if __name__ == "__main__":
         )
         success = registration.registration()
         transform = registration.transform
+        if success:
+            print("Transformation matrix in UTM frame:")
+            # the transformation that we got is in a local coordinate system ( "world" ) after applying the offset
+            # converting it back to the UTM frame
+            t_utm_to_w = np.eye(4)
+            t_utm_to_w[0, 3] = offset[0]
+            t_utm_to_w[1, 3] = offset[1]
+            t_utm_to_w[2, 3] = offset[2]
+            print("*****************")
+            print(transform)
+            print("*****************")
+            print(np.linalg.inv(t_utm_to_w))
+            print("*****************")
+            print(np.linalg.inv(t_utm_to_w) @ transform)
         print("File: ", frontier_cloud_filename.name, success)
         if not success:
             failures.append((frontier_cloud_filename.name, registration.report))
+
+        result = RegistrationResult()
+        result.transform = transform
+        result.success = success
+        registration_results[str(frontier_cloud_filename)] = result
 
         if args.output_folder is not None:
             output_filename = os.path.join(
@@ -111,3 +136,10 @@ if __name__ == "__main__":
     print("Total number of failures: ", len(failures))
     print("Total number of clouds: ", len(frontier_cloud_filenames))
     print("Failures: ", failures)
+
+    # save pose graph
+    if args.save_pose_graph is not None and args.output_folder is not None:
+        pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
+        write_tiles_to_pose_graph_file(
+            args.output_folder, pose_graph_path, registration_results, cloud_io
+        )

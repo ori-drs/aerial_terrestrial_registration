@@ -4,6 +4,7 @@ import numpy as np
 import gtsam
 from pathlib import Path
 from digiforest_registration.optimization.pose_graph import PoseGraph
+from digiforest_registration.utils import rotation_matrix_to_quat
 
 
 def read_pose_gt(tokens):
@@ -133,7 +134,10 @@ def write_pose_graph(pose_graph: PoseGraph, path: str):
 
 # TODO move this function elsewhere
 def write_tiles_to_pose_graph_file(
-    tiles_folder_path: str, pose_graph_path: str, registration_results: dict, cloud_io
+    tiles_folder_path: str,
+    pose_graph_path: str,
+    registration_results: dict,
+    cloud_loader,
 ):
 
     # the tiles form a grid, building the grid
@@ -158,7 +162,7 @@ def write_tiles_to_pose_graph_file(
     grid = [str() for i in range(grid_size) for j in range(grid_size)]
     coordinates = []
     for cloud_path in cloud_paths:
-        frontier_cloud = cloud_io.load_cloud(str(cloud_path))
+        frontier_cloud = cloud_loader.load_cloud(str(cloud_path))
         # get bounding box
         bbox = frontier_cloud.get_axis_aligned_bounding_box()
         min_bound = bbox.min_bound.numpy()
@@ -178,29 +182,39 @@ def write_tiles_to_pose_graph_file(
 
     # write the pose graph
     with open(pose_graph_path, "w") as file:
-        # write the nodes
         for i in range(len(coordinates)):
+            if not registration_results[coordinates[i][0]].success:
+                continue
+
+            # write the node
             file.write(
                 f"VERTEX_SE3:QUAT_TIME {i} {coordinates[i][1][0]} {coordinates[i][1][1]} {coordinates[i][1][2]} 0 0 0 1 0 0\n"
             )
 
-        # write the edges
-        for i in range(len(coordinates)):
-            # 4 neighbours
-            row = i // grid_size
-            col = i % grid_size
-            neighbours_row = [-1, 0, 0, 1]
-            neighbours_col = [0, -1, 1, 0]
-            for j in range(4):
-                neighbour_row = row + neighbours_row[j]
-                neighbour_col = col + neighbours_col[j]
-                if (
-                    neighbour_row >= 0
-                    and neighbour_row < grid_size
-                    and neighbour_col >= 0
-                    and neighbour_col < grid_size
-                ):
-                    neighbour = neighbour_row * grid_size + neighbour_col
-                    file.write(
-                        f"EDGE_SE3:QUAT {i} {neighbour} 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
-                    )
+        # write the edge
+        # 4 neighbours
+        row = i // grid_size
+        col = i % grid_size
+        neighbours_row = [-1, 0, 0, 1]
+        neighbours_col = [0, -1, 1, 0]
+        for j in range(4):
+            neighbour_row = row + neighbours_row[j]
+            neighbour_col = col + neighbours_col[j]
+            if (
+                neighbour_row >= 0
+                and neighbour_row < grid_size
+                and neighbour_col >= 0
+                and neighbour_col < grid_size
+            ):
+                neighbour = neighbour_row * grid_size + neighbour_col
+                if not registration_results[coordinates[neighbour][0]].success:
+                    continue
+                file.write(
+                    f"EDGE_SE3:QUAT {i} {neighbour} 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
+                )
+            # write the extra edge
+            mat = registration_results[coordinates[i][0]].transform
+            quat = rotation_matrix_to_quat(mat[0:3, 0:3])
+            file.write(
+                f"EDGE_SE3:QUAT {i} {i} {mat[0, 3]} {mat[1, 3]} {mat[2, 3]} {quat[1]} {quat[2]} {quat[3]} {quat[0]} 0 0 0 0 0 0 0 0 0 0\n"
+            )
