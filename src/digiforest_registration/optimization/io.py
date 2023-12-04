@@ -153,14 +153,12 @@ def write_tiles_to_pose_graph_file(
                     cloud_paths.append(entry)
 
     grid_size = int(np.sqrt(len(cloud_paths)))
-
     if grid_size * grid_size != len(cloud_paths):
         raise ValueError(
             f"Input folder [{folder}] does not contain a square number of tiles"
         )
 
-    grid = [str() for i in range(grid_size) for j in range(grid_size)]
-    coordinates = []
+    coordinates = []  # (cloud_path, center)
     for cloud_path in cloud_paths:
         frontier_cloud = cloud_loader.load_cloud(str(cloud_path))
         # get bounding box
@@ -176,44 +174,43 @@ def write_tiles_to_pose_graph_file(
     for i in range(grid_size):
         # sort the y coordinates
         coordinates[i * grid_size : (i + 1) * grid_size].sort(key=lambda x: x[1][1])
-        # fill the grid
-        for j in range(grid_size):
-            grid[i * grid_size + j] = coordinates[i * grid_size + j][0]
 
     # write the pose graph
     with open(pose_graph_path, "w") as file:
         for i in range(len(coordinates)):
-            if not registration_results[coordinates[i][0]].success:
+            filename = str(coordinates[i][0])
+            if not registration_results[filename].success:
                 continue
 
             # write the node
+            center = coordinates[i][1]
             file.write(
-                f"VERTEX_SE3:QUAT_TIME {i} {coordinates[i][1][0]} {coordinates[i][1][1]} {coordinates[i][1][2]} 0 0 0 1 0 0\n"
+                f"VERTEX_SE3:QUAT_TIME {i} {center[0]} {center[1]} {center[2]} 0 0 0 1 0 0\n"
             )
 
-        # write the edge
-        # 4 neighbours
-        row = i // grid_size
-        col = i % grid_size
-        neighbours_row = [-1, 0, 0, 1]
-        neighbours_col = [0, -1, 1, 0]
-        for j in range(4):
-            neighbour_row = row + neighbours_row[j]
-            neighbour_col = col + neighbours_col[j]
-            if (
-                neighbour_row >= 0
-                and neighbour_row < grid_size
-                and neighbour_col >= 0
-                and neighbour_col < grid_size
-            ):
-                neighbour = neighbour_row * grid_size + neighbour_col
-                if not registration_results[coordinates[neighbour][0]].success:
-                    continue
-                file.write(
-                    f"EDGE_SE3:QUAT {i} {neighbour} 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
-                )
+            # write the edge
+            # 4 neighbours
+            row = i // grid_size
+            col = i % grid_size
+            neighbours_row = [-1, 0, 0, 1]
+            neighbours_col = [0, -1, 1, 0]
+            for j in range(4):
+                neighbour_row = row + neighbours_row[j]
+                neighbour_col = col + neighbours_col[j]
+                if (
+                    neighbour_row >= 0
+                    and neighbour_row < grid_size
+                    and neighbour_col >= 0
+                    and neighbour_col < grid_size
+                ):
+                    neighbour = neighbour_row * grid_size + neighbour_col
+                    if not registration_results[str(coordinates[neighbour][0])].success:
+                        continue
+                    file.write(
+                        f"EDGE_SE3:QUAT {i} {neighbour} 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
+                    )
             # write the extra edge
-            mat = registration_results[coordinates[i][0]].transform
+            mat = registration_results[filename].transform
             quat = rotation_matrix_to_quat(mat[0:3, 0:3])
             file.write(
                 f"EDGE_SE3:QUAT {i} {i} {mat[0, 3]} {mat[1, 3]} {mat[2, 3]} {quat[1]} {quat[2]} {quat[3]} {quat[0]} 0 0 0 0 0 0 0 0 0 0\n"

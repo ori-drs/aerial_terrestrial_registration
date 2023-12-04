@@ -11,11 +11,7 @@ import open3d as o3d
 import argparse
 
 
-if __name__ == "__main__":
-    np.set_printoptions(suppress=True)
-    # set seed for deterministic results
-    o3d.utility.random.seed(12345)
-
+def parse_inputs():
     parser = argparse.ArgumentParser(
         prog="cloud_registration",
         description="Registers a frontier cloud to a reference UAV cloud",
@@ -40,6 +36,15 @@ if __name__ == "__main__":
         help="crop frontier cloud",
     )
     args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    # set seed for deterministic results
+    o3d.utility.random.seed(12345)
+
+    args = parse_inputs()
 
     # Check validity of inputs
     frontier_cloud_filenames = []
@@ -83,11 +88,14 @@ if __name__ == "__main__":
     failures = []
     registration_results = {}
     for frontier_cloud_filename in frontier_cloud_filenames:
+
         print("Processing file: ", frontier_cloud_filename.name)
         frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
+
         if args.crop_frontier_cloud:
             frontier_cloud = crop_cloud_to_size(frontier_cloud, size=30)
         cropped_uav_cloud = crop_cloud(uav_cloud, frontier_cloud, padding=20)
+
         if args.debug:
             frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
             cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
@@ -103,27 +111,13 @@ if __name__ == "__main__":
             debug=args.debug,
         )
         success = registration.registration()
-        transform = registration.transform
-        if success:
-            print("Transformation matrix in UTM frame:")
-            # the transformation that we got is in a local coordinate system ( "world" ) after applying the offset
-            # converting it back to the UTM frame
-            t_utm_to_w = np.eye(4)
-            t_utm_to_w[0, 3] = offset[0]
-            t_utm_to_w[1, 3] = offset[1]
-            t_utm_to_w[2, 3] = offset[2]
-            print("*****************")
-            print(transform)
-            print("*****************")
-            print(np.linalg.inv(t_utm_to_w))
-            print("*****************")
-            print(np.linalg.inv(t_utm_to_w) @ transform)
+
         print("File: ", frontier_cloud_filename.name, success)
         if not success:
             failures.append((frontier_cloud_filename.name, registration.report))
 
         result = RegistrationResult()
-        result.transform = transform
+        result.transform = registration.transform
         result.success = success
         registration_results[str(frontier_cloud_filename)] = result
 
@@ -141,5 +135,5 @@ if __name__ == "__main__":
     if args.save_pose_graph is not None and args.output_folder is not None:
         pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
         write_tiles_to_pose_graph_file(
-            args.output_folder, pose_graph_path, registration_results, cloud_io
+            args.frontier_cloud_folder, pose_graph_path, registration_results, cloud_io
         )
