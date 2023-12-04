@@ -29,6 +29,8 @@ def parse_inputs():
     parser.add_argument(
         "--save-pose-graph", default=False, action="store_true", help="save pose graph"
     )
+    parser.add_argument("--grid_size_row", type=int, default=0)
+    parser.add_argument("--grid_size_col", type=int, default=0)
     parser.add_argument(
         "--crop_frontier_cloud",
         default=False,
@@ -139,5 +141,10 @@ if __name__ == "__main__":
     if args.save_pose_graph is not None and args.output_folder is not None:
         pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
         write_tiles_to_pose_graph_file(
-            args.frontier_cloud_folder, pose_graph_path, registration_results, cloud_io
+            args.frontier_cloud_folder,
+            pose_graph_path,
+            args.grid_size_row,
+            args.grid_size_col,
+            registration_results,
+            cloud_io,
         )

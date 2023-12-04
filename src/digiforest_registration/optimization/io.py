@@ -136,6 +136,8 @@ def write_pose_graph(pose_graph: PoseGraph, path: str):
 def write_tiles_to_pose_graph_file(
     tiles_folder_path: str,
     pose_graph_path: str,
+    grid_size_row: int,
+    grid_size_col: int,
     registration_results: dict,
     cloud_loader,
 ):
@@ -152,10 +154,9 @@ def write_tiles_to_pose_graph_file(
                 if entry.suffix == ".ply":
                     cloud_paths.append(entry)
 
-    grid_size = int(np.sqrt(len(cloud_paths)))
-    if grid_size * grid_size != len(cloud_paths):
+    if grid_size_row * grid_size_col != len(cloud_paths):
         raise ValueError(
-            f"Input folder [{folder}] does not contain a square number of tiles"
+            f"Input folder [{folder}] does not contain an unexpected number of tiles"
         )
 
     coordinates = []  # (cloud_path, center)
@@ -170,10 +171,12 @@ def write_tiles_to_pose_graph_file(
         coordinates.append((cloud_path, center))
 
     # sort the x coordinates
-    coordinates.sort(key=lambda x: x[1][0])
-    for i in range(grid_size):
+    coordinates.sort(key=lambda x: x[1][0])  # column major
+    for col in range(grid_size_col):
         # sort the y coordinates
-        coordinates[i * grid_size : (i + 1) * grid_size].sort(key=lambda x: x[1][1])
+        coordinates[col * grid_size_row : (col + 1) * grid_size_row].sort(
+            key=lambda x: x[1][1]
+        )
 
     # write the pose graph
     with open(pose_graph_path, "w") as file:
@@ -190,8 +193,9 @@ def write_tiles_to_pose_graph_file(
 
             # write the edge
             # 4 neighbours
-            row = i // grid_size
-            col = i % grid_size
+            col = i // grid_size_row
+            row = i % grid_size_row
+
             neighbours_row = [-1, 0, 0, 1]
             neighbours_col = [0, -1, 1, 0]
             for j in range(4):
@@ -199,11 +203,11 @@ def write_tiles_to_pose_graph_file(
                 neighbour_col = col + neighbours_col[j]
                 if (
                     neighbour_row >= 0
-                    and neighbour_row < grid_size
+                    and neighbour_row < grid_size_row
                     and neighbour_col >= 0
-                    and neighbour_col < grid_size
+                    and neighbour_col < grid_size_col
                 ):
-                    neighbour = neighbour_row * grid_size + neighbour_col
+                    neighbour = neighbour_col * grid_size_row + neighbour_col
                     if not registration_results[str(coordinates[neighbour][0])].success:
                         continue
                     file.write(
