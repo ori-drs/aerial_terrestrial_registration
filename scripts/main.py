@@ -125,7 +125,11 @@ if __name__ == "__main__":
             output_filename = os.path.join(
                 args.output_folder, frontier_cloud_filename.name
             )
-            cloud_io.save_cloud(frontier_cloud, output_filename)
+            cloud_io.save_cloud(
+                registration.frontier_cloud_aligned,
+                output_filename,
+                local_coordinates=False,
+            )
 
     print("Total number of failures: ", len(failures))
     print("Total number of clouds: ", len(frontier_cloud_filenames))

@@ -20,7 +20,8 @@ class Registration:
         self, uav_cloud, frontier_cloud, ground_segmentation_method, debug=False
     ):
         self.uav_cloud = uav_cloud
-        self.frontier_cloud = frontier_cloud
+        self.frontier_cloud = frontier_cloud  # shouldn't modify the input cloud
+        self.frontier_cloud_aligned = frontier_cloud.clone()
         self.ground_segmentation_method = ground_segmentation_method
         self.debug = debug
         self.icp_fitness_threshold = 0.85
@@ -110,13 +111,13 @@ class Registration:
         )
         success = horizontal_registration.process()
         if not success:
-            self.colorize_cloud(self.frontier_cloud, 0.0)
+            self.colorize_cloud(self.frontier_cloud_aligned, 0.0)
             return False
 
         icp_fitness = self.find_transform(horizontal_registration, transform)
 
-        self.frontier_cloud.transform(self.transform)
-        self.colorize_cloud(self.frontier_cloud, icp_fitness)
+        self.frontier_cloud_aligned.transform(self.transform)
+        self.colorize_cloud(self.frontier_cloud_aligned, icp_fitness)
 
         return icp_fitness > self.icp_fitness_threshold
 

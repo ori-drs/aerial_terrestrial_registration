@@ -4,7 +4,7 @@ import numpy as np
 
 class CloudIO:
     def __init__(self, offset):
-        self.offset = offset
+        self.offset = offset  # to transform cloud to local coordinates
 
     def load_cloud(self, filename):
         """
@@ -27,8 +27,12 @@ class CloudIO:
 
         return cloud
 
-    def save_cloud(self, cloud, filename):
+    def save_cloud(self, cloud, filename, local_coordinates=True):
         """
         Saves a point cloud to a file."""
-
-        o3d.t.io.write_point_cloud(filename, cloud)
+        if local_coordinates:
+            o3d.t.io.write_point_cloud(filename, cloud)
+        else:
+            utm_cloud = cloud.clone()
+            utm_cloud = utm_cloud.translate(-self.offset)
+            o3d.t.io.write_point_cloud(filename, utm_cloud)
