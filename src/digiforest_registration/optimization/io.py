@@ -75,10 +75,7 @@ def load_pose_graph(path: str, clouds_path: str = None):
                 relative_pose, relative_info, parent_id, child_id = read_pose_edge_slam(
                     tokens[1:]
                 )
-                edge_type = "odometry" if (parent_id == child_id - 1) else "loop"
-                graph.add_edge(
-                    parent_id, child_id, edge_type, relative_pose, relative_info
-                )
+                graph.add_edge(parent_id, child_id, relative_pose, relative_info)
 
     return graph
 
@@ -141,6 +138,11 @@ def write_tiles_to_pose_graph_file(
     registration_results: dict,
     cloud_loader,
 ):
+    def get_tile_number(filename):
+        # assuming a filename of the form: tile_0000.ply
+        underscore_index = filename.find("_")
+        dot_index = filename.find(".")
+        return int(filename[underscore_index + 1 : dot_index])
 
     # the tiles form a grid, building the grid
     folder = Path(tiles_folder_path)
@@ -181,16 +183,20 @@ def write_tiles_to_pose_graph_file(
     # write the pose graph
     with open(pose_graph_path, "w") as file:
         for i in range(len(coordinates)):
-            filename = str(coordinates[i][0])
+            filename = coordinates[i][0].name
+            tile_id = get_tile_number(filename)
             if not registration_results[filename].success:
                 continue
 
             # write the node
             center = coordinates[i][1]
             file.write(
-                f"VERTEX_SE3:QUAT_TIME {i} {center[0]} {center[1]} {center[2]} 0 0 0 1 0 0\n"
+                f"VERTEX_SE3:QUAT_TIME {tile_id} {center[0]:.2f} {center[1]:.2f} {center[2]:.2f} 0 0 0 1 0 0\n"
             )
 
+        for i in range(len(coordinates)):
+            filename = coordinates[i][0].name
+            tile_id = get_tile_number(filename)
             # write the edge
             # 4 neighbours
             col = i // grid_size_row
@@ -207,15 +213,21 @@ def write_tiles_to_pose_graph_file(
                     and neighbour_col >= 0
                     and neighbour_col < grid_size_col
                 ):
-                    neighbour = neighbour_col * grid_size_row + neighbour_col
-                    if not registration_results[str(coordinates[neighbour][0])].success:
+                    neighbour = neighbour_col * grid_size_row + neighbour_row
+                    neighbour_id = get_tile_number(coordinates[neighbour][0].name)
+                    if not registration_results[coordinates[neighbour][0].name].success:
                         continue
+
+                    center = coordinates[i][1]  # tail
+                    center_neighbour = coordinates[neighbour][1]  # head
+                    offset = center - center_neighbour
+
                     file.write(
-                        f"EDGE_SE3:QUAT {i} {neighbour} 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
+                        f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset[0]:.2f} {offset[1]:.2f} {offset[2]:.2f} 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
                     )
             # write the extra edge
             mat = registration_results[filename].transform
             quat = rotation_matrix_to_quat(mat[0:3, 0:3])
             file.write(
-                f"EDGE_SE3:QUAT {i} {i} {mat[0, 3]} {mat[1, 3]} {mat[2, 3]} {quat[1]} {quat[2]} {quat[3]} {quat[0]} 0 0 0 0 0 0 0 0 0 0\n"
+                f"EDGE_SE3:QUAT {tile_id} {tile_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]} 0 0 0 0 0 0 0 0 0 0\n"
             )

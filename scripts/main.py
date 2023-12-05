@@ -121,7 +121,7 @@ if __name__ == "__main__":
         result = RegistrationResult()
         result.transform = registration.transform
         result.success = success
-        registration_results[str(frontier_cloud_filename)] = result
+        registration_results[frontier_cloud_filename.name] = result
 
         if args.output_folder is not None:
             output_filename = os.path.join(
