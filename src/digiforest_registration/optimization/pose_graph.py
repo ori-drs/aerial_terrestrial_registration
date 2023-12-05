@@ -57,7 +57,7 @@ class PoseGraph:
         self._nodes.append({"pose": pose, "stamp": stamp, "id": id})
         self._adjacency[id] = {}
 
-    def add_edge(self, parent_id, child_id, edge_type, relative_pose, relative_info):
+    def add_edge(self, parent_id, child_id, relative_pose, relative_info):
         # This adds directed edges, even though they should be an undirected graph
         # We do this to simplify the API
         assert isinstance(relative_pose, gtsam.Pose3)
@@ -77,7 +77,6 @@ class PoseGraph:
                 "child_id": child_id,
                 "pose": relative_pose,
                 "info": relative_info,
-                "type": edge_type,
             }
         )
         # Save reference to edge in adjacency matrix
@@ -106,56 +105,3 @@ def initialize_from_odometry(graph):
         # Update current node pose
         graph.set_node_pose(n, pose)
         node_initialized[n] = True
-
-
-def add_odometry_drift(
-    graph,
-    noise_per_m=0.0,
-    axis="",
-    rot_axis="",
-    drift_type="constant",
-    reset_node_poses=True,
-):
-    noise_mask = np.zeros(6)
-    if "x" in axis:
-        noise_mask[3] = 1.0
-    if "y" in axis:
-        noise_mask[4] = 1.0
-    if "z" in axis:
-        noise_mask[5] = 1.0
-
-    if "x" in rot_axis:
-        noise_mask[0] = 1.0
-    if "y" in rot_axis:
-        noise_mask[1] = 1.0
-    if "z" in rot_axis:
-        noise_mask[2] = 1.0
-
-    import copy
-
-    new_graph = copy.deepcopy(graph)
-    for i, edge in enumerate(new_graph.edges):
-        if edge["type"] != "odometry":
-            continue
-
-        # Get original odometry
-        relative_pose = edge["pose"]
-
-        # Drift model
-        if drift_type == "constant":
-            noise = np.ones(6)
-        elif drift_type == "random_walk":
-            noise = np.random.standard_normal(6)
-
-        relative_distance = np.linalg.norm(relative_pose.translation())
-        noise = noise * noise_mask * relative_distance * noise_per_m
-
-        # Apply drift to odometry measurement
-        new_relative_pose = relative_pose * gtsam.Pose3.Expmap(noise)
-
-        # Update odometry measurement
-        new_graph.edges[i]["pose"] = new_relative_pose
-
-    if reset_node_poses:
-        initialize_from_odometry(new_graph)
-    return new_graph

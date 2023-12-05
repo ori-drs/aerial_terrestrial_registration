@@ -4,7 +4,7 @@ import numpy as np
 import gtsam
 from pathlib import Path
 from digiforest_registration.optimization.pose_graph import PoseGraph
-from digiforest_registration.utils import rotation_matrix_to_quat
+from digiforest_registration.utils import rotation_matrix_to_quat, get_cloud_center
 
 
 def read_pose_gt(tokens):
@@ -75,7 +75,8 @@ def load_pose_graph(path: str, clouds_path: str = None):
                 relative_pose, relative_info, parent_id, child_id = read_pose_edge_slam(
                     tokens[1:]
                 )
-                graph.add_edge(parent_id, child_id, relative_pose, relative_info)
+                if parent_id != child_id:
+                    graph.add_edge(parent_id, child_id, relative_pose, relative_info)
 
     return graph
 
@@ -163,13 +164,8 @@ def write_tiles_to_pose_graph_file(
 
     coordinates = []  # (cloud_path, center)
     for cloud_path in cloud_paths:
-        frontier_cloud = cloud_loader.load_cloud(str(cloud_path))
-        # get bounding box
-        bbox = frontier_cloud.get_axis_aligned_bounding_box()
-        min_bound = bbox.min_bound.numpy()
-        max_bound = bbox.max_bound.numpy()
-        # get center of cloud
-        center = (min_bound + max_bound) / 2
+        cloud = cloud_loader.load_cloud(str(cloud_path))
+        center = get_cloud_center(cloud)
         coordinates.append((cloud_path, center))
 
     # sort the x coordinates

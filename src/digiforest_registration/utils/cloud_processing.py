@@ -1,4 +1,5 @@
 import open3d as o3d
+import numpy as np
 
 
 def crop_cloud(cloud_to_be_cropped, cloud, padding):
@@ -63,3 +64,15 @@ def crop_cloud_to_size(cloud, size):
 
     cropped_cloud = cloud.crop(crop_box)
     return cropped_cloud
+
+
+def get_cloud_center(cloud) -> np.ndarray:
+    """
+    Returns the center of a point cloud."""
+    # get bounding box
+    bbox = cloud.get_axis_aligned_bounding_box()
+    min_bound = bbox.min_bound.numpy()
+    max_bound = bbox.max_bound.numpy()
+    # get center of cloud
+    center = (min_bound + max_bound) / 2
+    return center

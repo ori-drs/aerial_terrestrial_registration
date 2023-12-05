@@ -3,10 +3,10 @@ import numpy as np
 
 
 class CloudIO:
-    def __init__(self, offset):
+    def __init__(self, offset: np.ndarray):
         self.offset = offset  # to transform cloud to local coordinates
 
-    def load_cloud(self, filename):
+    def load_cloud(self, filename: str):
         """
         Loads a point cloud from a file and translates it if its coordinates are too large."""
 
@@ -27,7 +27,7 @@ class CloudIO:
 
         return cloud
 
-    def save_cloud(self, cloud, filename, local_coordinates=True):
+    def save_cloud(self, cloud, filename: str, local_coordinates=True):
         """
         Saves a point cloud to a file."""
         if local_coordinates:
