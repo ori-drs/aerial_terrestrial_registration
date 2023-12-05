@@ -115,8 +115,8 @@ class CorrespondenceGraph:
         max_clique_size = 0
         max_cliques = []
         # max_clique = nx.algorithms.approximation.max_clique(self.graph)
-        for clique in nx.enumerate_all_cliques(self.graph):
-            # for clique in nx.find_cliques(self.graph):
+        # for clique in nx.enumerate_all_cliques(self.graph):
+        for clique in nx.find_cliques(self.graph):  # seems to be the fatest method
             if len(clique) > max_clique_size:
                 max_clique_size = len(clique)
                 max_cliques.clear()
