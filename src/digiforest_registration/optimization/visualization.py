@@ -17,7 +17,6 @@ def graph_to_geometries(
     show_clouds=False,
     odometry_color=GRAY,
     loop_color=RED,
-    up_to_node=np.inf,
 ):
     pose_graph = copy.deepcopy(graph)
     geometries = []
@@ -26,13 +25,13 @@ def graph_to_geometries(
     frames_vis = o3d.geometry.TriangleMesh()
     nodes_vis = o3d.geometry.TriangleMesh()
     # clouds_vis = o3d.t.geometry.PointCloud()
+    node_id_to_index = {}
+    for id, node in pose_graph.nodes.items():
 
-    for n, node in enumerate(pose_graph.nodes):
-        if n > up_to_node:
-            break
         pose = node["pose"].matrix()
         pos = pose[0:3, 3]
         rot = pose[0:3, 0:3]
+        node_id_to_index[id] = len(node_centers)
         node_centers.append(pos)
 
         if show_frames:
@@ -48,7 +47,7 @@ def graph_to_geometries(
             nodes_vis += node_mesh
 
         if show_clouds:
-            cloud = pose_graph.get_node_cloud(n)
+            cloud = pose_graph.get_node_cloud(id)
             cloud.transform(pose)
             cloud.paint_uniform_color(LIGHT_GRAY)
             geometries.append(cloud)
@@ -61,13 +60,13 @@ def graph_to_geometries(
         edges = []
         edge_colors = []
         for e in pose_graph.edges:
-            if e["parent_id"] > up_to_node or e["child_id"] > up_to_node:
+            if e["type"] != "center":
                 continue
 
-            edges.append([e["parent_id"], e["child_id"]])
-            edge_colors.append(
-                odometry_color if e["type"] == "odometry" else loop_color
+            edges.append(
+                [node_id_to_index[e["parent_id"]], node_id_to_index[e["child_id"]]]
             )
+            edge_colors.append(odometry_color if e["type"] == "center" else loop_color)
 
         line_set = o3d.geometry.LineSet(
             points=o3d.utility.Vector3dVector(node_centers),

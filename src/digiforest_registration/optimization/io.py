@@ -89,15 +89,18 @@ def load_pose_graph(path: str, clouds_folder_path, cloud_loader):
                 else:
                     # Add transform between the node and the aerial cloud
                     # get center of the tile
-                    tile = "tile_" + str(parent_id) + ".ply"
-                    cloud_path = clouds_folder_path / tile
-                    cloud = cloud_loader.load_cloud(str(cloud_path))
-                    quat = gtsam.Rot3.Quaternion(1, 0, 0, 0)
-                    center_pose = gtsam.Pose3(quat, get_cloud_center(cloud))
-                    # add the edge
-                    uav_pose = center_pose.inverse() * relative_pose
+                    # tile = "tile_" + str(parent_id) + ".ply"
+                    # cloud_path = clouds_folder_path / tile
+                    # cloud = cloud_loader.load_cloud(str(cloud_path))
+                    # quat = gtsam.Rot3.Quaternion(1, 0, 0, 0)
+                    # tile_center_pose = gtsam.Pose3(quat, get_cloud_center(cloud))
+                    # # add the edge
+                    # tile_center_pose_uav_aligned = relative_pose * tile_center_pose
+                    # graph.add_edge(
+                    #     parent_id, child_id, "aerial", tile_center_pose_uav_aligned, relative_info
+                    # )
                     graph.add_edge(
-                        parent_id, child_id, "aerial", uav_pose, relative_info
+                        parent_id, child_id, "aerial", relative_pose, relative_info
                     )
 
     return graph
@@ -223,6 +226,18 @@ def write_tiles_to_pose_graph_file(
 
             neighbours_row = [-1, 0, 0, 1]
             neighbours_col = [0, -1, 1, 0]
+
+            # write the prior edge, between tile and aerial cloud
+            tile_center = coordinates[i][1]
+            tile_pose = np.ones((4, 4))
+            tile_pose[0:3, 3] = tile_center
+            mat = registration_results[filename].transform
+            transformed_tile_pose = mat @ tile_pose
+            quat = rotation_matrix_to_quat(transformed_tile_pose[0:3, 0:3])
+            file.write(
+                f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+            )
+
             for j in range(4):
                 neighbour_row = row + neighbours_row[j]
                 neighbour_col = col + neighbours_col[j]
@@ -253,10 +268,3 @@ def write_tiles_to_pose_graph_file(
                         f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset[0]:.2f} {offset[1]:.2f} {offset[2]:.2f} 0 0 0 1 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
                     )
                     saved_edges.append((tile_id, neighbour_id))
-
-            # write the extra edge, between tile and aerial cloud
-            mat = registration_results[filename].transform
-            quat = rotation_matrix_to_quat(mat[0:3, 0:3])
-            file.write(
-                f"EDGE_SE3:QUAT {tile_id} {tile_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
-            )

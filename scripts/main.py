@@ -130,7 +130,7 @@ if __name__ == "__main__":
             cloud_io.save_cloud(
                 registration.frontier_cloud_aligned,
                 output_filename,
-                local_coordinates=False,
+                local_coordinates=True,
             )
 
     print("Total number of failures: ", len(failures))

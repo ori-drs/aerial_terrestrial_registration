@@ -14,7 +14,8 @@ class PoseGraphOptimization:
         # Create a factor graph container and add factors to it
         factor_graph = gtsam.NonlinearFactorGraph()
 
-        prior_noise = gtsam.noiseModel.Diagonal.Sigmas(np.ones(6))
+        # set prior on the root node
+        prior_noise = gtsam.noiseModel.Diagonal.Sigmas(0.000001 * np.ones(6))
         factor_graph.add(
             gtsam.PriorFactorPose3(
                 self.pose_graph.root_id,
@@ -23,6 +24,7 @@ class PoseGraphOptimization:
             )
         )
 
+        # add the other edges
         for e in self.pose_graph.edges:
             if e["type"] == "center":
                 noise = gtsam.noiseModel.Gaussian.Information(e["info"])
@@ -67,3 +69,53 @@ class PoseGraphOptimization:
         result = optimizer.optimize()
         for id, value in optimized_pose_graph.nodes.items():
             optimized_pose_graph.set_node_pose(id, result.atPose3(id))
+
+        # Display results
+        for id, node in self.pose_graph.nodes.items():
+            print(f"Node {id}:")
+            print(f"  pose: {node['pose']}")
+
+        print("********")
+        for id, node in optimized_pose_graph.nodes.items():
+            print(f"Node {id}:")
+            print(f"  pose: {node['pose']}")
+
+        #
+        import digiforest_registration.optimization.visualization as vis
+        import open3d as o3d
+
+        geometries = vis.graph_to_geometries(
+            self.pose_graph,
+            show_frames=True,
+            show_edges=True,
+            show_nodes=True,
+            show_clouds=False,
+            odometry_color=vis.GRAY,
+            loop_color=vis.RED,
+        )
+        o3d.visualization.draw_geometries(
+            geometries,
+            window_name="Initial Pose Graph",
+            # zoom=0.24,
+            # front=[-0.35, -0.57, 0.7],
+            # lookat=[1.4, -18, 2.0],
+            # up=[0.4, 0.5, 0.6],
+        )
+
+        geometries = vis.graph_to_geometries(
+            optimized_pose_graph,
+            show_frames=True,
+            show_edges=True,
+            show_nodes=True,
+            show_clouds=False,
+            odometry_color=vis.GRAY,
+            loop_color=vis.RED,
+        )
+        o3d.visualization.draw_geometries(
+            geometries,
+            window_name="Optimized Pose Graph",
+            # zoom=0.24,
+            # front=[-0.35, -0.57, 0.7],
+            # lookat=[1.4, -18, 2.0],
+            # up=[0.4, 0.5, 0.6],
+        )
