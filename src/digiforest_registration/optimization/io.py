@@ -44,11 +44,18 @@ def read_pose_edge_slam(tokens):
     relative_info[3, 3:6] = relative_info[3:6, 3] = upper_triangular[15:18]
     relative_info[4, 4:6] = relative_info[4:6, 4] = upper_triangular[18:20]
     relative_info[5, 5:6] = relative_info[5:6, 5] = upper_triangular[20:21]
+    # the convention is translation, rotation, which is the opposite of gtsam
+    # swapping blocks to match gtsam convention
+    relative_info_copy = relative_info.copy()
+    relative_info[0:3, 0:3] = relative_info_copy[3:6, 3:6]
+    relative_info[0:3, 3:6] = relative_info_copy[3:6, 0:3]
+    relative_info[3:6, 0:3] = relative_info_copy[0:3, 3:6]
+    relative_info[3:6, 3:6] = relative_info_copy[0:3, 0:3]
 
     return relative_pose, relative_info, parent_id, child_id
 
 
-def load_pose_graph(path: str, clouds_path: str = None):
+def load_pose_graph(path: str, clouds_folder_path, cloud_loader):
     graph = PoseGraph()
     with open(path, "r") as file:
         lines = file.readlines()
@@ -76,7 +83,22 @@ def load_pose_graph(path: str, clouds_path: str = None):
                     tokens[1:]
                 )
                 if parent_id != child_id:
-                    graph.add_edge(parent_id, child_id, relative_pose, relative_info)
+                    graph.add_edge(
+                        parent_id, child_id, "center", relative_pose, relative_info
+                    )
+                else:
+                    # Add transform between the node and the aerial cloud
+                    # get center of the tile
+                    tile = "tile_" + str(parent_id) + ".ply"
+                    cloud_path = clouds_folder_path / tile
+                    cloud = cloud_loader.load_cloud(str(cloud_path))
+                    quat = gtsam.Rot3.Quaternion(1, 0, 0, 0)
+                    center_pose = gtsam.Pose3(quat, get_cloud_center(cloud))
+                    # add the edge
+                    uav_pose = center_pose.inverse() * relative_pose
+                    graph.add_edge(
+                        parent_id, child_id, "aerial", uav_pose, relative_info
+                    )
 
     return graph
 
@@ -130,7 +152,6 @@ def write_pose_graph(pose_graph: PoseGraph, path: str):
             file.write(write_graph_edge(edge))
 
 
-# TODO move this function elsewhere
 def write_tiles_to_pose_graph_file(
     tiles_folder_path: str,
     pose_graph_path: str,
@@ -172,8 +193,9 @@ def write_tiles_to_pose_graph_file(
     coordinates.sort(key=lambda x: x[1][0])  # column major
     for col in range(grid_size_col):
         # sort the y coordinates
-        coordinates[col * grid_size_row : (col + 1) * grid_size_row].sort(
-            key=lambda x: x[1][1]
+        coordinates[col * grid_size_row : (col + 1) * grid_size_row] = sorted(
+            coordinates[col * grid_size_row : (col + 1) * grid_size_row],
+            key=lambda x: x[1][1],
         )
 
     # write the pose graph
@@ -190,6 +212,7 @@ def write_tiles_to_pose_graph_file(
                 f"VERTEX_SE3:QUAT_TIME {tile_id} {center[0]:.2f} {center[1]:.2f} {center[2]:.2f} 0 0 0 1 0 0\n"
             )
 
+        saved_edges = []
         for i in range(len(coordinates)):
             filename = coordinates[i][0].name
             tile_id = get_tile_number(filename)
@@ -209,21 +232,31 @@ def write_tiles_to_pose_graph_file(
                     and neighbour_col >= 0
                     and neighbour_col < grid_size_col
                 ):
+                    # TODO remove extra edges
                     neighbour = neighbour_col * grid_size_row + neighbour_row
                     neighbour_id = get_tile_number(coordinates[neighbour][0].name)
                     if not registration_results[coordinates[neighbour][0].name].success:
+                        continue
+
+                    if (tile_id, neighbour_id) in saved_edges or (
+                        neighbour_id,
+                        tile_id,
+                    ) in saved_edges:
                         continue
 
                     center = coordinates[i][1]  # tail
                     center_neighbour = coordinates[neighbour][1]  # head
                     offset = center - center_neighbour
 
+                    # write the edge
                     file.write(
-                        f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset[0]:.2f} {offset[1]:.2f} {offset[2]:.2f} 0 0 0 1 0 0 0 0 0 0 0 0 0 0\n"
+                        f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset[0]:.2f} {offset[1]:.2f} {offset[2]:.2f} 0 0 0 1 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
                     )
-            # write the extra edge
+                    saved_edges.append((tile_id, neighbour_id))
+
+            # write the extra edge, between tile and aerial cloud
             mat = registration_results[filename].transform
             quat = rotation_matrix_to_quat(mat[0:3, 0:3])
             file.write(
-                f"EDGE_SE3:QUAT {tile_id} {tile_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]} 0 0 0 0 0 0 0 0 0 0\n"
+                f"EDGE_SE3:QUAT {tile_id} {tile_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
             )

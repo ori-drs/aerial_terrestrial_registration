@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from digiforest_registration.optimization.io import load_pose_graph
+from digiforest_registration.optimization.optimize_graph import PoseGraphOptimization
 from digiforest_registration.utils import CloudIO
 from pathlib import Path
 import numpy as np
@@ -22,8 +23,6 @@ def parse_inputs():
     parser.add_argument(
         "--debug", default=False, action="store_true", help="debug mode"
     )
-    parser.add_argument("--grid_size_row", type=int, default=0)
-    parser.add_argument("--grid_size_col", type=int, default=0)
     args = parser.parse_args()
     return args
 
@@ -64,4 +63,7 @@ if __name__ == "__main__":
     cloud_io = CloudIO(offset)
 
     # load the pose graph
-    graph = load_pose_graph(args.pose_graph_file, args.frontier_cloud_folder)
+    pose_graph = load_pose_graph(args.pose_graph_file, frontier_cloud_folder, cloud_io)
+
+    optimizer = PoseGraphOptimization(pose_graph)
+    optimizer.optimize()

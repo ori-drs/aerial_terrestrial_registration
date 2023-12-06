@@ -20,7 +20,8 @@ catkin_package(
 ## Python #
 ###########
 catkin_python_setup()
-catkin_install_python(PROGRAMS scripts/main.py         
+catkin_install_python(PROGRAMS scripts/main.py
+                               scripts/optimization.py           
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
