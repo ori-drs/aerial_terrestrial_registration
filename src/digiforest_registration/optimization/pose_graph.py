@@ -80,5 +80,5 @@ class PoseGraph:
         self._adjacency[parent_id][child_id] = len(self._edges) - 1
 
     def add_clouds(self, id, scan):
-        assert isinstance(scan, o3d.geometry.PointCloud)
+        assert isinstance(scan, o3d.cuda.pybind.t.geometry.PointCloud)
         self._clouds[id] = scan
