@@ -27,5 +27,7 @@ def euler_to_rotation_matrix(yaw, pitch, roll):
 
 
 def rotation_matrix_to_quat(rotation_matrix: np.ndarray) -> np.ndarray:
+    """
+    Convert a rotation matrix to a (x,y,z,w) quaternion"""
     r = Rotation.from_matrix(rotation_matrix)
     return r.as_quat()

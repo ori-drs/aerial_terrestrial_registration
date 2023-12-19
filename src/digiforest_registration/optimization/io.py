@@ -252,7 +252,7 @@ def write_tiles_to_pose_graph_file(
                     and neighbour_col >= 0
                     and neighbour_col < grid_size_col
                 ):
-                    # TODO remove extra edges
+
                     neighbour = neighbour_col * grid_size_row + neighbour_row
                     neighbour_id = get_tile_number(coordinates[neighbour][0].name)
                     if not registration_results[coordinates[neighbour][0].name].success:

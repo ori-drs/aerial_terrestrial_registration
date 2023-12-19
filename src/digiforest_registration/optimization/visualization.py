@@ -4,9 +4,12 @@ import open3d as o3d
 import open3d.visualization.gui as gui
 
 # colors
-RED = [1, 0, 0]
+RED = [1, 0.0, 0.0]
 GRAY = [0.3, 0.3, 0.3]
 LIGHT_GRAY = [0.7, 0.7, 0.7]
+ORANGE = [1.0, 0.5, 0.0]
+GREEN = [0.0, 1, 0.0]
+COLORS = [RED, ORANGE, LIGHT_GRAY, GREEN]
 
 
 def graph_to_geometries(
@@ -15,16 +18,17 @@ def graph_to_geometries(
     show_edges=True,
     show_nodes=True,
     show_clouds=False,
+    show_coordinate_frame=True,
     odometry_color=GRAY,
     loop_color=RED,
 ):
+
     pose_graph = copy.deepcopy(graph)
     geometries = []
-
     node_centers = []
     frames_vis = o3d.geometry.TriangleMesh()
     nodes_vis = o3d.geometry.TriangleMesh()
-    # clouds_vis = o3d.t.geometry.PointCloud()
+
     node_id_to_index = {}
     for id, node in pose_graph.nodes.items():
 
@@ -36,22 +40,33 @@ def graph_to_geometries(
 
         if show_frames:
             frame_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(
-                size=1.0, origin=pos
+                size=2.0, origin=pos
             )
             frame_mesh.rotate(rot, center=pos)
             frames_vis += frame_mesh
 
         if show_nodes:
-            node_mesh = o3d.geometry.TriangleMesh.create_sphere(radius=0.3)
+            node_mesh = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
             node_mesh.translate(pos)
             nodes_vis += node_mesh
 
         if show_clouds:
             cloud = pose_graph.get_node_cloud(id)
-            cloud.transform(pose)
-            cloud.paint_uniform_color(LIGHT_GRAY)
-            geometries.append(cloud)
+            initial_node_pose = pose_graph.get_initial_node_pose(id)
+            node_pose = pose_graph.get_node_pose(id)
+            cloud.transform(node_pose.matrix() @ initial_node_pose.inverse().matrix())
+            cloud.paint_uniform_color(COLORS[id % len(COLORS)])
+            geometries.append(cloud.to_legacy())
 
+    if len(node_centers) == 0:
+        return geometries
+
+    if show_coordinate_frame:
+        axes_center = node_centers[0] + np.array([2, 2, 0])  # arbitrary offset
+        axes = o3d.geometry.TriangleMesh.create_coordinate_frame(
+            size=1.0, origin=axes_center
+        )
+        geometries.append(axes)
     # vis.add_geometry("clouds", clouds_vis)
     geometries.append(frames_vis)
     geometries.append(nodes_vis)
