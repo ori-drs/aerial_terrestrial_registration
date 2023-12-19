@@ -3,14 +3,19 @@ import numpy as np
 
 
 class CloudIO:
-    def __init__(self, offset: np.ndarray):
+    def __init__(self, offset: np.ndarray, downsample_cloud=False):
         self.offset = offset  # to transform cloud to local coordinates
+        self.downsample_cloud = downsample_cloud
 
     def load_cloud(self, filename: str):
         """
         Loads a point cloud from a file and translates it if its coordinates are too large."""
 
         cloud = o3d.t.io.read_point_cloud(filename)
+        # print("Loaded cloud with", len(cloud.point.positions), "points")
+        if self.downsample_cloud:
+            cloud = cloud.voxel_down_sample(voxel_size=0.1)
+
         threshold = 10**6
         if self.offset is not None:
             cloud = cloud.translate(self.offset)

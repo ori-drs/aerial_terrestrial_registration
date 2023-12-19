@@ -29,6 +29,12 @@ def parse_inputs():
     parser.add_argument(
         "--save-pose-graph", default=False, action="store_true", help="save pose graph"
     )
+    parser.add_argument(
+        "--downsample-cloud",
+        default=False,
+        action="store_true",
+        help="downsample input point clouds",
+    )
     parser.add_argument("--grid_size_row", type=int, default=0)
     parser.add_argument("--grid_size_col", type=int, default=0)
     parser.add_argument(
@@ -83,7 +89,7 @@ if __name__ == "__main__":
             [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
         )
 
-    cloud_io = CloudIO(offset)
+    cloud_io = CloudIO(offset, args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
 
     # Registration
