@@ -73,10 +73,14 @@ def load_pose_graph(path: str, clouds_folder_path, cloud_loader):
                 pose, pose_stamp, pose_id = read_pose_slam(tokens[1:])
                 graph.add_node(pose_id, pose_stamp, pose)
 
-                # if clouds_path is not None:
-                #     cloud = read_cloud(pose_stamp, clouds_path)
-                #     cloud.transform(T_base_lidar)
-                #     graph.add_clouds(pose_id, cloud)
+                if clouds_folder_path is not None:
+                    tile = "tile_" + str(pose_id) + ".ply"
+                    cloud_path = clouds_folder_path / tile
+                    cloud = cloud_loader.load_cloud(str(cloud_path))
+
+                    # downsample cloud
+                    cloud = cloud.voxel_down_sample(voxel_size=0.2)
+                    graph.add_clouds(pose_id, cloud)
 
             elif tokens[0] == "EDGE_SE3:QUAT":
                 relative_pose, relative_info, parent_id, child_id = read_pose_edge_slam(
@@ -229,13 +233,14 @@ def write_tiles_to_pose_graph_file(
 
             # write the prior edge, between tile and aerial cloud
             tile_center = coordinates[i][1]
-            tile_pose = np.ones((4, 4))
+            tile_pose = np.eye(4)
             tile_pose[0:3, 3] = tile_center
             mat = registration_results[filename].transform
+            # transform tile center to uav in world frame
             transformed_tile_pose = mat @ tile_pose
             quat = rotation_matrix_to_quat(transformed_tile_pose[0:3, 0:3])
             file.write(
-                f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
             )
 
             for j in range(4):
