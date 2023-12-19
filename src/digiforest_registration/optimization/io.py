@@ -238,9 +238,11 @@ def write_tiles_to_pose_graph_file(
             mat = registration_results[filename].transform
             # transform tile center to uav in world frame
             transformed_tile_pose = mat @ tile_pose
-            quat = rotation_matrix_to_quat(transformed_tile_pose[0:3, 0:3])
+            quat = rotation_matrix_to_quat(
+                transformed_tile_pose[0:3, 0:3]
+            )  # x, y, z, w
             file.write(
-                f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {quat[0]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
             )
 
             for j in range(4):
