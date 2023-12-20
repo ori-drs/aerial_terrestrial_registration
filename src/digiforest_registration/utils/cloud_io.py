@@ -1,5 +1,14 @@
 import open3d as o3d
 import numpy as np
+from pathlib import Path
+
+
+def is_cloud_name(path: Path):
+    """
+    Returns True if the path is a valid cloud file name."""
+    return path.suffix == ".ply" and (
+        path.name[:4] == "tile" or path.name[:5] == "cloud"
+    )
 
 
 class CloudIO:
@@ -12,9 +21,11 @@ class CloudIO:
         Loads a point cloud from a file and translates it if its coordinates are too large."""
 
         cloud = o3d.t.io.read_point_cloud(filename)
-        # print("Loaded cloud with", len(cloud.point.positions), "points")
+        print("Loaded cloud with", len(cloud.point.positions), "points")
         if self.downsample_cloud:
+            # TODO there can be a problem if the voxel_size is greater than the resolution of the canopy height image
             cloud = cloud.voxel_down_sample(voxel_size=0.1)
+            print(len(cloud.point.positions), "points remaining")
 
         threshold = 10**6
         if self.offset is not None:

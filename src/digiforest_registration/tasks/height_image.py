@@ -5,11 +5,11 @@ import cv2
 
 
 class HeightImage:
-    def __init__(self):
+    def __init__(self, debug=False):
         self.kernel_size = (3, 3)
-        self.debug = False
+        self.debug = debug
         self.min_distance_to_ground = 3.0
-        self.image_resolution = 0.1  # meters per pixel
+        self.image_resolution = 0.15  # meters per pixel
         # coordinates of the top left corner of the image in the utm frame
         self.top_left_corner = [0, 0, 0]
 
@@ -81,8 +81,14 @@ class HeightImage:
         max_height = max(dist)
         index = 0
         for point in canopy_points:
-            x = int(np.floor((point[0] - min_bound[0]) / self.image_resolution))
-            y = int(np.floor((point[1] - min_bound[1]) / self.image_resolution))
+            x = min(
+                int(np.floor((point[0] - min_bound[0]) / self.image_resolution)),
+                width - 1,
+            )
+            y = min(
+                int(np.floor((point[1] - min_bound[1]) / self.image_resolution)),
+                height - 1,
+            )
             v = abs(dist[index][0] / max_height[0])
             image[y, x] = max(v, image[y, x])
             index += 1

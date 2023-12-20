@@ -107,7 +107,7 @@ class CorrespondenceGraph:
                 return False
         return True
 
-    def maximum_clique(self):
+    def maximum_clique(self) -> list:
         """
         Compute the maximum cliques.
         Returns the edges of the maximum cliques.
@@ -123,6 +123,9 @@ class CorrespondenceGraph:
 
             if len(clique) == max_clique_size:
                 max_cliques.append(clique)
+
+        if len(max_cliques) == 0:
+            return []
 
         # Print the maximum cliques
         print("Length of the maximum clique", len(max_cliques[0]))

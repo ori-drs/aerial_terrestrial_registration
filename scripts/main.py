@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from digiforest_registration.tasks.registration import Registration, RegistrationResult
 from digiforest_registration.optimization.io import write_tiles_to_pose_graph_file
-from digiforest_registration.utils import CloudIO
+from digiforest_registration.utils import CloudIO, is_cloud_name
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from pathlib import Path
 import numpy as np
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             # Get all the ply files in the folder
             for entry in frontier_cloud_folder.iterdir():
                 if entry.is_file():
-                    if entry.suffix == ".ply":
+                    if is_cloud_name(entry):
                         frontier_cloud_filenames.append(entry)
 
     # loading the data

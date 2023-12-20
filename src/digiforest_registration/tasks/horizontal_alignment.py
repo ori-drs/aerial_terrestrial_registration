@@ -14,7 +14,7 @@ class HorizontalRegistration:
         self.cloud_ground_plane = cloud_ground_plane
         self.debug = debug
         self.transforms = []
-        self.max_number_of_clique = 8
+        self.max_number_of_clique = 5
         self.clique_size = 0
         self.frontier_peaks_size = 0
 
@@ -93,8 +93,8 @@ class HorizontalRegistration:
         return T
 
     def process(self) -> bool:
-        uav_proc = HeightImage()
-        bls_proc = HeightImage()
+        uav_proc = HeightImage(self.debug)
+        bls_proc = HeightImage(self.debug)
 
         uav_canopy = uav_proc.compute_canopy_image(
             self.uav_cloud, *self.uav_ground_plane
@@ -125,6 +125,11 @@ class HorizontalRegistration:
 
         if len(edges_list) > self.max_number_of_clique:
             # too many cliques, something is wrong
+            print("Too many cliques, downsampling them")
+            # TODO it's not great
+            # edges_list = edges_list[0 : self.max_number_of_clique]
+            return False
+        elif len(edges_list) == 0:
             return False
 
         for i in range(len(edges_list)):
