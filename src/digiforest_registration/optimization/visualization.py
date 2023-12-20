@@ -2,6 +2,7 @@ import copy
 import numpy as np
 import open3d as o3d
 import open3d.visualization.gui as gui
+from digiforest_registration.utils import get_cloud_center
 
 # colors
 RED = [1, 0.0, 0.0]
@@ -52,9 +53,12 @@ def graph_to_geometries(
 
         if show_clouds:
             cloud = pose_graph.get_node_cloud(id)
-            initial_node_pose = pose_graph.get_initial_node_pose(id)
+            center = get_cloud_center(cloud)
+            center_pose = np.eye(4)
+            center_pose[0:3, 3] = center
             node_pose = pose_graph.get_node_pose(id)
-            cloud.transform(node_pose.matrix() @ initial_node_pose.inverse().matrix())
+            # transform cloud to node pose
+            cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
             cloud.paint_uniform_color(COLORS[id % len(COLORS)])
             geometries.append(cloud.to_legacy())
 
@@ -117,7 +121,6 @@ def show_pose_graph(
     node_centers = []
     frames_vis = o3d.geometry.TriangleMesh()
     nodes_vis = o3d.geometry.TriangleMesh()
-    # clouds_vis = o3d.t.geometry.PointCloud()
 
     for n, node in enumerate(pose_graph.nodes):
         if n > up_to_node:

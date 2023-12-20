@@ -5,6 +5,7 @@ import gtsam
 from pathlib import Path
 from digiforest_registration.optimization.pose_graph import PoseGraph
 from digiforest_registration.utils import rotation_matrix_to_quat, get_cloud_center
+from digiforest_registration.utils import is_cloud_name
 
 
 def read_pose_gt(tokens):
@@ -91,18 +92,6 @@ def load_pose_graph(path: str, clouds_folder_path, cloud_loader):
                         parent_id, child_id, "center", relative_pose, relative_info
                     )
                 else:
-                    # Add transform between the node and the aerial cloud
-                    # get center of the tile
-                    # tile = "tile_" + str(parent_id) + ".ply"
-                    # cloud_path = clouds_folder_path / tile
-                    # cloud = cloud_loader.load_cloud(str(cloud_path))
-                    # quat = gtsam.Rot3.Quaternion(1, 0, 0, 0)
-                    # tile_center_pose = gtsam.Pose3(quat, get_cloud_center(cloud))
-                    # # add the edge
-                    # tile_center_pose_uav_aligned = relative_pose * tile_center_pose
-                    # graph.add_edge(
-                    #     parent_id, child_id, "aerial", tile_center_pose_uav_aligned, relative_info
-                    # )
                     graph.add_edge(
                         parent_id, child_id, "aerial", relative_pose, relative_info
                     )
@@ -182,13 +171,13 @@ def write_tiles_to_pose_graph_file(
         # Get all the ply files in the folder
         for entry in folder.iterdir():
             if entry.is_file():
-                if entry.suffix == ".ply":
+                if is_cloud_name(entry):
                     cloud_paths.append(entry)
 
-    if grid_size_row * grid_size_col != len(cloud_paths):
-        raise ValueError(
-            f"Input folder [{folder}] does not contain an unexpected number of tiles"
-        )
+    # if grid_size_row * grid_size_col != len(cloud_paths):
+    #     raise ValueError(
+    #         f"Input folder [{folder}] does not contain an unexpected number of tiles"
+    #     )
 
     coordinates = []  # (cloud_path, center)
     for cloud_path in cloud_paths:
@@ -218,11 +207,13 @@ def write_tiles_to_pose_graph_file(
             file.write(
                 f"VERTEX_SE3:QUAT_TIME {tile_id} {center[0]:.2f} {center[1]:.2f} {center[2]:.2f} 0 0 0 1 0 0\n"
             )
-
+        # Edges
         saved_edges = []
         for i in range(len(coordinates)):
             filename = coordinates[i][0].name
             tile_id = get_tile_number(filename)
+            if not registration_results[filename].success:
+                continue
             # write the edge
             # 4 neighbours
             col = i // grid_size_row
