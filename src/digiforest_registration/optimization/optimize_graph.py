@@ -1,7 +1,7 @@
 from digiforest_registration.optimization.pose_graph import PoseGraph
+import digiforest_registration.optimization.visualization as vis
 import gtsam
-import numpy as np
-import copy
+import open3d as o3d
 
 
 class PoseGraphOptimization:
@@ -15,25 +15,35 @@ class PoseGraphOptimization:
         factor_graph = gtsam.NonlinearFactorGraph()
 
         # set prior on the root node
-        prior_noise = gtsam.noiseModel.Diagonal.Sigmas(0.000001 * np.ones(6))
-        factor_graph.add(
-            gtsam.PriorFactorPose3(
-                self.pose_graph.root_id,
-                self.pose_graph.get_node_pose(self.pose_graph.root_id),
-                prior_noise,
-            )
-        )
+        # prior_noise = gtsam.noiseModel.Diagonal.Sigmas(0.000001 * np.ones(6))
+        # factor_graph.add(
+        #     gtsam.PriorFactorPose3(
+        #         self.pose_graph.root_id,
+        #         self.pose_graph.get_node_pose(self.pose_graph.root_id),
+        #         prior_noise,
+        #     )
+        # )
 
         # add the other edges
         for e in self.pose_graph.edges:
             if e["type"] == "center":
                 noise = gtsam.noiseModel.Gaussian.Information(e["info"])
+                # TODO check if the direction of the edge is correct
+                # ie child -> parent of parent -> child
                 factor_graph.add(
                     gtsam.BetweenFactorPose3(
-                        e["parent_id"], e["child_id"], e["pose"], noise
+                        e["child_id"],
+                        e["parent_id"],
+                        e["pose"],
+                        noise
+                        # e["parent_id"], e["child_id"], e["pose"], noise
                     )
                 )
             elif e["type"] == "aerial":
+                # if e["parent_id"] == self.pose_graph.root_id:
+                #     # the root node is fixed by a prior constraint already
+                #     continue
+
                 noise = gtsam.noiseModel.Gaussian.Information(e["info"])
                 factor_graph.add(
                     gtsam.PriorFactorPose3(e["parent_id"], e["pose"], noise)
@@ -50,7 +60,41 @@ class PoseGraphOptimization:
         s.view()
 
     def optimize(self):
-        optimized_pose_graph = copy.deepcopy(self.pose_graph)
+        # Display initial node poses
+        for id, node in self.pose_graph.nodes.items():
+            print(f"Node {id}:")
+            print(f"  pose: {node['pose']}")
+
+        geometries = vis.graph_to_geometries(
+            self.pose_graph,
+            show_frames=True,
+            show_edges=True,
+            show_nodes=True,
+            show_clouds=False,
+            show_coordinate_frame=True,
+            odometry_color=vis.GRAY,
+            loop_color=vis.RED,
+        )
+        o3d.visualization.draw_geometries(
+            geometries,
+            window_name="Initial Pose Graph",
+        )
+
+        geometries = vis.graph_to_geometries(
+            self.pose_graph,
+            show_frames=True,
+            show_edges=True,
+            show_nodes=True,
+            show_clouds=True,
+            show_coordinate_frame=True,
+            odometry_color=vis.GRAY,
+            loop_color=vis.RED,
+        )
+        o3d.visualization.draw_geometries(
+            geometries,
+            window_name="Initial Pose Graph with Clouds",
+        )
+        # optimized_pose_graph = copy.deepcopy(self.pose_graph)
 
         initial_estimate = gtsam.Values()
         for id, node in self.pose_graph.nodes.items():
@@ -67,22 +111,15 @@ class PoseGraphOptimization:
         # Optimize
         print("Optimizing factor graph...")
         result = optimizer.optimize()
-        for id, value in optimized_pose_graph.nodes.items():
-            optimized_pose_graph.set_node_pose(id, result.atPose3(id))
+
+        for id, _ in self.pose_graph.nodes.items():
+            self.pose_graph.set_node_pose(id, result.atPose3(id))
 
         # Display results
+        print("********")
         for id, node in self.pose_graph.nodes.items():
             print(f"Node {id}:")
             print(f"  pose: {node['pose']}")
-
-        print("********")
-        for id, node in optimized_pose_graph.nodes.items():
-            print(f"Node {id}:")
-            print(f"  pose: {node['pose']}")
-
-        #
-        import digiforest_registration.optimization.visualization as vis
-        import open3d as o3d
 
         geometries = vis.graph_to_geometries(
             self.pose_graph,
@@ -90,32 +127,26 @@ class PoseGraphOptimization:
             show_edges=True,
             show_nodes=True,
             show_clouds=False,
-            odometry_color=vis.GRAY,
-            loop_color=vis.RED,
-        )
-        o3d.visualization.draw_geometries(
-            geometries,
-            window_name="Initial Pose Graph",
-            # zoom=0.24,
-            # front=[-0.35, -0.57, 0.7],
-            # lookat=[1.4, -18, 2.0],
-            # up=[0.4, 0.5, 0.6],
-        )
-
-        geometries = vis.graph_to_geometries(
-            optimized_pose_graph,
-            show_frames=True,
-            show_edges=True,
-            show_nodes=True,
-            show_clouds=False,
+            show_coordinate_frame=True,
             odometry_color=vis.GRAY,
             loop_color=vis.RED,
         )
         o3d.visualization.draw_geometries(
             geometries,
             window_name="Optimized Pose Graph",
-            # zoom=0.24,
-            # front=[-0.35, -0.57, 0.7],
-            # lookat=[1.4, -18, 2.0],
-            # up=[0.4, 0.5, 0.6],
+        )
+
+        geometries = vis.graph_to_geometries(
+            self.pose_graph,
+            show_frames=True,
+            show_edges=True,
+            show_nodes=True,
+            show_clouds=True,
+            show_coordinate_frame=True,
+            odometry_color=vis.GRAY,
+            loop_color=vis.RED,
+        )
+        o3d.visualization.draw_geometries(
+            geometries,
+            window_name="Optimized Pose Graph with clouds",
         )

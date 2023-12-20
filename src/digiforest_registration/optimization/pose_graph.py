@@ -1,11 +1,13 @@
 import gtsam
 import numpy as np
 import open3d as o3d
+import copy
 
 
 class PoseGraph:
     def __init__(self):
         self._nodes = {}
+        self._initial_nodes = {}
         self._edges = []
         self._adjacency = {}
         self._clouds = {}
@@ -34,6 +36,12 @@ class PoseGraph:
     def get_node_pose(self, id):
         return self._nodes[id]["pose"]
 
+    def get_initial_node_pose(self, id):
+        if id in self._initial_nodes:
+            return self._initial_nodes[id]["pose"]
+        else:
+            return self._nodes[id]["pose"]
+
     def get_node_cloud(self, id):
         try:
             return self._clouds[id]
@@ -41,6 +49,9 @@ class PoseGraph:
             return o3d.geometry.PointCloud()
 
     def set_node_pose(self, id, pose):
+        if id in self._nodes and id not in self._initial_nodes:
+            # initializing initial node poses
+            self._initial_nodes[id] = copy.deepcopy(self._nodes[id])
         self._nodes[id]["pose"] = pose
 
     # def _is_valid_id(self, id):
