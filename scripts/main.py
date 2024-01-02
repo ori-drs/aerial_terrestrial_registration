@@ -9,6 +9,7 @@ import os
 import open3d as o3d
 
 import argparse
+import yaml
 
 
 def parse_inputs():
@@ -17,6 +18,7 @@ def parse_inputs():
         description="Registers a frontier cloud to a reference UAV cloud",
         epilog="Text at the bottom of help",
     )
+    parser.add_argument("--config", default=None, help="yaml config file")
     parser.add_argument("--uav_cloud")
     parser.add_argument("--frontier_cloud", default=None)
     parser.add_argument("--frontier_cloud_folder", default=None)
@@ -27,7 +29,7 @@ def parse_inputs():
         "--debug", default=False, action="store_true", help="debug mode"
     )
     parser.add_argument(
-        "--save-pose-graph", default=False, action="store_true", help="save pose graph"
+        "--save_pose_graph", default=False, action="store_true", help="save pose graph"
     )
     parser.add_argument(
         "--downsample-cloud",
@@ -44,6 +46,13 @@ def parse_inputs():
         help="crop frontier cloud",
     )
     args = parser.parse_args()
+
+    if args.config is not None:
+        with open(args.config, "r") as stream:
+            config = yaml.safe_load(stream)
+            for key, value in config.items():
+                setattr(args, key, value)
+
     return args
 
 

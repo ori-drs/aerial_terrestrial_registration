@@ -9,7 +9,7 @@ class HeightImage:
         self.kernel_size = (3, 3)
         self.debug = debug
         self.min_distance_to_ground = 3.0
-        self.image_resolution = 0.15  # meters per pixel
+        self.image_resolution = 0.1  # meters per pixel
         # coordinates of the top left corner of the image in the utm frame
         self.top_left_corner = [0, 0, 0]
 
