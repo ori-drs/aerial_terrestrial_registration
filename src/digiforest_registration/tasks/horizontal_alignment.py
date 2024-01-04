@@ -121,34 +121,38 @@ class HorizontalRegistration:
         correspondence_graph = CorrespondenceGraph(G, H)
 
         print("Computing the maximum clique")
-        edges_list = correspondence_graph.maximum_clique()
+        correspondences_list = correspondence_graph.maximum_clique()
 
-        if len(edges_list) > self.max_number_of_clique:
+        if len(correspondences_list) > self.max_number_of_clique:
             # too many cliques, something is wrong
             print("Too many cliques, downsampling them")
             # TODO it's not great
-            # edges_list = edges_list[0 : self.max_number_of_clique]
-            return False
-        elif len(edges_list) == 0:
+            correspondences_list = correspondences_list[0 : self.max_number_of_clique]
+            # return False
+        elif len(correspondences_list) == 0:
             return False
 
-        for i in range(len(edges_list)):
-            edges = edges_list[i]
+        for i in range(len(correspondences_list)):
+            correspondences = correspondences_list[i]
             if self.debug:
                 draw_correspondences(
                     bls_height_img,
                     bls_height_pts,
                     uav_height_img,
                     uav_height_pts,
-                    edges,
+                    correspondences,
                 )
 
             # find transformation using maximum clique
-            bls_pts = np.zeros((len(edges), 2))
-            uav_pts = np.zeros((len(edges), 2))
-            for i in range(len(edges)):
-                bls_pts[i] = bls_proc.pixel_to_cloud(edges[i][0][0], edges[i][0][1])
-                uav_pts[i] = uav_proc.pixel_to_cloud(edges[i][1][0], edges[i][1][1])
+            bls_pts = np.zeros((len(correspondences), 2))
+            uav_pts = np.zeros((len(correspondences), 2))
+            for i in range(len(correspondences)):
+                bls_pts[i] = bls_proc.pixel_to_cloud(
+                    correspondences[i][0][0], correspondences[i][0][1]
+                )
+                uav_pts[i] = uav_proc.pixel_to_cloud(
+                    correspondences[i][1][0], correspondences[i][1][1]
+                )
 
             if bls_pts.shape[0] < 3:
                 return False
