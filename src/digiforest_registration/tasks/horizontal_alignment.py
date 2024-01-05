@@ -1,4 +1,9 @@
-from digiforest_registration.tasks.height_image import HeightImage, draw_correspondences
+from digiforest_registration.tasks.height_image import (
+    HeightImage,
+    CanopyFeatureDescriptor,
+    CanopyFeatureMatcher,
+    draw_correspondences,
+)
 from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
 
 import numpy as np
@@ -6,7 +11,13 @@ import numpy as np
 
 class HorizontalRegistration:
     def __init__(
-        self, uav_cloud, uav_ground_plane, cloud, cloud_ground_plane, debug=False
+        self,
+        uav_cloud,
+        uav_ground_plane,
+        cloud,
+        cloud_ground_plane,
+        debug=False,
+        method="graph",
     ):
         self.uav_cloud = uav_cloud
         self.uav_ground_plane = uav_ground_plane
@@ -17,6 +28,7 @@ class HorizontalRegistration:
         self.max_number_of_clique = 5
         self.clique_size = 0
         self.frontier_peaks_size = 0
+        self.method = method  # graph or feature_extraction
 
     def find_transform(self, src, dst, estimate_scale=False):
         """Estimate N-D similarity transformation with or without scaling.
@@ -106,31 +118,45 @@ class HorizontalRegistration:
 
         uav_height_pts, uav_height_img = bls_proc.find_local_maxima(uav_canopy)
 
-        # create feature graphs
-        print("Creating the feature graphs")
-        G = Graph(bls_height_pts, node_prefix="f")
-        # edge1 = G.graph.get_edge_data('f_1', 'f_7')
-        H = Graph(uav_height_pts, node_prefix="uav")
-
-        print("Number of nodes of the frontier graph", G.graph.number_of_nodes())
-        print("Number of nodes of the uav graph", H.graph.number_of_nodes())
-
         # np.savetxt('/tmp/frontier_peaks.txt', bls_height_pts, delimiter=",", fmt='%.4f')
 
-        # find maximum clique in the correspondence graph
-        correspondence_graph = CorrespondenceGraph(G, H)
+        if self.method == "graph":
+            # create feature graphs
+            print("Creating the feature graphs")
+            G = Graph(bls_height_pts, node_prefix="f")
+            # edge1 = G.graph.get_edge_data('f_1', 'f_7')
+            H = Graph(uav_height_pts, node_prefix="uav")
 
-        print("Computing the maximum clique")
-        correspondences_list = correspondence_graph.maximum_clique()
+            print("Number of nodes of the frontier graph", G.graph.number_of_nodes())
+            print("Number of nodes of the uav graph", H.graph.number_of_nodes())
 
-        if len(correspondences_list) > self.max_number_of_clique:
-            # too many cliques, something is wrong
-            print("Too many cliques, downsampling them")
-            # TODO it's not great
-            correspondences_list = correspondences_list[0 : self.max_number_of_clique]
-            # return False
-        elif len(correspondences_list) == 0:
-            return False
+            # find maximum clique in the correspondence graph
+            correspondence_graph = CorrespondenceGraph(G, H)
+            print("Computing the maximum clique")
+            correspondences_list = correspondence_graph.maximum_clique()
+
+            if len(correspondences_list) > self.max_number_of_clique:
+                # too many cliques, something is wrong
+                print("Too many cliques, downsampling them")
+                # TODO it's not great
+                correspondences_list = correspondences_list[
+                    0 : self.max_number_of_clique
+                ]
+                # return False
+            elif len(correspondences_list) == 0:
+                return False
+        elif self.method == "feature_extraction":
+            # find correspondences using feature extraction
+            print("Computing correspondences using feature extraction")
+            descriptor = CanopyFeatureDescriptor()
+            uav_descriptors = descriptor.compute_feature_descriptors(uav_height_pts)
+            bls_descriptors = descriptor.compute_feature_descriptors(bls_height_pts)
+            feature_matcher = CanopyFeatureMatcher()
+            correspondences_list = feature_matcher.match(
+                uav_height_pts, uav_descriptors, bls_height_pts, bls_descriptors
+            )
+        else:
+            raise ValueError("Unknown method: " + self.method)
 
         for i in range(len(correspondences_list)):
             correspondences = correspondences_list[i]

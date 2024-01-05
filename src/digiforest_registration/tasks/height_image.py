@@ -1,6 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
+from typing import Tuple
 from numpy import float64
+
+from sklearn.neighbors import NearestNeighbors
+
 import cv2
 
 
@@ -124,7 +128,7 @@ class HeightImage:
 
         return filtered_img
 
-    def find_local_maxima(self, img: np.ndarray):
+    def find_local_maxima(self, img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Find peaks in a float image.
         Return the coordinates of the peaks and the filtered image
@@ -168,7 +172,105 @@ class HeightImage:
             cv2.imshow("Image", maxima_img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
+
         return np.array(valid_points), img
+
+
+class CanopyFeatureDescriptor:
+    def __init__(self):
+        self.k_nearest_neighbors = 4
+
+    def _get_angle(self, p1: np.ndarray, p2: np.ndarray):
+        return np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+
+    def compute_feature_descriptors(self, points: np.ndarray) -> list:
+        """
+        Returns one descriptor for each point
+        """
+        descriptors = []
+        size_descriptor = 2 * self.k_nearest_neighbors - 1
+        nbrs = NearestNeighbors(
+            n_neighbors=self.k_nearest_neighbors, algorithm="auto"
+        ).fit(points)
+        for pt in points:
+            # find the k nearest neighbors
+            _, indices = nbrs.kneighbors([pt])
+            k_neighbours = points[indices][0]
+
+            # compute the feature descriptor
+            descriptor = np.zeros(size_descriptor)
+            # distance
+            distances = np.linalg.norm(k_neighbours - pt, axis=1)
+            max_distance = np.max(distances)
+            argmax_distance = np.argmax(distances)
+
+            distances = distances / max_distance
+            distances = np.delete(distances, argmax_distance)
+
+            descriptor[0 : (self.k_nearest_neighbors - 1)] = distances
+
+            # angle
+            angles = np.apply_along_axis(
+                self._get_angle, axis=1, arr=k_neighbours, p2=pt
+            )
+            angles /= np.pi
+            descriptor[self.k_nearest_neighbors - 1 :] = angles
+
+            descriptors.append(descriptor)
+
+        return descriptors
+
+
+class CanopyFeatureMatcher:
+    def __init__(self):
+        self.threshold_matching = 10000000
+        self.threshold_ratio_ssd = 0.8
+
+    def _two_best_matches(self, distances: list) -> float:
+        """
+        eturn the first and second closest points"""
+        best_match = np.finfo(np.float64).max
+        second_best_match = np.finfo(np.float64).max
+        for i in range(len(distances)):
+            if distances[i] < best_match:
+                second_best_match = best_match
+                best_match = distances[i]
+            elif distances[i] < second_best_match and distances[i] != best_match:
+                second_best_match = distances[i]
+
+        return best_match, second_best_match
+
+    def match(
+        self,
+        points1: np.ndarray,
+        descriptors1: list,
+        points2: np.ndarray,
+        descriptors2: list,
+    ) -> list:
+        """
+        Find correspondences between two sets of feature descriptors
+        """
+
+        correspondences = []
+        for i in range(len(descriptors1)):
+
+            distances = []
+            for j in range(len(descriptors2)):
+                distance = np.linalg.norm(descriptors1[i] - descriptors2[j])
+                distances.append(distance)
+
+            first_best, second_best = self._two_best_matches(distances)
+            ratio_ssd = first_best / second_best
+            if (
+                ratio_ssd > self.threshold_ratio_ssd
+                or first_best > self.threshold_matching
+            ):
+                # feature is rejected
+                continue
+
+            correspondences.append([points1[i], points2[np.argmin(distances)]])
+
+        return [correspondences]
 
 
 def draw_correspondences(
@@ -176,7 +278,7 @@ def draw_correspondences(
     height_pts1: np.ndarray,
     height_img2: np.ndarray,
     height_pts2: np.ndarray,
-    edges: list,
+    correspondences: list,
 ):
     grayscale_image = (height_img1 * 255).astype(np.uint8)
     img1 = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2RGB)
@@ -197,10 +299,15 @@ def draw_correspondences(
         cv2.circle(img, (point[0], point[1]), 3, (0, 0, 255), -1)
     for point in height_pts2:
         cv2.circle(img, (point[0] + w1, point[1]), 3, (0, 0, 255), -1)
-    # Draw the edges
-    for edge in edges:
+
+    # Draw the correspondences
+    for correspondence in correspondences:
         cv2.line(
-            img, (edge[0][0], edge[0][1]), (edge[1][0] + w1, edge[1][1]), (0, 255, 0), 1
+            img,
+            (correspondence[0][0], correspondence[0][1]),
+            (correspondence[1][0] + w1, correspondence[1][1]),
+            (0, 255, 0),
+            1,
         )
 
     cv2.imshow("Image", img)

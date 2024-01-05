@@ -23,6 +23,7 @@ def parse_inputs():
     parser.add_argument("--frontier_cloud", default=None)
     parser.add_argument("--frontier_cloud_folder", default=None)
     parser.add_argument("--ground_segmentation_method", nargs="?", default="default")
+    parser.add_argument("--correspondence_matching_method", nargs="?", default="graph")
     parser.add_argument("--offset", nargs="+", type=float, default=None)
     parser.add_argument("--output_folder", default=None)
     parser.add_argument(
@@ -125,6 +126,7 @@ if __name__ == "__main__":
             cropped_uav_cloud,
             frontier_cloud,
             args.ground_segmentation_method,
+            args.correspondence_matching_method,
             debug=args.debug,
         )
         success = registration.registration()
