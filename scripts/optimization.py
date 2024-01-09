@@ -8,6 +8,7 @@ import numpy as np
 import open3d as o3d
 
 import argparse
+import yaml
 
 
 def parse_inputs():
@@ -16,6 +17,7 @@ def parse_inputs():
         description="Optimize a pose graph",
         epilog="Text at the bottom of help",
     )
+    parser.add_argument("--config", default=None, help="yaml config file")
     parser.add_argument("--frontier_cloud_folder", default=None)
     parser.add_argument("--pose_graph_file", default=None)
     parser.add_argument("--offset", nargs="+", type=float, default=None)
@@ -24,6 +26,12 @@ def parse_inputs():
         "--debug", default=False, action="store_true", help="debug mode"
     )
     args = parser.parse_args()
+
+    if args.config is not None:
+        with open(args.config, "r") as stream:
+            config = yaml.safe_load(stream)
+            for key, value in config.items():
+                setattr(args, key, value)
     return args
 
 
@@ -67,3 +75,12 @@ if __name__ == "__main__":
 
     optimizer = PoseGraphOptimization(pose_graph)
     optimizer.optimize()
+
+    # save the results
+    if args.output_folder is not None:
+        for id, _ in pose_graph.nodes.items():
+            cloud = pose_graph.get_node_cloud(id)
+            cloud_name = pose_graph.get_node_cloud_name(id)
+            cloud_path = Path(args.output_folder) / cloud_name
+
+            cloud_io.save_cloud(cloud, str(cloud_path))

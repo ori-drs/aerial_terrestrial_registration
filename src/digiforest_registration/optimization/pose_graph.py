@@ -2,6 +2,7 @@ import gtsam
 import numpy as np
 import open3d as o3d
 import copy
+from digiforest_registration.utils import get_cloud_center
 
 
 class PoseGraph:
@@ -11,6 +12,8 @@ class PoseGraph:
         self._edges = []
         self._adjacency = {}
         self._clouds = {}
+        self._downsampled_clouds = {}
+        self._cloud_names = {}
         self.root_id = None
 
     @property
@@ -42,9 +45,44 @@ class PoseGraph:
         else:
             return self._nodes[id]["pose"]
 
-    def get_node_cloud(self, id):
+    def get_node_cloud_name(self, id):
         try:
-            return self._clouds[id]
+            return self._cloud_names[id]
+        except Exception:
+            return str()
+
+    def _transform_node_cloud(self, cloud, node_id: int):
+        """
+        Transform the cloud to center it with the node"""
+        center = get_cloud_center(cloud)
+        center_pose = np.eye(4)
+        center_pose[0:3, 3] = center
+        node_pose = self.get_node_pose(node_id)
+        # transform cloud to node pose
+        cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
+        return cloud
+
+    def get_node_cloud_downsampled(self, id):
+        """
+        Return the downsampled transformed cloud attached to the node
+        """
+        try:
+            cloud = self._downsampled_clouds[
+                id
+            ].clone()  # need to clone the cloud because where applying a transform to it
+            return self._transform_node_cloud(cloud, id)
+        except Exception:
+            return o3d.geometry.PointCloud()
+
+    def get_node_cloud(self, id):
+        """
+        Return the transformed cloud attached to the node
+        """
+        try:
+            cloud = self._clouds[
+                id
+            ].clone()  # need to clone the cloud because where applying a transform to it
+            return self._transform_node_cloud(cloud, id)
         except Exception:
             return o3d.geometry.PointCloud()
 
@@ -90,6 +128,8 @@ class PoseGraph:
         # Save reference to edge in adjacency matrix
         self._adjacency[parent_id][child_id] = len(self._edges) - 1
 
-    def add_clouds(self, id, scan):
+    def add_clouds(self, id: int, scan, scan_name: str):
         assert isinstance(scan, o3d.cuda.pybind.t.geometry.PointCloud)
         self._clouds[id] = scan
+        self._downsampled_clouds[id] = scan.voxel_down_sample(voxel_size=0.2)
+        self._cloud_names[id] = scan_name

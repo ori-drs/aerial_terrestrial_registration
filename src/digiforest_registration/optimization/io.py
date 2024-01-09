@@ -1,5 +1,3 @@
-# Author: Matias Mattamala (matias@robots.ox.ac.uk)
-
 import numpy as np
 import gtsam
 from pathlib import Path
@@ -56,7 +54,7 @@ def read_pose_edge_slam(tokens):
     return relative_pose, relative_info, parent_id, child_id
 
 
-def load_pose_graph(path: str, clouds_folder_path, cloud_loader):
+def load_pose_graph(path: str, clouds_folder_path: Path, cloud_loader):
     graph = PoseGraph()
     with open(path, "r") as file:
         lines = file.readlines()
@@ -75,13 +73,11 @@ def load_pose_graph(path: str, clouds_folder_path, cloud_loader):
                 graph.add_node(pose_id, pose_stamp, pose)
 
                 if clouds_folder_path is not None:
-                    tile = "tile_" + str(pose_id) + ".ply"
-                    cloud_path = clouds_folder_path / tile
+                    tile_name = "tile_" + str(pose_id) + ".ply"
+                    cloud_path = clouds_folder_path / tile_name
                     cloud = cloud_loader.load_cloud(str(cloud_path))
 
-                    # downsample cloud
-                    cloud = cloud.voxel_down_sample(voxel_size=0.2)
-                    graph.add_clouds(pose_id, cloud)
+                    graph.add_clouds(pose_id, cloud, tile_name)
 
             elif tokens[0] == "EDGE_SE3:QUAT":
                 relative_pose, relative_info, parent_id, child_id = read_pose_edge_slam(
