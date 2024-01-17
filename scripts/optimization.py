@@ -79,7 +79,15 @@ if __name__ == "__main__":
     # save the results
     if args.output_folder is not None:
         for id, _ in pose_graph.nodes.items():
-            cloud = pose_graph.get_node_cloud(id)
+            cloud = pose_graph.get_node_cloud(id).clone()
+
+            # Transform the cloud to take into account the factor graph optimization
+            initial_node_pose = pose_graph.get_initial_node_pose(id)
+            node_pose = pose_graph.get_node_pose(id)
+            cloud.transform(
+                node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
+            )
+
             cloud_name = pose_graph.get_node_cloud_name(id)
             cloud_path = Path(args.output_folder) / cloud_name
 

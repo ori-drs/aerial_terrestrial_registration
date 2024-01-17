@@ -2,7 +2,6 @@ import gtsam
 import numpy as np
 import open3d as o3d
 import copy
-from digiforest_registration.utils import get_cloud_center
 
 
 class PoseGraph:
@@ -51,43 +50,39 @@ class PoseGraph:
         except Exception:
             return str()
 
-    def _transform_node_cloud(self, cloud, node_id: int):
-        """
-        Transform the cloud to center it with the node"""
-        center = get_cloud_center(cloud)
-        center_pose = np.eye(4)
-        center_pose[0:3, 3] = center
-        node_pose = self.get_node_pose(node_id)
-        # transform cloud to node pose
-        cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
-        return cloud
+    # def _transform_node_cloud(self, cloud, node_id: int):
+    #     """
+    #     Transform the cloud to center it with the node"""
+    #     center = get_cloud_center(cloud)
+    #     center_pose = np.eye(4)
+    #     center_pose[0:3, 3] = center
+    #     node_pose = self.get_node_pose(node_id)
+    #     # transform cloud to node pose
+    #     cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
+    #     return cloud
 
     def get_node_cloud_downsampled(self, id):
         """
-        Return the downsampled transformed cloud attached to the node
+        Return the downsampled cloud attached to the node
         """
         try:
-            cloud = self._downsampled_clouds[
-                id
-            ].clone()  # need to clone the cloud because where applying a transform to it
-            return self._transform_node_cloud(cloud, id)
+            cloud = self._downsampled_clouds[id]
+            return cloud
         except Exception:
             return o3d.geometry.PointCloud()
 
     def get_node_cloud(self, id):
         """
-        Return the transformed cloud attached to the node
+        Return the cloud attached to the node
         """
         try:
-            cloud = self._clouds[
-                id
-            ].clone()  # need to clone the cloud because where applying a transform to it
-            return self._transform_node_cloud(cloud, id)
+            cloud = self._clouds[id]
+            return cloud
         except Exception:
             return o3d.geometry.PointCloud()
 
     def set_node_pose(self, id, pose):
-        if id in self._nodes and id not in self._initial_nodes:
+        if id not in self._initial_nodes:
             # initializing initial node poses
             self._initial_nodes[id] = copy.deepcopy(self._nodes[id])
         self._nodes[id]["pose"] = pose
