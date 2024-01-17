@@ -95,7 +95,10 @@ if __name__ == "__main__":
                     if is_cloud_name(entry):
                         frontier_cloud_filenames.append(entry)
 
-    # loading the data
+    if args.output_folder is not None and args.tiles_conf_file is None:
+        raise ValueError(f"Tiles configuration file must be specified")
+
+    # Loading the data
     offset = None
     if args.offset is not None and len(args.offset) == 3:
         offset = np.array(
@@ -105,9 +108,10 @@ if __name__ == "__main__":
     cloud_io = CloudIO(offset, args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
 
-    tile_config_reader = TileConfigReader(
-        args.tiles_conf_file, offset, args.grid_size_col, args.grid_size_row
-    )
+    if args.output_folder is not None and args.tiles_conf_file is not None:
+        tile_config_reader = TileConfigReader(
+            args.tiles_conf_file, offset, args.grid_size_col, args.grid_size_row
+        )
 
     # Registration
     failures = []
