@@ -118,9 +118,15 @@ class HorizontalRegistration:
 
         uav_height_pts, uav_height_img = bls_proc.find_local_maxima(uav_canopy)
 
-        # np.savetxt('/tmp/frontier_peaks.txt', bls_height_pts, delimiter=",", fmt='%.4f')
+        import pickle
+
+        pickle.dump(bls_height_pts, open("/tmp/bls_height_pts.pkl", "wb"))
+        pickle.dump(bls_height_img, open("/tmp/bls_height_img.pkl", "wb"))
+        pickle.dump(uav_height_pts, open("/tmp/uav_height_pts.pkl", "wb"))
+        pickle.dump(uav_height_img, open("/tmp/uav_height_img.pkl", "wb"))
 
         if self.method == "graph":
+
             # create feature graphs
             print("Creating the feature graphs")
             G = Graph(bls_height_pts, node_prefix="f")
@@ -145,6 +151,7 @@ class HorizontalRegistration:
                 # return False
             elif len(correspondences_list) == 0:
                 return False
+
         elif self.method == "feature_extraction":
             # find correspondences using feature extraction
             print("Computing correspondences using feature extraction")
@@ -153,7 +160,7 @@ class HorizontalRegistration:
             bls_descriptors = descriptor.compute_feature_descriptors(bls_height_pts)
             feature_matcher = CanopyFeatureMatcher()
             correspondences_list = feature_matcher.match(
-                uav_height_pts, uav_descriptors, bls_height_pts, bls_descriptors
+                bls_height_pts, bls_descriptors, uav_height_pts, uav_descriptors
             )
         else:
             raise ValueError("Unknown method: " + self.method)
@@ -187,3 +194,31 @@ class HorizontalRegistration:
             self.transforms.append(M)
 
         return True
+
+
+if __name__ == "__main__":
+    import pickle
+
+    bls_height_pts = pickle.load(open("/tmp/bls_height_pts.pkl", "rb"))
+    uav_height_pts = pickle.load(open("/tmp/uav_height_pts.pkl", "rb"))
+    bls_height_img = pickle.load(open("/tmp/bls_height_img.pkl", "rb"))
+    uav_height_img = pickle.load(open("/tmp/uav_height_img.pkl", "rb"))
+
+    descriptor = CanopyFeatureDescriptor()
+    uav_descriptors = descriptor.compute_feature_descriptors(uav_height_pts)
+    bls_descriptors = descriptor.compute_feature_descriptors(bls_height_pts)
+    feature_matcher = CanopyFeatureMatcher()
+    correspondences_list = feature_matcher.match(
+        bls_height_pts, bls_descriptors, uav_height_pts, uav_descriptors
+    )
+
+    for i in range(len(correspondences_list)):
+        correspondences = correspondences_list[i]
+
+        draw_correspondences(
+            bls_height_img,
+            bls_height_pts,
+            uav_height_img,
+            uav_height_pts,
+            correspondences,
+        )

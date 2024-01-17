@@ -57,14 +57,14 @@ class HeightImage:
         idx = idx.flatten()  # make it a row vector
         canopy_points = points[idx]
 
-        if self.debug:
-            # Display canopy points as a point cloud
-            import open3d as o3d
+        # if self.debug:
+        #     # Display canopy points as a point cloud
+        #     import open3d as o3d
 
-            print(a, b, c, d)
-            point_cloud = o3d.geometry.PointCloud()
-            point_cloud.points = o3d.utility.Vector3dVector(canopy_points)
-            o3d.visualization.draw_geometries([point_cloud])
+        #     print(a, b, c, d)
+        #     point_cloud = o3d.geometry.PointCloud()
+        #     point_cloud.points = o3d.utility.Vector3dVector(canopy_points)
+        #     o3d.visualization.draw_geometries([point_cloud])
 
         bounding_box = cloud.get_axis_aligned_bounding_box()
 
@@ -178,42 +178,66 @@ class HeightImage:
 
 class CanopyFeatureDescriptor:
     def __init__(self):
-        self.k_nearest_neighbors = 4
+        self.k_nearest_neighbors = 5
 
-    def _get_angle(self, p1: np.ndarray, p2: np.ndarray):
-        return np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+    # def _get_angle(self, p1: np.ndarray, p2: np.ndarray):
+    #     return np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+
+    def _get_angle(self, p: np.ndarray, q1: np.ndarray, q2: np.ndarray):
+        """
+        Returns the angle between the vectors p->q1 and p->q2"""
+        return np.arctan2(q2[1] - p[1], q2[0] - p[0]) - np.arctan2(
+            q1[1] - p[1], q1[0] - p[0]
+        )
 
     def compute_feature_descriptors(self, points: np.ndarray) -> list:
         """
         Returns one descriptor for each point
         """
         descriptors = []
-        size_descriptor = 2 * self.k_nearest_neighbors - 1
+        size_descriptor = 2 * (self.k_nearest_neighbors - 1)
         nbrs = NearestNeighbors(
-            n_neighbors=self.k_nearest_neighbors, algorithm="auto"
+            n_neighbors=self.k_nearest_neighbors + 1, algorithm="auto"
         ).fit(points)
         for pt in points:
             # find the k nearest neighbors
             _, indices = nbrs.kneighbors([pt])
             k_neighbours = points[indices][0]
 
+            # delete the pt itself
+            k_neighbours = np.delete(k_neighbours, 0, axis=0)
+
             # compute the feature descriptor
             descriptor = np.zeros(size_descriptor)
+
             # distance
+            distances = np.linalg.norm(k_neighbours - pt, axis=1)
+            max_distance = np.max(distances)
+            argmax_distance = np.argmax(distances)
+
+            # sort the points by angle
+            k_neighbours = k_neighbours.tolist()
+            q1 = k_neighbours[argmax_distance].copy()
+            k_neighbours.sort(key=lambda x: self._get_angle(pt, q1, x))
+
+            # recomputing the distances with the sorted points
             distances = np.linalg.norm(k_neighbours - pt, axis=1)
             max_distance = np.max(distances)
             argmax_distance = np.argmax(distances)
 
             distances = distances / max_distance
             distances = np.delete(distances, argmax_distance)
-
             descriptor[0 : (self.k_nearest_neighbors - 1)] = distances
 
             # angle
-            angles = np.apply_along_axis(
-                self._get_angle, axis=1, arr=k_neighbours, p2=pt
-            )
-            angles /= np.pi
+            # angles = np.apply_along_axis(
+            #     self._get_angle, axis=1, arr=k_neighbours, p=pt, q1=q1
+            # )
+            angles = [
+                self._get_angle(pt, q1, q2) / (2 * np.pi)
+                for q2 in k_neighbours
+                if not np.array_equal(q1, q2)
+            ]
             descriptor[self.k_nearest_neighbors - 1 :] = angles
 
             descriptors.append(descriptor)
@@ -223,12 +247,12 @@ class CanopyFeatureDescriptor:
 
 class CanopyFeatureMatcher:
     def __init__(self):
-        self.threshold_matching = 10000000
+        self.threshold_matching = 0.5
         self.threshold_ratio_ssd = 0.8
 
     def _two_best_matches(self, distances: list) -> float:
         """
-        eturn the first and second closest points"""
+        Return the first and second closest points"""
         best_match = np.finfo(np.float64).max
         second_best_match = np.finfo(np.float64).max
         for i in range(len(distances)):
@@ -252,6 +276,16 @@ class CanopyFeatureMatcher:
         """
 
         correspondences = []
+        print(
+            descriptors1[9],
+            descriptors2[65],
+            np.linalg.norm(descriptors1[9] - descriptors2[65]),
+        )
+        print(
+            descriptors1[9],
+            descriptors2[84],
+            np.linalg.norm(descriptors1[9] - descriptors2[84]),
+        )
         for i in range(len(descriptors1)):
 
             distances = []
@@ -261,12 +295,21 @@ class CanopyFeatureMatcher:
 
             first_best, second_best = self._two_best_matches(distances)
             ratio_ssd = first_best / second_best
-            if (
-                ratio_ssd > self.threshold_ratio_ssd
-                or first_best > self.threshold_matching
-            ):
-                # feature is rejected
-                continue
+            print(
+                points1[i],
+                points2[np.argmin(distances)],
+                i,
+                np.argmin(distances),
+                first_best,
+                second_best,
+                ratio_ssd,
+            )
+            # if (
+            #     ratio_ssd > self.threshold_ratio_ssd
+            #     or first_best > self.threshold_matching
+            # ):
+            #     # feature is rejected
+            #     continue
 
             correspondences.append([points1[i], points2[np.argmin(distances)]])
 

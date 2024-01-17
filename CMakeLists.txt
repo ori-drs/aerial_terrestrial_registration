@@ -21,7 +21,8 @@ catkin_package(
 ###########
 catkin_python_setup()
 catkin_install_python(PROGRAMS scripts/main.py
-                               scripts/optimization.py           
+                               scripts/optimization.py
+                               src/digiforest_registration/tasks/horizontal_alignment.py           
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
