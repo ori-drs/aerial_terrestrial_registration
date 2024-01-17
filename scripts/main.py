@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from digiforest_registration.tasks.registration import Registration, RegistrationResult
 from digiforest_registration.optimization.io import write_tiles_to_pose_graph_file
-from digiforest_registration.utils import CloudIO, is_cloud_name
+from digiforest_registration.utils import CloudIO, is_cloud_name, TileConfigReader
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from pathlib import Path
 import numpy as np
@@ -22,6 +22,9 @@ def parse_inputs():
     parser.add_argument("--uav_cloud")
     parser.add_argument("--frontier_cloud", default=None)
     parser.add_argument("--frontier_cloud_folder", default=None)
+    parser.add_argument(
+        "--tiles_conf_file", default=None, help="tiles configuration file"
+    )
     parser.add_argument("--ground_segmentation_method", nargs="?", default="default")
     parser.add_argument("--correspondence_matching_method", nargs="?", default="graph")
     parser.add_argument("--offset", nargs="+", type=float, default=None)
@@ -102,6 +105,10 @@ if __name__ == "__main__":
     cloud_io = CloudIO(offset, args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
 
+    tile_config_reader = TileConfigReader(
+        args.tiles_conf_file, offset, args.grid_size_col, args.grid_size_row
+    )
+
     # Registration
     failures = []
     registration_results = {}
@@ -158,10 +165,10 @@ if __name__ == "__main__":
     if args.save_pose_graph is not None and args.output_folder is not None:
         pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
         write_tiles_to_pose_graph_file(
-            args.frontier_cloud_folder,
+            frontier_cloud_folder,
             pose_graph_path,
             args.grid_size_row,
             args.grid_size_col,
             registration_results,
-            cloud_io,
+            tile_config_reader,
         )

@@ -31,7 +31,7 @@ class Registration:
         self.correspondence_matching_method = correspondence_matching_method
         self.debug = debug
         self.icp_fitness_threshold = 0.85
-        self.transform = None
+        self.transform = np.identity(4)
         self.report = {}
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:

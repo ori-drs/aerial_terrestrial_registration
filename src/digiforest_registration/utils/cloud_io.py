@@ -11,6 +11,19 @@ def is_cloud_name(path: Path):
     )
 
 
+def get_tile_id(filename: str):
+    # assuming a filename of the form: tile_0000.ply
+    underscore_index = filename.find("_")
+    dot_index = filename.find(".")
+    return int(filename[underscore_index + 1 : dot_index])
+
+
+def get_tile_filename(id: int):
+    # assuming a filename of the form: tile_id.ply
+    filename = "tile_" + str(id) + ".ply"
+    return filename
+
+
 class CloudIO:
     def __init__(self, offset: np.ndarray, downsample_cloud=False):
         self.offset = offset  # to transform cloud to local coordinates
@@ -52,3 +65,71 @@ class CloudIO:
             utm_cloud = cloud.clone()
             utm_cloud = utm_cloud.translate(-self.offset)
             o3d.t.io.write_point_cloud(filename, utm_cloud)
+
+
+class TileConfigReader:
+    def __init__(
+        self, path: Path, offset: np.ndarray, num_grid_cols: int, num_grid_rows: int
+    ):
+        self.path = path
+        self.offset = offset
+        self.num_grid_cols = num_grid_cols
+        self.num_grid_rows = num_grid_rows
+
+        coordinates = []
+        with open(path, "r") as file:
+            lines = file.readlines()
+            for line in lines:
+                tokens = line.strip().split(",")
+
+                # Parse lines
+                if tokens[0][0] == "#":
+                    continue
+
+                # counter,x_min,y_min,size_x,size_y
+                tile_id = int(tokens[0])
+                x_min = float(tokens[1])
+                y_min = float(tokens[2])
+                size_x = float(tokens[3])
+                size_y = float(tokens[4])
+
+                center = np.array([x_min + size_x / 2, y_min + size_y / 2, 0])
+                # apply offset
+                if self.offset is not None:
+                    center = center + self.offset
+
+                coordinates.append((tile_id, center))
+
+        self.coordinates = coordinates
+
+    def get_tiles_coordinates(self, tiles_folder: Path):
+        coordinates = []
+        cloud_paths = []
+        if not tiles_folder.is_dir():
+            raise ValueError(f"Input folder {str(tiles_folder)} does not exist")
+        else:
+            # Get all the ply files in the folder
+            for entry in tiles_folder.iterdir():
+                if entry.is_file():
+                    if is_cloud_name(entry):
+                        cloud_paths.append(entry)
+
+        for cloud_path in cloud_paths:
+            tile_id = get_tile_id(cloud_path.name)
+            for i in range(len(self.coordinates)):
+                if self.coordinates[i][0] == tile_id:
+                    coordinates.append(self.coordinates[i])
+                    break
+
+        # sort the x coordinates
+        coordinates.sort(key=lambda x: x[1][0])  # column major
+        for col in range(self.num_grid_cols):
+            # sort the y coordinates
+            coordinates[
+                col * self.num_grid_rows : (col + 1) * self.num_grid_rows
+            ] = sorted(
+                coordinates[col * self.num_grid_rows : (col + 1) * self.num_grid_rows],
+                key=lambda x: x[1][1],
+            )
+
+        return coordinates

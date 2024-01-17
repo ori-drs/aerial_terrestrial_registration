@@ -2,8 +2,7 @@ import numpy as np
 import gtsam
 from pathlib import Path
 from digiforest_registration.optimization.pose_graph import PoseGraph
-from digiforest_registration.utils import rotation_matrix_to_quat, get_cloud_center
-from digiforest_registration.utils import is_cloud_name
+from digiforest_registration.utils import rotation_matrix_to_quat, get_tile_filename
 
 
 def read_pose_gt(tokens):
@@ -145,58 +144,23 @@ def write_pose_graph(pose_graph: PoseGraph, path: str):
 
 
 def write_tiles_to_pose_graph_file(
-    tiles_folder_path: str,
+    tiles_folder_path: Path,
     pose_graph_path: str,
     grid_size_row: int,
     grid_size_col: int,
     registration_results: dict,
-    cloud_loader,
+    tiles_config_reader,
 ):
-    def get_tile_number(filename):
-        # assuming a filename of the form: tile_0000.ply
-        underscore_index = filename.find("_")
-        dot_index = filename.find(".")
-        return int(filename[underscore_index + 1 : dot_index])
 
-    # the tiles form a grid, building the grid
-    folder = Path(tiles_folder_path)
-    cloud_paths = []
-    if not folder.is_dir():
-        raise ValueError(f"Input folder [{folder}] does not exist")
-    else:
-        # Get all the ply files in the folder
-        for entry in folder.iterdir():
-            if entry.is_file():
-                if is_cloud_name(entry):
-                    cloud_paths.append(entry)
-
-    # if grid_size_row * grid_size_col != len(cloud_paths):
-    #     raise ValueError(
-    #         f"Input folder [{folder}] does not contain an unexpected number of tiles"
-    #     )
-
-    coordinates = []  # (cloud_path, center)
-    for cloud_path in cloud_paths:
-        cloud = cloud_loader.load_cloud(str(cloud_path))
-        center = get_cloud_center(cloud)
-        coordinates.append((cloud_path, center))
-
-    # sort the x coordinates
-    coordinates.sort(key=lambda x: x[1][0])  # column major
-    for col in range(grid_size_col):
-        # sort the y coordinates
-        coordinates[col * grid_size_row : (col + 1) * grid_size_row] = sorted(
-            coordinates[col * grid_size_row : (col + 1) * grid_size_row],
-            key=lambda x: x[1][1],
-        )
+    coordinates = tiles_config_reader.get_tiles_coordinates(tiles_folder_path)
 
     # write the pose graph
     with open(pose_graph_path, "w") as file:
         for i in range(len(coordinates)):
-            filename = coordinates[i][0].name
-            tile_id = get_tile_number(filename)
-            if not registration_results[filename].success:
-                continue
+            tile_id = coordinates[i][0]
+            filename = get_tile_filename(tile_id)
+            # if not registration_results[filename].success:
+            #     continue
 
             # write the node
             center = coordinates[i][1]
@@ -206,10 +170,10 @@ def write_tiles_to_pose_graph_file(
         # Edges
         saved_edges = []
         for i in range(len(coordinates)):
-            filename = coordinates[i][0].name
-            tile_id = get_tile_number(filename)
-            if not registration_results[filename].success:
-                continue
+            tile_id = coordinates[i][0]
+            filename = get_tile_filename(tile_id)
+            # if not registration_results[filename].success:
+            #     continue
             # write the edge
             # 4 neighbours
             col = i // grid_size_row
@@ -223,6 +187,7 @@ def write_tiles_to_pose_graph_file(
             tile_pose = np.eye(4)
             tile_pose[0:3, 3] = tile_center
             mat = registration_results[filename].transform
+
             # transform tile center to uav in world frame
             transformed_tile_pose = mat @ tile_pose
             quat = rotation_matrix_to_quat(
@@ -243,9 +208,10 @@ def write_tiles_to_pose_graph_file(
                 ):
 
                     neighbour = neighbour_col * grid_size_row + neighbour_row
-                    neighbour_id = get_tile_number(coordinates[neighbour][0].name)
-                    if not registration_results[coordinates[neighbour][0].name].success:
-                        continue
+                    neighbour_id = coordinates[neighbour][0]
+                    # neighbour_filename = get_tile_filename(neighbour_id)
+                    # if not registration_results[neighbour_filename].success:
+                    #     continue
 
                     if (tile_id, neighbour_id) in saved_edges or (
                         neighbour_id,
