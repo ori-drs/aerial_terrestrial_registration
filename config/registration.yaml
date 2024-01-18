@@ -1,0 +1,9 @@
+uav_cloud: /home/benoit/data/digiforest/test/inputs_registration/uav_normals_for_exp01.ply
+frontier_cloud_folder: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/tiles_subset/
+tiles_conf_file: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/tiles/tiles.csv  
+offset: [-399200.00,-6785900.00,0.0]
+output_folder: /home/benoit/data/digiforest/test/inputs_registration/transformed_clouds 
+save_pose_graph: True
+grid_size_row: 5
+grid_size_col: 7
+correspondence_matching_method: graph

@@ -1,0 +1,4 @@
+frontier_cloud_folder: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/tiles_subset
+offset: [-399200.00,-6785900.00,0.0]
+pose_graph_file: /home/benoit/data/digiforest/test/inputs_registration/transformed_clouds/pose_graph.g2o
+output_folder: /home/benoit/data/digiforest/test/inputs_registration/optimized_clouds
