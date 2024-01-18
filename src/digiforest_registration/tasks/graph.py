@@ -25,7 +25,11 @@ class Graph:
                 )
 
     def get_angle(self, p1, p2):
-        return np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+        angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+        # TODO double check that :
+        if angle < 0:
+            angle += np.pi
+        return angle
 
     def display_graph(self, display_weights: bool = False, display_edges: bool = True):
         if display_edges:
@@ -66,6 +70,8 @@ class CorrespondenceGraph:
         self.g1 = graph1
         self.g2 = graph2
         self.graph.remove_edges_from(list(self.graph.edges()))
+        self.distance_threshold = 0.2
+        self.angle_threshold = 0.25
 
         # Creating the edges
         for node1 in self.graph.nodes():
@@ -86,24 +92,25 @@ class CorrespondenceGraph:
         )
 
     def compare_edge(self, edge1, edge2, use_angle=False, debug=False) -> bool:
+        """
+        Return true if the two edges are similar"""
         if edge1 is None or edge2 is None:
             return False
 
         w1 = edge1["distance"]
         w2 = edge2["distance"]
-        distance_threshold = 0.2
+
         if debug:
             print(w1, w2, abs(w1 - w2) / w2)
-        if abs(w1 - w2) / w2 > distance_threshold:
+        if abs(w1 - w2) / w2 > self.distance_threshold:
             return False
 
         if use_angle:
             a1 = edge1["angle"]
             a2 = edge2["angle"]
-            angle_threshold = 0.25
             if debug:
                 print(a1, a2, abs(a1 - a2))
-            if abs(a1 - a2) > angle_threshold:
+            if abs(a1 - a2) > self.angle_threshold:
                 return False
         return True
 

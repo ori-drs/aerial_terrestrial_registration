@@ -9,3 +9,4 @@ from .height_image import (
 from .graph import Graph, CorrespondenceGraph
 from .icp import icp
 from .registration import Registration, RegistrationResult
+from .tree_trunk_segmentation import TreeTrunkSegmentation

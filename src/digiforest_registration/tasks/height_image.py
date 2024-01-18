@@ -17,6 +17,30 @@ class HeightImage:
         # coordinates of the top left corner of the image in the utm frame
         self.top_left_corner = [0, 0, 0]
 
+    @staticmethod
+    def cloud_point_to_pixel(point, cloud_bounding_box, image_resolution):
+        """
+        Convert a point to a pixel coordinate"""
+        min_bound = cloud_bounding_box.min_bound.numpy()
+        max_bound = cloud_bounding_box.max_bound.numpy()
+        height = int(np.ceil((max_bound[1] - min_bound[1]) / image_resolution))
+        width = int(np.ceil((max_bound[0] - min_bound[0]) / image_resolution))
+        x = max(
+            0,
+            min(
+                int(np.floor((point[0] - min_bound[0]) / image_resolution)),
+                width - 1,
+            ),
+        )
+        y = max(
+            0,
+            min(
+                int(np.floor((point[1] - min_bound[1]) / image_resolution)),
+                height - 1,
+            ),
+        )
+        return np.array([x, y], dtype=np.int32)
+
     def pixel_to_cloud(self, x, y):
         """
         Convert pixel coordinates to cloud coordinates"""

@@ -5,6 +5,7 @@ from digiforest_registration.tasks.height_image import (
     draw_correspondences,
 )
 from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
+from digiforest_registration.tasks.tree_trunk_segmentation import TreeTrunkSegmentation
 
 import numpy as np
 
@@ -28,7 +29,10 @@ class HorizontalRegistration:
         self.max_number_of_clique = 5
         self.clique_size = 0
         self.frontier_peaks_size = 0
-        self.method = method  # graph or feature_extraction
+        self.feature_association_method = method  # graph or feature_extraction
+        self.bls_feature_extraction_method = (
+            "canopy_map"  # canopy_map or tree_segmentation
+        )
 
     def find_transform(self, src, dst, estimate_scale=False):
         """Estimate N-D similarity transformation with or without scaling.
@@ -114,23 +118,43 @@ class HorizontalRegistration:
         bls_canopy = bls_proc.compute_canopy_image(self.cloud, *self.cloud_ground_plane)
 
         # find maxima in the heigh image
-        bls_height_pts, bls_height_img = uav_proc.find_local_maxima(bls_canopy)
+        bls_height_pts, bls_height_img = bls_proc.find_local_maxima(bls_canopy)
 
-        uav_height_pts, uav_height_img = bls_proc.find_local_maxima(uav_canopy)
+        uav_height_pts, uav_height_img = uav_proc.find_local_maxima(uav_canopy)
 
-        import pickle
+        if self.bls_feature_extraction_method == "tree_segmentation":
+            # find tree trunks
+            tree_trunk_segmentation = TreeTrunkSegmentation()
+            bls_pts = tree_trunk_segmentation.find_tree_trunks(
+                self.cloud, self.cloud_ground_plane
+            )
+            bounding_box = self.cloud.get_axis_aligned_bounding_box()
+            # convert to pixel coordinates
+            bls_height_pts2 = np.zeros((bls_pts.shape[0], 2), dtype=np.int32)
+            for i in range(bls_pts.shape[0]):
+                bls_height_pts2[i] = bls_proc.cloud_point_to_pixel(
+                    bls_pts[i], bounding_box, image_resolution=0.1
+                )
 
-        pickle.dump(bls_height_pts, open("/tmp/bls_height_pts.pkl", "wb"))
-        pickle.dump(bls_height_img, open("/tmp/bls_height_img.pkl", "wb"))
-        pickle.dump(uav_height_pts, open("/tmp/uav_height_pts.pkl", "wb"))
-        pickle.dump(uav_height_img, open("/tmp/uav_height_img.pkl", "wb"))
+            bls_height_pts = bls_height_pts2  # TODO improve that
+        elif self.bls_feature_extraction_method != "canopy_map":
+            raise ValueError("Unknown method: " + self.bls_feature_extraction_method)
 
-        if self.method == "graph":
+        # import pickle
+        # pickle.dump(bls_height_pts, open("/tmp/bls_height_pts.pkl", "wb"))
+        # pickle.dump(bls_height_img, open("/tmp/bls_height_img.pkl", "wb"))
+        # pickle.dump(uav_height_pts, open("/tmp/uav_height_pts.pkl", "wb"))
+        # pickle.dump(uav_height_img, open("/tmp/uav_height_img.pkl", "wb"))
+
+        if self.feature_association_method == "graph":
 
             # create feature graphs
             print("Creating the feature graphs")
             G = Graph(bls_height_pts, node_prefix="f")
-            # edge1 = G.graph.get_edge_data('f_1', 'f_7')
+            # G.display_graph()
+            # edge1 = G.graph.get_edge_data('f_7', 'f_5')
+            # edge2 = H.graph.get_edge_data('uav_6', 'uav_9')
+            # print(correspondence_graph.compare_edge(edge1, edge2, use_angle=True, debug=True))
             H = Graph(uav_height_pts, node_prefix="uav")
 
             print("Number of nodes of the frontier graph", G.graph.number_of_nodes())
@@ -138,6 +162,9 @@ class HorizontalRegistration:
 
             # find maximum clique in the correspondence graph
             correspondence_graph = CorrespondenceGraph(G, H)
+            if self.bls_feature_extraction_method == "tree_segmentation":
+                correspondence_graph.distance_threshold = 0.25
+
             print("Computing the maximum clique")
             correspondences_list = correspondence_graph.maximum_clique()
 
@@ -152,7 +179,7 @@ class HorizontalRegistration:
             elif len(correspondences_list) == 0:
                 return False
 
-        elif self.method == "feature_extraction":
+        elif self.feature_association_method == "feature_extraction":
             # find correspondences using feature extraction
             print("Computing correspondences using feature extraction")
             descriptor = CanopyFeatureDescriptor()
@@ -163,7 +190,7 @@ class HorizontalRegistration:
                 bls_height_pts, bls_descriptors, uav_height_pts, uav_descriptors
             )
         else:
-            raise ValueError("Unknown method: " + self.method)
+            raise ValueError("Unknown method: " + self.feature_association_method)
 
         for i in range(len(correspondences_list)):
             correspondences = correspondences_list[i]
@@ -187,6 +214,7 @@ class HorizontalRegistration:
                     correspondences[i][1][0], correspondences[i][1][1]
                 )
 
+            # need at least 3 pairs of points to find a transformation
             if bls_pts.shape[0] < 3:
                 return False
 
