@@ -4,6 +4,7 @@ from digiforest_registration.optimization.io import write_tiles_to_pose_graph_fi
 from digiforest_registration.utils import CloudIO, is_cloud_name, TileConfigReader
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from pathlib import Path
+from typing import Tuple
 import numpy as np
 import os
 import open3d as o3d
@@ -60,14 +61,8 @@ def parse_inputs():
     return args
 
 
-if __name__ == "__main__":
-    np.set_printoptions(suppress=True)
-    # set seed for deterministic results
-    o3d.utility.random.seed(12345)
+def check_inputs_validity(args) -> Tuple[str, str, str]:
 
-    args = parse_inputs()
-
-    # Check validity of inputs
     frontier_cloud_filenames = []
     uav_cloud_filename = Path(args.uav_cloud)
     if not uav_cloud_filename.exists():
@@ -97,6 +92,23 @@ if __name__ == "__main__":
 
     if args.output_folder is not None and args.tiles_conf_file is None:
         raise ValueError(f"Tiles configuration file must be specified")
+
+    return frontier_cloud_filenames, frontier_cloud_folder, uav_cloud_filename
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    # set seed for deterministic results
+    o3d.utility.random.seed(12345)
+
+    args = parse_inputs()
+
+    # Check validity of inputs
+    (
+        frontier_cloud_filenames,
+        frontier_cloud_folder,
+        uav_cloud_filename,
+    ) = check_inputs_validity(args)
 
     # Loading the data
     offset = None
