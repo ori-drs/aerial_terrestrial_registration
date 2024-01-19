@@ -22,12 +22,14 @@ class Registration:
         frontier_cloud,
         ground_segmentation_method,
         correspondence_matching_method,
+        bls_feature_extraction_method,
         debug=False,
     ):
         self.uav_cloud = uav_cloud
         self.frontier_cloud = frontier_cloud  # shouldn't modify the input cloud
         self.ground_segmentation_method = ground_segmentation_method
         self.correspondence_matching_method = correspondence_matching_method
+        self.bls_feature_extraction_method = bls_feature_extraction_method
         self.debug = debug
         self.icp_fitness_threshold = 0.85
         self.transform = np.identity(4)
@@ -113,7 +115,8 @@ class Registration:
             uav_groud_plane,
             self.frontier_cloud,
             frontier_ground_plane,
-            method=self.correspondence_matching_method,
+            correspondence_matching_method=self.correspondence_matching_method,
+            bls_feature_extraction_method=self.bls_feature_extraction_method,
             debug=self.debug,
         )
         self.success = horizontal_registration.process()

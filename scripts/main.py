@@ -28,6 +28,9 @@ def parse_inputs():
     )
     parser.add_argument("--ground_segmentation_method", nargs="?", default="default")
     parser.add_argument("--correspondence_matching_method", nargs="?", default="graph")
+    parser.add_argument(
+        "--bls_feature_extraction_method", nargs="?", default="canopy_map"
+    )
     parser.add_argument("--offset", nargs="+", type=float, default=None)
     parser.add_argument("--output_folder", default=None)
     parser.add_argument(
@@ -158,6 +161,7 @@ if __name__ == "__main__":
             frontier_cloud,
             args.ground_segmentation_method,
             args.correspondence_matching_method,
+            args.bls_feature_extraction_method,
             debug=args.debug,
         )
         success = registration.registration()

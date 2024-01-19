@@ -18,7 +18,8 @@ class HorizontalRegistration:
         cloud,
         cloud_ground_plane,
         debug=False,
-        method="graph",
+        correspondence_matching_method="graph",
+        bls_feature_extraction_method="canopy_map",
     ):
         self.uav_cloud = uav_cloud
         self.uav_ground_plane = uav_ground_plane
@@ -29,9 +30,11 @@ class HorizontalRegistration:
         self.max_number_of_clique = 5
         self.clique_size = 0
         self.frontier_peaks_size = 0
-        self.feature_association_method = method  # graph or feature_extraction
+        self.feature_association_method = (
+            correspondence_matching_method  # graph or feature_extraction
+        )
         self.bls_feature_extraction_method = (
-            "canopy_map"  # canopy_map or tree_segmentation
+            bls_feature_extraction_method  # canopy_map or tree_segmentation
         )
 
     def find_transform(self, src, dst, estimate_scale=False):
@@ -157,8 +160,16 @@ class HorizontalRegistration:
             # print(correspondence_graph.compare_edge(edge1, edge2, use_angle=True, debug=True))
             H = Graph(uav_height_pts, node_prefix="uav")
 
-            print("Number of nodes of the frontier graph", G.graph.number_of_nodes())
-            print("Number of nodes of the uav graph", H.graph.number_of_nodes())
+            print(
+                "Number of nodes and edges of the frontier graph",
+                G.graph.number_of_nodes(),
+                G.graph.number_of_edges(),
+            )
+            print(
+                "Number of nodes and edges of the uav graph",
+                H.graph.number_of_nodes(),
+                H.graph.number_of_edges(),
+            )
 
             # find maximum clique in the correspondence graph
             correspondence_graph = CorrespondenceGraph(G, H)
