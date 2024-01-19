@@ -64,6 +64,7 @@ def parse_inputs():
 def check_inputs_validity(args) -> Tuple[str, str, str]:
 
     frontier_cloud_filenames = []
+    frontier_cloud_folder = None
     uav_cloud_filename = Path(args.uav_cloud)
     if not uav_cloud_filename.exists():
         raise ValueError(f"Input file [{uav_cloud_filename}] does not exist")
@@ -90,7 +91,11 @@ def check_inputs_validity(args) -> Tuple[str, str, str]:
                     if is_cloud_name(entry):
                         frontier_cloud_filenames.append(entry)
 
-    if args.output_folder is not None and args.tiles_conf_file is None:
+    if (
+        (args.output_folder is not None)
+        and args.save_pose_graph
+        and (args.tiles_conf_file is None)
+    ):
         raise ValueError(f"Tiles configuration file must be specified")
 
     return frontier_cloud_filenames, frontier_cloud_folder, uav_cloud_filename
@@ -178,7 +183,7 @@ if __name__ == "__main__":
     print("Failures: ", failures)
 
     # save pose graph
-    if args.save_pose_graph is not None and args.output_folder is not None:
+    if args.save_pose_graph and args.output_folder is not None:
         pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
         write_tiles_to_pose_graph_file(
             frontier_cloud_folder,
