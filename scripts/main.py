@@ -136,10 +136,13 @@ if __name__ == "__main__":
     for frontier_cloud_filename in frontier_cloud_filenames:
 
         print("Processing file: ", frontier_cloud_filename.name)
-        frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
+        original_frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
 
+        # cropping input clouds
         if args.crop_frontier_cloud:
-            frontier_cloud = crop_cloud_to_size(frontier_cloud, size=30)
+            frontier_cloud = crop_cloud_to_size(original_frontier_cloud, size=30)
+        else:
+            frontier_cloud = original_frontier_cloud
         cropped_uav_cloud = crop_cloud(uav_cloud, frontier_cloud, padding=20)
 
         if args.debug:
@@ -173,7 +176,7 @@ if __name__ == "__main__":
                 args.output_folder, frontier_cloud_filename.name
             )
             cloud_io.save_cloud(
-                registration.frontier_cloud_aligned,
+                registration.transform_cloud(original_frontier_cloud),
                 output_filename,
                 local_coordinates=True,
             )

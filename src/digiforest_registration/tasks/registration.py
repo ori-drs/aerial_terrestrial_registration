@@ -26,12 +26,12 @@ class Registration:
     ):
         self.uav_cloud = uav_cloud
         self.frontier_cloud = frontier_cloud  # shouldn't modify the input cloud
-        self.frontier_cloud_aligned = frontier_cloud.clone()
         self.ground_segmentation_method = ground_segmentation_method
         self.correspondence_matching_method = correspondence_matching_method
         self.debug = debug
         self.icp_fitness_threshold = 0.85
         self.transform = np.identity(4)
+        self.success = False
         self.report = {}
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
@@ -116,15 +116,11 @@ class Registration:
             method=self.correspondence_matching_method,
             debug=self.debug,
         )
-        success = horizontal_registration.process()
-        if not success:
-            self.colorize_cloud(self.frontier_cloud_aligned, 0.0)
+        self.success = horizontal_registration.process()
+        if not self.success:
             return False
 
         icp_fitness = self.find_transform(horizontal_registration, transform)
-
-        self.frontier_cloud_aligned.transform(self.transform)
-        self.colorize_cloud(self.frontier_cloud_aligned, icp_fitness)
 
         return icp_fitness > self.icp_fitness_threshold
 
@@ -139,3 +135,16 @@ class Registration:
 
         index = np.floor(icp_fitness * num_colors).astype(int)
         cloud.paint_uniform_color(colormap(values[index])[:3])
+
+    def transform_cloud(self, cloud):
+        """
+        Transform the cloud using the estimated transformation matrix"""
+
+        transformed_cloud = cloud.clone()
+        if not self.success:
+            self.colorize_cloud(transformed_cloud, 0.0)
+            return transformed_cloud
+
+        transformed_cloud.transform(self.transform)
+        self.colorize_cloud(transformed_cloud, self.report["icp_fitness"])
+        return transformed_cloud
