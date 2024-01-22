@@ -11,13 +11,41 @@ class TreeTrunkSegmentation:
         # TODO set debug_level according to debug
         self.tree_seg = TreeSegmentation(debug_level=0, clustering_method="voronoi")
 
+    def _point_plane_distance(
+        self, a: float, b: float, c: float, d: float, array
+    ) -> float:
+        """
+        Calculate the distance between a point and a plane
+        ax + by + cz + d = 0
+        """
+        normal = np.tile(np.array([a, b, c]), (array.shape[0], 1))
+        d_array = np.tile(d, (array.shape[0], 1))
+
+        # Calculate the distance using the formula
+        dot_product = np.sum(array * normal, axis=1)
+        dot_product = dot_product[:, np.newaxis]  # make it a column vector
+        numerator = np.abs(dot_product + d_array)
+        denominator = np.linalg.norm(np.array([a, b, c]))
+
+        distance = numerator / denominator
+        return distance
+
     def find_tree_trunks(self, cloud, groud_plane) -> np.ndarray:
         """
         ground_plane is the equation of the ground plane in the form [a, b, c, d]
         Returns an array of tree trunk positions"""
         assert isinstance(cloud, o3d.cuda.pybind.t.geometry.PointCloud)
 
-        [_, _, _, d] = groud_plane
+        points = np.asarray(cloud.to_legacy().points)
+        dist = self._point_plane_distance(
+            groud_plane[0], groud_plane[1], groud_plane[2], groud_plane[3], points
+        )
+        idx = (dist > 0) & (dist < 0.2)
+        idx = idx.flatten()  # make it a row vector
+        tree_points = points[idx]
+        z_ground = tree_points[0][
+            2
+        ]  # TODO can improve how the z coordinate of the ground is detected
 
         # segment stems
         clusters = self.tree_seg.process(
@@ -26,8 +54,8 @@ class TreeTrunkSegmentation:
             max_cluster_radius=2,
             n_threads=8,
             point_fraction=0.1,
-            crop_lower_bound=-d + 4,
-            crop_upper_bound=-d + 6,
+            crop_lower_bound=z_ground + 4,
+            crop_upper_bound=z_ground + 6,
         )
 
         trunks_positions = []

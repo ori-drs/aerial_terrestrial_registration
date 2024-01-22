@@ -93,6 +93,10 @@ class Registration:
                 best_icp_fitness_score = icp_fitness
                 self.transform = icp_transform @ transform
 
+            if best_icp_fitness_score > 0.95:
+                # we are happy with the result
+                break
+
         self.report["icp_fitness"] = best_icp_fitness_score
         self.report["clique_size"] = horizontal_registration.clique_size
         return best_icp_fitness_score

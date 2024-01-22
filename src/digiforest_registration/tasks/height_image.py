@@ -49,6 +49,7 @@ class HeightImage:
         y_cloud = y * self.image_resolution + self.top_left_corner[1]
         return [x_cloud, y_cloud]
 
+    # TODO it's a static method
     def _point_plane_distance(
         self, a: float, b: float, c: float, d: float, array: NDArray[float64]
     ) -> float:
