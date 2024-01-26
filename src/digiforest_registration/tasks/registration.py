@@ -13,6 +13,7 @@ class RegistrationResult:
     def __init__(self):
         self.success = False
         self.transform = None
+        self.icp_fitness = 0.0
 
 
 class Registration:

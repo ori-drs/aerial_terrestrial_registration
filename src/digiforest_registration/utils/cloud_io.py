@@ -11,6 +11,14 @@ def is_cloud_name(path: Path):
     )
 
 
+def get_payload_cloud_timestamp(path: Path):
+    """
+    Returns the timestamp of a payload cloud file name."""
+    name = path.stem
+    x = name.split("_")
+    return (x[1], x[2])
+
+
 def get_tile_id(filename: str):
     # assuming a filename of the form: tile_0000.ply
     underscore_index = filename.find("_")

@@ -31,3 +31,10 @@ def rotation_matrix_to_quat(rotation_matrix: np.ndarray) -> np.ndarray:
     Convert a rotation matrix to a (x,y,z,w) quaternion"""
     r = Rotation.from_matrix(rotation_matrix)
     return r.as_quat()
+
+
+def quat_to_rotation_matrix(quat: np.ndarray) -> np.ndarray:
+    """
+    Convert a (x,y,z,w) quaternion to a rotation matrix"""
+    r = Rotation.from_quat(quat)
+    return r.as_matrix()

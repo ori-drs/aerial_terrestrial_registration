@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from digiforest_registration.tasks.registration import Registration, RegistrationResult
-from digiforest_registration.optimization.io import write_tiles_to_pose_graph_file
+from digiforest_registration.optimization.io import (
+    write_tiles_to_pose_graph_file,
+    write_aerial_transforms_to_pose_graph_file,
+)
 from digiforest_registration.utils import CloudIO, is_cloud_name, TileConfigReader
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from pathlib import Path
@@ -38,6 +41,9 @@ def parse_inputs():
     )
     parser.add_argument(
         "--save_pose_graph", default=False, action="store_true", help="save pose graph"
+    )
+    parser.add_argument(
+        "--pose_graph_file", default=None, help="frontier pose graph file"
     )
     parser.add_argument(
         "--downsample-cloud",
@@ -93,13 +99,6 @@ def check_inputs_validity(args) -> Tuple[str, str, str]:
                 if entry.is_file():
                     if is_cloud_name(entry):
                         frontier_cloud_filenames.append(entry)
-
-    if (
-        (args.output_folder is not None)
-        and args.save_pose_graph
-        and (args.tiles_conf_file is None)
-    ):
-        raise ValueError(f"Tiles configuration file must be specified")
 
     return frontier_cloud_filenames, frontier_cloud_folder, uav_cloud_filename
 
@@ -173,6 +172,7 @@ if __name__ == "__main__":
         result = RegistrationResult()
         result.transform = registration.transform
         result.success = success
+        result.icp_fitness = registration.report["icp_fitness"]
         registration_results[frontier_cloud_filename.name] = result
 
         if args.output_folder is not None:
@@ -189,14 +189,32 @@ if __name__ == "__main__":
     print("Total number of clouds: ", len(frontier_cloud_filenames))
     print("Failures: ", failures)
 
+    # save registration results
+    if args.output_folder is not None:
+        import pickle
+
+        output_file_path = os.path.join(args.output_folder, "registration_results.pkl")
+        pickle.dump(registration_results, open(output_file_path, "wb"))
+
     # save pose graph
-    if args.save_pose_graph and args.output_folder is not None:
-        pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
-        write_tiles_to_pose_graph_file(
-            frontier_cloud_folder,
-            pose_graph_path,
-            args.grid_size_row,
-            args.grid_size_col,
-            registration_results,
-            tile_config_reader,
-        )
+    if args.tiles_conf_file is not None:
+
+        # saving the pose graph in case we are processing tiles
+        if args.save_pose_graph and args.output_folder is not None:
+            pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
+            write_tiles_to_pose_graph_file(
+                frontier_cloud_folder,
+                pose_graph_path,
+                args.grid_size_row,
+                args.grid_size_col,
+                registration_results,
+                tile_config_reader,
+            )
+
+    elif args.pose_graph_file is not None:
+        # processing frontier clouds
+        if args.save_pose_graph and args.output_folder is not None:
+            output_pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
+            write_aerial_transforms_to_pose_graph_file(
+                Path(args.pose_graph_file), output_pose_graph_path, registration_results
+            )
