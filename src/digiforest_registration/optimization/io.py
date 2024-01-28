@@ -1,8 +1,13 @@
 import numpy as np
 import gtsam
 from pathlib import Path
+import shutil
 from digiforest_registration.optimization.pose_graph import PoseGraph
-from digiforest_registration.utils import rotation_matrix_to_quat, get_tile_filename
+from digiforest_registration.utils import (
+    rotation_matrix_to_quat,
+    get_tile_filename,
+    get_payload_cloud_timestamp,
+)
 
 
 def read_pose_gt(tokens):
@@ -53,7 +58,7 @@ def read_pose_edge_slam(tokens):
     return relative_pose, relative_info, parent_id, child_id
 
 
-def load_pose_graph(path: str, clouds_folder_path: Path, cloud_loader):
+def load_pose_graph(path: str, clouds_folder_path=None, cloud_loader=None):
     graph = PoseGraph()
     with open(path, "r") as file:
         lines = file.readlines()
@@ -106,7 +111,7 @@ def write_graph_node(node):
     qz = node["pose"].rotation().toQuaternion().z()
     qw = node["pose"].rotation().toQuaternion().w()
 
-    stream = f"VERTEX_SE3:QUAT_TIME {id} {x} {y} {z} {qx} {qy} {qz} {qw} {sec} {nsec}\n"
+    stream = f"VERTEX_SE3:QUAT_TIME {id} {x:.6f} {y:.6f} {z:.6f} {qx:.6f} {qy:.6f} {qz:.6f} {qw:.6f} {sec} {nsec}\n"
     return stream
 
 
@@ -129,18 +134,41 @@ def write_graph_edge(edge):
             info += f"{edge['info'][i][j]} "
     info = info[:-1]
 
-    stream = (
-        f"EDGE_SE3:QUAT {parent_id} {child_id} {x} {y} {z} {qx} {qy} {qz} {qw} {info}\n"
-    )
+    stream = f"EDGE_SE3:QUAT {parent_id} {child_id} {x:.6f} {y:.6f} {z:.6f} {qx:.6f} {qy:.6f} {qz:.6f} {qw} {info}\n"
     return stream
 
 
 def write_pose_graph(pose_graph: PoseGraph, path: str):
     with open(path, "w") as file:
-        for node in pose_graph.nodes:
+        for _, node in pose_graph.nodes.items():
             file.write(write_graph_node(node))
         for edge in pose_graph.edges:
             file.write(write_graph_edge(edge))
+
+
+def write_aerial_transforms_to_pose_graph_file(
+    input_pose_graph_file: Path,
+    output_pose_graph_file: Path,
+    registration_results: dict,
+):
+
+    pose_graph = load_pose_graph(str(input_pose_graph_file))
+    shutil.copyfile(str(input_pose_graph_file), str(output_pose_graph_file))
+
+    with open(str(output_pose_graph_file), "a") as file:
+        for filename, result in registration_results.items():
+            if result.success and result.icp_fitness > 0.90:
+                try:
+                    stamp = get_payload_cloud_timestamp(Path(filename))
+                    node_id = pose_graph.get_node_id_from_stamp(stamp)
+                except Exception:
+                    continue
+
+                mat = result.transform
+                quat = rotation_matrix_to_quat(mat[0:3, 0:3])  # x, y, z, w
+                file.write(
+                    f"EDGE_SE3:QUAT {node_id} {node_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                )
 
 
 def write_tiles_to_pose_graph_file(
@@ -188,7 +216,7 @@ def write_tiles_to_pose_graph_file(
             tile_pose[0:3, 3] = tile_center
             mat = registration_results[filename].transform
 
-            # transform tile center to uav in world frame
+            # transform tile center-to-uav in world frame
             transformed_tile_pose = mat @ tile_pose
             quat = rotation_matrix_to_quat(
                 transformed_tile_pose[0:3, 0:3]

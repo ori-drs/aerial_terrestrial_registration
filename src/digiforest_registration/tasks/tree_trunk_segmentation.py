@@ -42,20 +42,27 @@ class TreeTrunkSegmentation:
         )
         idx = (dist > 0) & (dist < 0.2)
         idx = idx.flatten()  # make it a row vector
-        tree_points = points[idx]
-        z_ground = tree_points[0][
-            2
-        ]  # TODO can improve how the z coordinate of the ground is detected
+        ground_points = points[idx]
+        # z_ground = ground_points[0][
+        #     2
+        # ]
+        # TODO can improve how the z coordinate of the ground is detected
+        z_ground = np.mean(ground_points[:, 2])
+
+        cloud_translated = cloud.clone()
+        cloud_translated.translate([0, 0, -z_ground])
 
         # segment stems
         clusters = self.tree_seg.process(
-            cloud=cloud,
+            cloud=cloud_translated,
             cloth=None,
             max_cluster_radius=2,
             n_threads=8,
             point_fraction=0.1,
-            crop_lower_bound=z_ground + 4,
-            crop_upper_bound=z_ground + 6,
+            # crop_lower_bound=z_ground + 4,
+            # crop_upper_bound=z_ground + 6,
+            crop_lower_bound=4,
+            crop_upper_bound=6,
         )
 
         trunks_positions = []
