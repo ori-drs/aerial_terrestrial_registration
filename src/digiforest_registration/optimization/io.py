@@ -58,7 +58,13 @@ def read_pose_edge_slam(tokens):
     return relative_pose, relative_info, parent_id, child_id
 
 
-def load_pose_graph(path: str, clouds_folder_path=None, cloud_loader=None):
+def load_pose_graph(
+    path: str,
+    clouds_folder_path=None,
+    cloud_loader=None,
+    load_clouds=False,
+    load_tiles=False,
+):
     graph = PoseGraph()
     with open(path, "r") as file:
         lines = file.readlines()
@@ -76,26 +82,66 @@ def load_pose_graph(path: str, clouds_folder_path=None, cloud_loader=None):
                 pose, pose_stamp, pose_id = read_pose_slam(tokens[1:])
                 graph.add_node(pose_id, pose_stamp, pose)
 
-                if clouds_folder_path is not None:
+                if clouds_folder_path is not None and load_clouds:
                     tile_name = "tile_" + str(pose_id) + ".ply"
                     cloud_path = clouds_folder_path / tile_name
-                    cloud = cloud_loader.load_cloud(str(cloud_path))
-
-                    graph.add_clouds(pose_id, cloud, tile_name)
+                    if not cloud_path.exists():
+                        # try with a payload cloud name
+                        payload_name = (
+                            "cloud_" + pose_stamp[0] + "_" + pose_stamp[1] + ".ply"
+                        )
+                        cloud_path = clouds_folder_path / payload_name
+                        if cloud_path.exists():
+                            cloud = cloud_loader.load_cloud(str(cloud_path))
+                            graph.add_clouds(pose_id, cloud, tile_name)
+                    else:
+                        cloud = cloud_loader.load_cloud(str(cloud_path))
+                        graph.add_clouds(pose_id, cloud, tile_name)
 
             elif tokens[0] == "EDGE_SE3:QUAT":
                 relative_pose, relative_info, parent_id, child_id = read_pose_edge_slam(
                     tokens[1:]
                 )
-                if parent_id != child_id:
-                    graph.add_edge(
-                        parent_id, child_id, "center", relative_pose, relative_info
-                    )
+                if load_tiles:
+                    # Dealing with tiles
+                    # edges between tiles and aerial constraints
+                    if parent_id != child_id:
+                        graph.add_edge(
+                            parent_id,
+                            child_id,
+                            "in-between",
+                            relative_pose,
+                            relative_info,
+                        )
+                    else:
+                        graph.add_edge(
+                            parent_id, child_id, "aerial", relative_pose, relative_info
+                        )
                 else:
-                    graph.add_edge(
-                        parent_id, child_id, "aerial", relative_pose, relative_info
-                    )
-
+                    # dealing with payload clouds
+                    if parent_id != child_id:
+                        if parent_id == child_id - 1:
+                            graph.add_edge(
+                                parent_id,
+                                child_id,
+                                "in-between",
+                                relative_pose,
+                                relative_info,
+                            )
+                        else:
+                            print("loop closure", parent_id, child_id)
+                            continue
+                            graph.add_edge(
+                                parent_id,
+                                child_id,
+                                "loop-closure",
+                                relative_pose,
+                                relative_info,
+                            )
+                    else:
+                        graph.add_edge(
+                            parent_id, child_id, "aerial", relative_pose, relative_info
+                        )
     return graph
 
 
@@ -164,7 +210,10 @@ def write_aerial_transforms_to_pose_graph_file(
                 except Exception:
                     continue
 
-                mat = result.transform
+                transform = result.transform
+                node_pose = pose_graph.get_node_pose(node_id)
+                mat = transform @ node_pose.matrix()
+                # transform the node pose
                 quat = rotation_matrix_to_quat(mat[0:3, 0:3])  # x, y, z, w
                 file.write(
                     f"EDGE_SE3:QUAT {node_id} {node_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
