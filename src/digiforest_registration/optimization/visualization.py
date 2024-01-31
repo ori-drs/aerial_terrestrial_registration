@@ -2,8 +2,6 @@ import copy
 import numpy as np
 import open3d as o3d
 
-from digiforest_registration.utils import get_cloud_center
-
 # colors
 RED = [1, 0.0, 0.0]
 GRAY = [0.3, 0.3, 0.3]
@@ -47,21 +45,25 @@ def graph_to_geometries(
             frames_vis += frame_mesh
 
         if show_nodes:
-            node_mesh = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
+            node_mesh = o3d.geometry.TriangleMesh.create_sphere(radius=0.25)
             node_mesh.translate(pos)
             nodes_vis += node_mesh
 
         if show_clouds:
-            cloud = pose_graph.get_node_cloud_downsampled(id)
-            # Transform the cloud to center it with the node
-            center = get_cloud_center(cloud)
-            center_pose = np.eye(4)
-            center_pose[0:3, 3] = center
-            node_pose = pose_graph.get_node_pose(id)
-            cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
+            try:
+                cloud = pose_graph.get_node_cloud_downsampled(id)
+                # TODO add flag for tiles
+                # Transform the cloud to center it with the node
+                # center = get_cloud_center(cloud)
+                # center_pose = np.eye(4)
+                # center_pose[0:3, 3] = center
+                # node_pose = pose_graph.get_node_pose(id)
+                # cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
 
-            cloud.paint_uniform_color(COLORS[id % len(COLORS)])
-            geometries.append(cloud.to_legacy())
+                cloud.paint_uniform_color(COLORS[id % len(COLORS)])
+                geometries.append(cloud.to_legacy())
+            except Exception:
+                pass
 
     if len(node_centers) == 0:
         return geometries
@@ -69,7 +71,7 @@ def graph_to_geometries(
     if show_coordinate_frame:
         axes_center = node_centers[0] + np.array([2, 2, 0])  # arbitrary offset
         axes = o3d.geometry.TriangleMesh.create_coordinate_frame(
-            size=1.0, origin=axes_center
+            size=3.0, origin=axes_center
         )
         geometries.append(axes)
     # vis.add_geometry("clouds", clouds_vis)
@@ -80,13 +82,15 @@ def graph_to_geometries(
         edges = []
         edge_colors = []
         for e in pose_graph.edges:
-            if e["type"] != "center":
+            if e["type"] != "in-between":
                 continue
 
             edges.append(
                 [node_id_to_index[e["parent_id"]], node_id_to_index[e["child_id"]]]
             )
-            edge_colors.append(odometry_color if e["type"] == "center" else loop_color)
+            edge_colors.append(
+                odometry_color if e["type"] == "in-between" else loop_color
+            )
 
         line_set = o3d.geometry.LineSet(
             points=o3d.utility.Vector3dVector(node_centers),

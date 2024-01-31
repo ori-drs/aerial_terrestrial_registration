@@ -38,6 +38,13 @@ class PoseGraph:
     def get_node_pose(self, id):
         return self._nodes[id]["pose"]
 
+    def get_node_id_from_stamp(self, stamp):
+        for node_id in self._nodes:
+            if self._nodes[node_id]["stamp"] == stamp:
+                return node_id
+
+        raise ValueError("Unknown stamp")
+
     def get_initial_node_pose(self, id):
         if id in self._initial_nodes:
             return self._initial_nodes[id]["pose"]
@@ -65,21 +72,15 @@ class PoseGraph:
         """
         Return the downsampled cloud attached to the node
         """
-        try:
-            cloud = self._downsampled_clouds[id]
-            return cloud
-        except Exception:
-            return o3d.geometry.PointCloud()
+        cloud = self._downsampled_clouds[id]
+        return cloud
 
     def get_node_cloud(self, id):
         """
         Return the cloud attached to the node
         """
-        try:
-            cloud = self._clouds[id]
-            return cloud
-        except Exception:
-            return o3d.geometry.PointCloud()
+        cloud = self._clouds[id]
+        return cloud
 
     def set_node_pose(self, id, pose):
         if id not in self._initial_nodes:

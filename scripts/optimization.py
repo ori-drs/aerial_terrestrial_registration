@@ -3,6 +3,7 @@
 from digiforest_registration.optimization.io import load_pose_graph
 from digiforest_registration.optimization.optimize_graph import PoseGraphOptimization
 from digiforest_registration.utils import CloudIO
+from digiforest_registration.utils import get_cloud_center
 from pathlib import Path
 import numpy as np
 import open3d as o3d
@@ -24,6 +25,12 @@ def parse_inputs():
     parser.add_argument("--output_folder", default=None)
     parser.add_argument(
         "--debug", default=False, action="store_true", help="debug mode"
+    )
+    parser.add_argument(
+        "--load_clouds", default=False, action="store_true", help="show clouds"
+    )
+    parser.add_argument(
+        "--tiles", default=False, action="store_true", help="processing tiles"
     )
     args = parser.parse_args()
 
@@ -71,24 +78,41 @@ if __name__ == "__main__":
     cloud_io = CloudIO(offset)
 
     # load the pose graph
-    pose_graph = load_pose_graph(args.pose_graph_file, frontier_cloud_folder, cloud_io)
+    pose_graph = load_pose_graph(
+        args.pose_graph_file,
+        frontier_cloud_folder,
+        cloud_io,
+        args.load_clouds,
+        args.tiles,
+    )
 
-    optimizer = PoseGraphOptimization(pose_graph)
+    optimizer = PoseGraphOptimization(
+        pose_graph, args.load_clouds, process_tiles=args.tiles
+    )
     optimizer.optimize()
 
     # save the results
-    if args.output_folder is not None:
+    if args.output_folder is not None and args.load_clouds:
         for id, _ in pose_graph.nodes.items():
-            cloud = pose_graph.get_node_cloud(id).clone()
+            try:
+                cloud = pose_graph.get_node_cloud(id).clone()
 
-            # Transform the cloud to take into account the factor graph optimization
-            initial_node_pose = pose_graph.get_initial_node_pose(id)
-            node_pose = pose_graph.get_node_pose(id)
-            cloud.transform(
-                node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
-            )
+                # Transform the cloud to take into account the factor graph optimization
+                initial_node_pose = pose_graph.get_initial_node_pose(id)
+                node_pose = pose_graph.get_node_pose(id)
+                # cloud.transform(
+                #     node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
+                # )
+                # TODO it's still not the correct transformation
+                center = get_cloud_center(cloud)
+                center_pose = np.eye(4)
+                center_pose[0:3, 3] = center
+                node_pose = pose_graph.get_node_pose(id)
+                cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
 
-            cloud_name = pose_graph.get_node_cloud_name(id)
-            cloud_path = Path(args.output_folder) / cloud_name
+                cloud_name = pose_graph.get_node_cloud_name(id)
+                cloud_path = Path(args.output_folder) / cloud_name
 
-            cloud_io.save_cloud(cloud, str(cloud_path))
+                cloud_io.save_cloud(cloud, str(cloud_path))
+            except Exception:
+                pass
