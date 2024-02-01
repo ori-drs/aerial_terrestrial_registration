@@ -93,7 +93,7 @@ def load_pose_graph(
                         cloud_path = clouds_folder_path / payload_name
                         if cloud_path.exists():
                             cloud = cloud_loader.load_cloud(str(cloud_path))
-                            graph.add_clouds(pose_id, cloud, tile_name)
+                            graph.add_clouds(pose_id, cloud, payload_name)
                     else:
                         cloud = cloud_loader.load_cloud(str(cloud_path))
                         graph.add_clouds(pose_id, cloud, tile_name)
@@ -130,7 +130,6 @@ def load_pose_graph(
                             )
                         else:
                             print("loop closure", parent_id, child_id)
-                            continue
                             graph.add_edge(
                                 parent_id,
                                 child_id,
