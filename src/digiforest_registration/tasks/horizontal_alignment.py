@@ -154,10 +154,6 @@ class HorizontalRegistration:
             # create feature graphs
             print("Creating the feature graphs")
             G = Graph(bls_height_pts, node_prefix="f")
-            # G.display_graph()
-            # edge1 = G.graph.get_edge_data('f_7', 'f_5')
-            # edge2 = H.graph.get_edge_data('uav_6', 'uav_9')
-            # print(correspondence_graph.compare_edge(edge1, edge2, use_angle=True, debug=True))
             H = Graph(uav_height_pts, node_prefix="uav")
 
             print(
@@ -212,6 +208,9 @@ class HorizontalRegistration:
                     uav_height_img,
                     uav_height_pts,
                     correspondences,
+                    True,
+                    G,
+                    H,
                 )
 
             # find transformation using maximum clique
@@ -233,6 +232,32 @@ class HorizontalRegistration:
             self.transforms.append(M)
 
         return True
+
+    def _test_edges(self, G, H, correspondence_graph):
+        edges = []
+        # edges.append([('f_13', 'f_15'), ('uav_5', 'uav_6' )])
+        # edges.append([('f_15', 'f_19'), ('uav_6', 'uav_7' )])
+        # edges.append([('f_10', 'f_13'), ('uav_8', 'uav_5' )])
+        # edges.append([('f_10', 'f_3'), ('uav_8', 'uav_10' )])
+        # edges.append([('f_3', 'f_17'), ('uav_10', 'uav_11' )])
+        for edge in edges:
+            edge1 = G.graph.get_edge_data(edge[0][0], edge[0][1])
+            edge2 = H.graph.get_edge_data(edge[1][0], edge[1][1])
+            print(
+                G.pos[edge[0][0]],
+                G.pos[edge[0][1]],
+                G.get_angle(G.pos[edge[0][0]], G.pos[edge[0][1]]),
+            )
+            print(
+                H.pos[edge[1][0]],
+                H.pos[edge[1][1]],
+                H.get_angle(H.pos[edge[1][0]], H.pos[edge[1][1]]),
+            )
+            print(
+                correspondence_graph.compare_edge(
+                    edge1, edge2, use_angle=True, debug=True
+                )
+            )
 
 
 if __name__ == "__main__":

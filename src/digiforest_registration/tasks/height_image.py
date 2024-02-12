@@ -347,6 +347,9 @@ def draw_correspondences(
     height_img2: np.ndarray,
     height_pts2: np.ndarray,
     correspondences: list,
+    draw_node_names=False,
+    graph1=None,
+    graph2=None,
 ):
     grayscale_image = (height_img1 * 255).astype(np.uint8)
     img1 = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2RGB)
@@ -367,6 +370,36 @@ def draw_correspondences(
         cv2.circle(img, (point[0], point[1]), 3, (0, 0, 255), -1)
     for point in height_pts2:
         cv2.circle(img, (point[0] + w1, point[1]), 3, (0, 0, 255), -1)
+
+    if draw_node_names:
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 0.3
+        fontColor = (0, 255, 255)
+        thickness = 1
+        lineType = 2
+        for i in range(len(height_pts1)):
+            cv2.putText(
+                img,
+                graph1.node_name(i),
+                (height_pts1[i][0], height_pts1[i][1]),
+                font,
+                fontScale,
+                fontColor,
+                thickness,
+                lineType,
+            )
+
+        for i in range(len(height_pts2)):
+            cv2.putText(
+                img,
+                graph2.node_name(i),
+                (height_pts2[i][0] + w1, height_pts2[i][1]),
+                font,
+                fontScale,
+                fontColor,
+                thickness,
+                lineType,
+            )
 
     # Draw the correspondences
     for correspondence in correspondences:

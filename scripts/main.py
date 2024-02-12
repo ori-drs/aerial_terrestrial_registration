@@ -151,8 +151,12 @@ if __name__ == "__main__":
             frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
             cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
             o3d.visualization.draw_geometries(
-                [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
-                window_name="Initial data",
+                [frontier_cloud.to_legacy()],
+                window_name="Initial frontier cloud",
+            )
+            o3d.visualization.draw_geometries(
+                [cropped_uav_cloud.to_legacy()],
+                window_name="Initial uav",
             )
 
         registration = Registration(
