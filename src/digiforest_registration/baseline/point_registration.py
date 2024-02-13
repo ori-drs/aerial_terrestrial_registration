@@ -83,7 +83,7 @@ def apply_transform(points, transform):
     transformed_points = np.dot(transform, homogenous_points.T).T
     return transformed_points[:, :2]
 
-def icp(source_points, target_points, max_iterations=50, tolerance=1e-5):
+def icp(source_points, target_points, max_iterations=1000, tolerance=1e-5):
     """
     Perform ICP (Iterative Closest Point) algorithm.
 
@@ -132,14 +132,12 @@ transformed_bls, final_transform = icp(bls_coordinates, uav_coordinates)
 
 # Plot results
 plt.figure(figsize=(10, 8))
-plt.scatter(uav_coordinates[:, 0], uav_coordinates[:, 1], color='blue', label='Source Points')
-plt.scatter(bls_coordinates[:, 0], bls_coordinates[:, 1], color='red', marker='o', label='Target Points')
-plt.scatter(transformed_bls[:, 0], transformed_bls[:, 1], color='green', marker='x', label='Transformed Target Points')
+plt.scatter(uav_coordinates[:, 0], uav_coordinates[:, 1], color='blue', label='UAV')
+plt.scatter(bls_coordinates[:, 0], bls_coordinates[:, 1], color='red', marker='o', label='BLS')
+plt.scatter(transformed_bls[:, 0], transformed_bls[:, 1], color='green', marker='x', label='Transformed  BLS')
 plt.title('ICP Transformation Result')
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.legend()
 plt.grid(True)
 plt.show()
-
-print('Registration successful')
