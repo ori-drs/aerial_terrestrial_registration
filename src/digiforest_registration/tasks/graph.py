@@ -25,10 +25,16 @@ class Graph:
                 )
 
     def get_angle(self, p1, p2):
-        angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
-        # TODO double check that :
-        if angle < 0:
-            angle += np.pi
+        # angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+        # if p2[0] - p1[0] < 0:
+        #     angle = np.arctan2(p1[1] - p2[1], p1[0] - p2[0])
+        # if angle < 0:
+        #     angle += np.pi
+        dx = p2[0] - p1[0]
+        dy = p2[1] - p1[1]
+        if dx == 0:
+            return 0
+        angle = np.arctan(dy / dx)
         return angle
 
     def display_graph(self, display_weights: bool = False, display_edges: bool = True):
@@ -70,8 +76,10 @@ class CorrespondenceGraph:
         self.g1 = graph1
         self.g2 = graph2
         self.graph.remove_edges_from(list(self.graph.edges()))
-        self.distance_threshold = 0.2
-        self.angle_threshold = 0.25
+        self.distance_threshold = 0.22
+        self.angle_threshold = 0.26
+        # self.distance_threshold = 0.2
+        # self.angle_threshold = 0.25
 
         # Creating the edges
         for node1 in self.graph.nodes():
