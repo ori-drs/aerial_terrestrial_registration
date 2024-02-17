@@ -186,7 +186,7 @@ if __name__ == "__main__":
             cloud_io.save_cloud(
                 registration.transform_cloud(original_frontier_cloud),
                 output_filename,
-                local_coordinates=True,
+                local_coordinates=False,
             )
 
     print("Total number of failures: ", len(failures))

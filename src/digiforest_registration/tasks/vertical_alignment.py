@@ -67,7 +67,7 @@ class VerticalRegistration:
             inlier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
 
             inlier_cloud_uav = ground_uav_cloud.select_by_index(inliers_uav)
-            inlier_cloud_uav.paint_uniform_color([1.0, 0.0, 0])
+            inlier_cloud_uav.paint_uniform_color([0, 0.0, 1.0])
 
             o3d.visualization.draw_geometries(
                 [inlier_cloud.to_legacy(), inlier_cloud_uav.to_legacy()],

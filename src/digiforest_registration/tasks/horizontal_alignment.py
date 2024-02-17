@@ -143,6 +143,9 @@ class HorizontalRegistration:
         elif self.bls_feature_extraction_method != "canopy_map":
             raise ValueError("Unknown method: " + self.bls_feature_extraction_method)
 
+        # save points to disk
+        # self._save_tree_location_to_disk(uav_proc, uav_height_pts, bls_proc, bls_height_pts)
+
         # import pickle
         # pickle.dump(bls_height_pts, open("/tmp/bls_height_pts.pkl", "wb"))
         # pickle.dump(bls_height_img, open("/tmp/bls_height_img.pkl", "wb"))
@@ -208,7 +211,7 @@ class HorizontalRegistration:
                     uav_height_img,
                     uav_height_pts,
                     correspondences,
-                    True,
+                    False,
                     G,
                     H,
                 )
@@ -258,6 +261,19 @@ class HorizontalRegistration:
                     edge1, edge2, use_angle=True, debug=True
                 )
             )
+
+    def _save_tree_location_to_disk(
+        self, uav_proc, uav_img_pts: np.ndarray, bls_proc, bls_img_pts: np.ndarray
+    ):
+        bls_pts = np.zeros((bls_img_pts.shape[0], 2))
+        uav_pts = np.zeros((uav_img_pts.shape[0], 2))
+        for i in range(bls_img_pts.shape[0]):
+            bls_pts[i] = bls_proc.pixel_to_cloud(bls_img_pts[i][0], bls_img_pts[i][1])
+        for i in range(uav_img_pts.shape[0]):
+            uav_pts[i] = uav_proc.pixel_to_cloud(uav_img_pts[i][0], uav_img_pts[i][1])
+
+        np.savetxt("/tmp/uav_pts.txt", uav_pts, fmt="%.2f", delimiter=",")
+        np.savetxt("/tmp/bls_pts.txt", bls_pts, fmt="%.2f", delimiter=",")
 
 
 if __name__ == "__main__":
