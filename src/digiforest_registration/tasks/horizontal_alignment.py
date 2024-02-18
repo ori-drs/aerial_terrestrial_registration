@@ -238,11 +238,11 @@ class HorizontalRegistration:
 
     def _test_edges(self, G, H, correspondence_graph):
         edges = []
-        # edges.append([('f_13', 'f_15'), ('uav_5', 'uav_6' )])
-        # edges.append([('f_15', 'f_19'), ('uav_6', 'uav_7' )])
-        # edges.append([('f_10', 'f_13'), ('uav_8', 'uav_5' )])
-        # edges.append([('f_10', 'f_3'), ('uav_8', 'uav_10' )])
-        # edges.append([('f_3', 'f_17'), ('uav_10', 'uav_11' )])
+        edges.append([("f_1", "f_2"), ("uav_31", "uav_36")])
+        edges.append([("f_2", "f_0"), ("uav_36", "uav_26")])
+        edges.append([("f_2", "f_4"), ("uav_36", "uav_42")])
+        edges.append([("f_4", "f_6"), ("uav_42", "uav_51")])
+        edges.append([("f_7", "f_10"), ("uav_63", "uav_69")])
         for edge in edges:
             edge1 = G.graph.get_edge_data(edge[0][0], edge[0][1])
             edge2 = H.graph.get_edge_data(edge[1][0], edge[1][1])
