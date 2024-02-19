@@ -5,11 +5,14 @@ import open3d as o3d
 
 
 class PoseGraphOptimization:
-    def __init__(self, pose_graph: PoseGraph, show_clouds=False, process_tiles=False):
+    def __init__(
+        self, pose_graph: PoseGraph, debug, show_clouds=False, process_tiles=False
+    ):
         self.pose_graph = pose_graph
         self.show_clouds = show_clouds
         self.factor_graph = None
         self.process_tiles = process_tiles
+        self.debug = debug
         self.initialize_factor_graph()
 
     def initialize_factor_graph(self):
@@ -85,20 +88,21 @@ class PoseGraphOptimization:
             print(f"Node {id}:")
             print(f"  pose: {node['pose']}")
 
-        geometries = vis.graph_to_geometries(
-            self.pose_graph,
-            show_frames=True,
-            show_edges=True,
-            show_nodes=True,
-            show_clouds=False,
-            show_coordinate_frame=True,
-            odometry_color=vis.GRAY,
-            loop_color=vis.RED,
-        )
-        o3d.visualization.draw_geometries(
-            geometries,
-            window_name="Initial Pose Graph",
-        )
+        if self.debug:
+            geometries = vis.graph_to_geometries(
+                self.pose_graph,
+                show_frames=True,
+                show_edges=True,
+                show_nodes=True,
+                show_clouds=False,
+                show_coordinate_frame=True,
+                odometry_color=vis.GRAY,
+                loop_color=vis.RED,
+            )
+            o3d.visualization.draw_geometries(
+                geometries,
+                window_name="Initial Pose Graph",
+            )
 
         if self.show_clouds:
             geometries = vis.graph_to_geometries(
@@ -120,7 +124,8 @@ class PoseGraphOptimization:
         for id, node in self.pose_graph.nodes.items():
             initial_estimate.insert(id, node["pose"])
 
-        self.visualize(initial_estimate)
+        if self.debug:
+            self.visualize(initial_estimate)
 
         # Setup optimizer
         parameters = gtsam.GaussNewtonParams()
@@ -141,20 +146,21 @@ class PoseGraphOptimization:
             print(f"Node {id}:")
             print(f"  pose: {node['pose']}")
 
-        geometries = vis.graph_to_geometries(
-            self.pose_graph,
-            show_frames=True,
-            show_edges=True,
-            show_nodes=True,
-            show_clouds=False,
-            show_coordinate_frame=True,
-            odometry_color=vis.GRAY,
-            loop_color=vis.RED,
-        )
-        o3d.visualization.draw_geometries(
-            geometries,
-            window_name="Optimized Pose Graph",
-        )
+        if self.debug:
+            geometries = vis.graph_to_geometries(
+                self.pose_graph,
+                show_frames=True,
+                show_edges=True,
+                show_nodes=True,
+                show_clouds=False,
+                show_coordinate_frame=True,
+                odometry_color=vis.GRAY,
+                loop_color=vis.RED,
+            )
+            o3d.visualization.draw_geometries(
+                geometries,
+                window_name="Optimized Pose Graph",
+            )
 
         if self.show_clouds:
             geometries = vis.graph_to_geometries(
