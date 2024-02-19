@@ -67,7 +67,21 @@ class Registration:
                     window_name="Result after horizontal alignment",
                 )
 
+            # Crop the uav cloud around the frontier cloud and reestimate the transformation
+            # along the z axis
             cropped_uav_cloud = crop_cloud(self.uav_cloud, frontier_cloud, padding=4)
+            vertical_registration = VerticalRegistration(
+                cropped_uav_cloud,
+                frontier_cloud,
+                ground_segmentation_method=self.ground_segmentation_method,
+                debug=self.debug,
+            )
+            (_, _, tz) = vertical_registration.process()
+            vertical_transform = np.identity(4)
+            vertical_transform[2, 3] = tz
+
+            frontier_cloud.transform(vertical_transform)
+            transform[2, 3] = tz + transform[2, 3]
             print("Transformation matrix before icp:")
             print(transform)
 
