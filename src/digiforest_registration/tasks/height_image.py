@@ -89,7 +89,7 @@ class HeightImage:
         #     print(a, b, c, d)
         #     point_cloud = o3d.geometry.PointCloud()
         #     point_cloud.points = o3d.utility.Vector3dVector(canopy_points)
-        #     o3d.visualization.draw_geometries([point_cloud])
+        #     o3d.visualization.draw_geometries([point_cloud], window_name="canopy points")
 
         bounding_box = cloud.get_axis_aligned_bounding_box()
 

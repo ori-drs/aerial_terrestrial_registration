@@ -195,6 +195,7 @@ def write_aerial_transforms_to_pose_graph_file(
     input_pose_graph_file: Path,
     output_pose_graph_file: Path,
     registration_results: dict,
+    icp_fitness_threshold: float,
 ):
 
     pose_graph = load_pose_graph(str(input_pose_graph_file))
@@ -202,7 +203,7 @@ def write_aerial_transforms_to_pose_graph_file(
 
     with open(str(output_pose_graph_file), "a") as file:
         for filename, result in registration_results.items():
-            if result.success and result.icp_fitness > 0.90:
+            if result.success and result.icp_fitness > icp_fitness_threshold:
                 try:
                     stamp = get_payload_cloud_timestamp(Path(filename))
                     node_id = pose_graph.get_node_id_from_stamp(stamp)

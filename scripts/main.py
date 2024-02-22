@@ -59,6 +59,7 @@ def parse_inputs():
         action="store_true",
         help="crop frontier cloud",
     )
+    parser.add_argument("--icp_fitness_score_threshold", type=float, default=0.85)
     args = parser.parse_args()
 
     if args.config is not None:
@@ -165,6 +166,7 @@ if __name__ == "__main__":
             args.ground_segmentation_method,
             args.correspondence_matching_method,
             args.bls_feature_extraction_method,
+            args.icp_fitness_score_threshold,
             debug=args.debug,
         )
         success = registration.registration()
@@ -220,5 +222,8 @@ if __name__ == "__main__":
         if args.save_pose_graph and args.output_folder is not None:
             output_pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
             write_aerial_transforms_to_pose_graph_file(
-                Path(args.pose_graph_file), output_pose_graph_path, registration_results
+                Path(args.pose_graph_file),
+                output_pose_graph_path,
+                registration_results,
+                args.icp_fitness_score_threshold,
             )

@@ -24,6 +24,7 @@ class Registration:
         ground_segmentation_method,
         correspondence_matching_method,
         bls_feature_extraction_method,
+        icp_fitness_threshold,
         debug=False,
     ):
         self.uav_cloud = uav_cloud
@@ -32,7 +33,7 @@ class Registration:
         self.correspondence_matching_method = correspondence_matching_method
         self.bls_feature_extraction_method = bls_feature_extraction_method
         self.debug = debug
-        self.icp_fitness_threshold = 0.85
+        self.icp_fitness_threshold = icp_fitness_threshold
         self.transform = np.identity(4)
         self.success = False
         self.report = {}
@@ -69,7 +70,7 @@ class Registration:
 
             # Crop the uav cloud around the frontier cloud and reestimate the transformation
             # along the z axis
-            cropped_uav_cloud = crop_cloud(self.uav_cloud, frontier_cloud, padding=4)
+            cropped_uav_cloud = crop_cloud(self.uav_cloud, frontier_cloud, padding=1)
             vertical_registration = VerticalRegistration(
                 cropped_uav_cloud,
                 frontier_cloud,
