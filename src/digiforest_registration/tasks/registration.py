@@ -36,7 +36,7 @@ class Registration:
         self.icp_fitness_threshold = icp_fitness_threshold
         self.transform = np.identity(4)
         self.success = False
-        self.report = {}
+        self.report = {"icp_fitness": 0, "clique_size": 0}
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
         best_icp_fitness_score = 0
