@@ -16,6 +16,42 @@ def parse_inputs():
     return args
 
 
+def unpack_matrix(mat: np.ndarray):
+    return (
+        str(mat[0, 0])
+        + " "
+        + str(mat[0, 1])
+        + " "
+        + str(mat[0, 2])
+        + " "
+        + str(mat[0, 3])
+        + " "
+        + str(mat[1, 0])
+        + " "
+        + str(mat[1, 1])
+        + " "
+        + str(mat[1, 2])
+        + " "
+        + str(mat[1, 3])
+        + " "
+        + str(mat[2, 0])
+        + " "
+        + str(mat[2, 1])
+        + " "
+        + str(mat[2, 2])
+        + " "
+        + str(mat[2, 3])
+        + " "
+        + str(mat[3, 0])
+        + " "
+        + str(mat[3, 1])
+        + " "
+        + str(mat[3, 2])
+        + " "
+        + str(mat[3, 3])
+    )
+
+
 def parse_registration(registration_file: str, results: dict):
     with open(registration_file, "r") as file:
         lines = file.readlines()

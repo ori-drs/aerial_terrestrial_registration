@@ -10,5 +10,6 @@ from .transformations import (
     euler_to_rotation_matrix,
     rotation_matrix_to_quat,
     quat_to_rotation_matrix,
+    rotation_matrix_to_euler,
 )
 from .cloud_processing import crop_cloud, crop_cloud_to_size, get_cloud_center
