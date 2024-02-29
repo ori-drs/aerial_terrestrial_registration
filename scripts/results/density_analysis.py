@@ -86,7 +86,6 @@ if __name__ == "__main__":
     plt.plot(z, density_uav, label="Aerial cloud", color="#5f8dd3")
     plt.plot(z, density_frontier, label="Terrestrial cloud", color="#f1943b")
     plt.plot(z, density_combined, label="Combined cloud", color="#22de0d")
-    plt.yticks([])
 
     # Add labels and title
     plt.xlabel("Z axis (m)")

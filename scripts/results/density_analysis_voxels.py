@@ -5,6 +5,7 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 
 import argparse
+import pickle
 import yaml
 
 
@@ -19,6 +20,11 @@ def parse_inputs():
     parser.add_argument("--uav_cloud", default=None)
     parser.add_argument("--frontier_cloud", default=None)
     parser.add_argument("--combined_cloud", default=None)
+    parser.add_argument("--uav_data", default=None)
+    parser.add_argument("--frontier_data", default=None)
+    parser.add_argument("--combined_data", default=None)
+    parser.add_argument("--plot", default=False, action="store_true")
+    parser.add_argument("--load_data", default=False, action="store_true")
     args = parser.parse_args()
 
     if args.config is not None:
@@ -63,45 +69,14 @@ def compute_axis(clouds, step):
     return z
 
 
-if __name__ == "__main__":
-    np.set_printoptions(suppress=True)
-    # set seed for deterministic results
-    o3d.utility.random.seed(12345)
-
-    args = parse_inputs()
-
-    # Loading the data
-    offset = None
-    if args.offset is not None and len(args.offset) == 3:
-        offset = np.array(
-            [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
-        )
-
-    cloud_io = CloudIO(offset)
-    uav_cloud = cloud_io.load_cloud(args.uav_cloud)
-    frontier_cloud = cloud_io.load_cloud(args.frontier_cloud)
-    combined_cloud = cloud_io.load_cloud(args.combined_cloud)
-
-    # compute density
-    step = 0.5
-    # z = compute_axis([uav_cloud, frontier_cloud, combined_cloud], step)
-    z = np.arange(0, 20, step)
-    print("Computing density for uav cloud")
-    density_uav = compute_density(uav_cloud, z)
-    print("Computing density for frontier cloud")
-    density_frontier = compute_density(frontier_cloud, z)
-    print("Computing density for combined cloud")
-    density_combined = compute_density(combined_cloud, z)
-
-    # Display density
-    plt.plot(z, density_uav, label="Aerial cloud", color="#5f8dd3")
-    plt.plot(z, density_frontier, label="Terrestrial cloud", color="#f1943b")
-    plt.plot(z, density_combined, label="Combined cloud", color="#22de0d")
-    plt.yticks([])
+def plot(z, density_uav, density_frontier, density_combined):
+    plt.plot(z[1:], density_uav[1:], label="Aerial cloud", color="#5f8dd3")
+    plt.plot(z[1:], density_frontier[1:], label="Terrestrial cloud", color="#f1943b")
+    plt.plot(z[1:], density_combined[1:], label="Combined cloud", color="#0f9156")
 
     # Add labels and title
     plt.xlabel("Z axis (m)")
-    plt.ylabel("Point Density")
+    plt.ylabel("Occupied voxels")
     plt.title("Density Plot")
 
     # Add a legend
@@ -109,3 +84,61 @@ if __name__ == "__main__":
 
     # Display the plot
     plt.show()
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    # set seed for deterministic results
+    o3d.utility.random.seed(12345)
+
+    args = parse_inputs()
+
+    step = 0.5
+    # z = compute_axis([uav_cloud, frontier_cloud, combined_cloud], step)
+    z = np.arange(0, 20, step)
+
+    if args.load_data:
+        file = open(args.uav_data, "rb")
+        density_uav = pickle.load(file)
+        file.close()
+        file = open(args.frontier_data, "rb")
+        density_frontier = pickle.load(file)
+        file.close()
+        file = open(args.combined_data, "rb")
+        density_combined = pickle.load(file)
+        file.close()
+        plot(z, density_uav, density_frontier, density_combined)
+    else:
+
+        # Loading the clouds
+        offset = None
+        if args.offset is not None and len(args.offset) == 3:
+            offset = np.array(
+                [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
+            )
+
+        cloud_io = CloudIO(offset)
+        uav_cloud = cloud_io.load_cloud(args.uav_cloud)
+        frontier_cloud = cloud_io.load_cloud(args.frontier_cloud)
+        combined_cloud = cloud_io.load_cloud(args.combined_cloud)
+
+        # compute density
+        print("Computing density for uav cloud")
+        density_uav = compute_density(uav_cloud, z)
+        print("Computing density for frontier cloud")
+        density_frontier = compute_density(frontier_cloud, z)
+        print("Computing density for combined cloud")
+        density_combined = compute_density(combined_cloud, z)
+
+        if args.plot:
+            plot(z, density_uav, density_frontier, density_combined)
+        else:
+            file = open("uav_data.pkl", "wb")
+            pickle.dump(density_uav, file)
+            file.close()
+            file = open("frontier_data.pkl", "wb")
+            pickle.dump(density_frontier, file)
+            file.close()
+            file = open("combined_data.pkl", "wb")
+            pickle.dump(density_combined, file)
+            file.close()

@@ -116,17 +116,25 @@ if __name__ == "__main__":
     parse_registration(args.manual_file, manual_registration)
     parse_registration(args.auto_file, auto_registration)
 
+    mean_rmse_manual = []
+    mean_rmse_auto = []
+    std_rmse_manual = []
+    std_rmse_auto = []
     for file, data in manual_registration.items():
         t_manual = manual_registration[file]["transform"]
         t_auto = auto_registration[file]["transform"]
         t_diff, r_diff = compare_transform(t_manual, t_auto)
 
-        mean_rmse_manual = manual_registration[file]["mean_rmse"]
-        mean_rmse_auto = auto_registration[file]["mean_rmse"]
+        mean_rmse_manual.append(manual_registration[file]["mean_rmse"])
+        mean_rmse_auto.append(auto_registration[file]["mean_rmse"])
 
-        std_rmse_manual = manual_registration[file]["std_rmse"]
-        std_rmse_auto = auto_registration[file]["std_rmse"]
+        std_rmse_manual.append(manual_registration[file]["std_rmse"])
+        std_rmse_auto.append(auto_registration[file]["std_rmse"])
 
-        print(
-            f"File: {file}, translation error {t_diff}, rotation error {r_diff}, mean rmse error {mean_rmse_manual - mean_rmse_auto}, std rmse error {std_rmse_manual - std_rmse_auto}"
-        )
+        # print(
+        #     f"File: {file}, translation error {t_diff}, rotation error {r_diff}, mean rmse error {mean_rmse_manual - mean_rmse_auto}, std rmse error {std_rmse_manual - std_rmse_auto}"
+        # )
+    print(
+        "Mean manual :", np.mean(mean_rmse_manual), "mean auto", np.mean(mean_rmse_auto)
+    )
+    print("Std manual :", np.mean(std_rmse_manual), "std auto", np.mean(std_rmse_auto))
