@@ -58,6 +58,17 @@ def read_pose_edge_slam(tokens):
     return relative_pose, relative_info, parent_id, child_id
 
 
+def _convert_nano_secs_to_string(nsec: str):
+    """Returns a 9 characters string of a nano sec value"""
+    s = nsec
+    if len(s) == 9:
+        return s
+
+    for i in range(len(s) + 1, 10):
+        s = "0" + s
+    return s
+
+
 def load_pose_graph(
     path: str,
     clouds_folder_path=None,
@@ -88,7 +99,11 @@ def load_pose_graph(
                     if not cloud_path.exists():
                         # try with a payload cloud name
                         payload_name = (
-                            "cloud_" + pose_stamp[0] + "_" + pose_stamp[1] + ".ply"
+                            "cloud_"
+                            + pose_stamp[0]
+                            + "_"
+                            + _convert_nano_secs_to_string(pose_stamp[1])
+                            + ".ply"
                         )
                         cloud_path = clouds_folder_path / payload_name
                         if cloud_path.exists():
