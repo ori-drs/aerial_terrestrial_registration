@@ -1,0 +1,10 @@
+uav_cloud: /home/benoit/data/digiforest/test/finland/uav_normals_for_exp01_in_map.ply
+#frontier_cloud_folder: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/payload_clouds_in_map
+frontier_cloud: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/tiles/tile_11.ply
+offset: [-399200.00,-6785900.00,0.0]
+#output_folder: /home/benoit/data/digiforest/test/finland/transformed_clouds_payloads
+crop_frontier_cloud: True
+bls_feature_extraction_method: "tree_segmentation"
+debug: False
+#pose_graph_file: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/slam_pose_graph.g2o.bck
+save_pose_graph: False
