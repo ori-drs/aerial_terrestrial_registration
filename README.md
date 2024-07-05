@@ -22,8 +22,12 @@ Install the automatic formatting pre-commit hooks (black and flake8), which will
 pre-commit install
 ```
 
+Clone the `digifores_drs` repository and checkout the `voronoi-segmentation` branch.
 Install digiforest_analysis :
-https://github.com/ori-drs/digiforest_drs/tree/master/digiforest_analysis
+```sh
+cd digiforest_analysis
+pip install -e .
+```
 
 
 
@@ -34,8 +38,25 @@ The uav and mls clouds are usually in UTM frame, the first step is to make sure 
 
 If they are not, you can use a tool to convert them. Checkout the `save-pose-graph-utm` branch of the `vilens` repository, and use `payload_transformer.launch`.
 
-Once you have the data in the same UTM frame, it makes things simpler to convert all the data into the `map` frame. It can be achieved with the same launch file by changing the output_frame to `map`.
+Once you have the data in the same UTM frame, it makes things simpler to convert all the data into the `map` frame. See `Point cloud preprocessing for frontier`.
 The last step is to make sure that the uav cloud has normals. If it doesn't have normals, you can use CloudCompare to compute them. The normals are used by the pipeline to extract the ground and the trees.
+
+#### Point cloud preprocessing for stein am rhein
+- the uav cloud provided by Prefor is in EPSG:2056. We don't use this UTM frame but EPSG:25832, so the first step is to convert it to EPSG:25832.
+- use the pdal tool to do the conversion : 
+```sh
+pdal translate -i prefor_steim_am_rhein.las -o prefor_steim_am_rhein_epsg25832.las  -f filters.reprojection --filters.reprojection.out_srs="EPSG:25832"  --filters.reprojection.in_srs="EPSG:2056"
+```
+- convert `prefor_steim_am_rhein_epsg25832.las` to ply using CloudCompare.
+- use payload_transformer.launch to convert the file converted above to map frame. You need to change the output frame argument of this launch file to `map`.
+
+
+#### Point cloud preprocessing for frontier
+- the frontier data consists in a `payload_cloud` folder (data in sensor frame) and a g2o file.
+- use `payload_transformer.launch` to convert the data to map or utm frame. Change the output frame to select the desired frame.
+```sh
+roslaunch vilens_slam payload_tranformer.launch
+```
 
 ## Parameters of the registration pipeline
 
@@ -48,7 +69,7 @@ Inside the `conf` folder you will find an example configuration file `registrati
 * **`correspondence_matching_method`** ( graph ) : there is a single method implemented so far to match the features from the uav and mls clouds.
 * **`bls_feature_extraction_method`** ( canopy_map or tree_segmentation): the method to extract the features of the mls cloud. 'canopy_map' works well if the canopy is visible in the mls cloud. If the canopy is not visible, the other method must be used.
 * **`offset`** (default [0., 0., 0.]): translation offset to apply to the frontier clouds. With the recommended 'map' frame, setting the offset to [0., 0., 0.] ( no offset ) is sufficient.
-* **`output_folder`** : path to the output folder where the transformed mls clouds and the new pose graph will be stored.
+* **`output_folder`** : path to the output folder where the transformed mls clouds and the new pose graph will be stored. The transformed mls is.
 * **`debug`** : set it to True to output debug information about the execution of the pipeline.
 * **`save_pose_graph`** : set it to True to save the pose graph with the additional constraints in the **`output_folder`**.
 * **`crop_frontier_cloud`** : the frontier cloud can be large. Setting this flag to True will crop the clouds to make them smaller.
