@@ -22,7 +22,7 @@ Install the automatic formatting pre-commit hooks (black and flake8), which will
 pre-commit install
 ```
 
-Clone the `digifores_drs` repository and checkout the `voronoi-segmentation` branch.
+Clone the `digiforest_drs` repository and checkout the `voronoi-segmentation` branch.
 Install digiforest_analysis :
 ```sh
 cd digiforest_analysis
@@ -34,11 +34,10 @@ pip install -e .
 ## Point cloud preprocessing
 We assume that a mission was recorded on a Frontier scanner and that a pose graph and payload clouds in the `map` frame were saved.
 The inputs to the registration pipeline are an uav cloud, one or more mls payload clouds and a pose graph file (in g2o format).
-The uav and mls clouds are usually in UTM frame, the first step is to make sure that they are in the same UTM frame.
+The first step is to make sure that the uav and mls clouds are in the same frame.
 
-If they are not, you can use a tool to convert them. Checkout the `save-pose-graph-utm` branch of the `vilens` repository, and use `payload_transformer.launch`.
+If they are not, you can use a tool to convert them. Checkout the `save-pose-graph-utm` branch of the `vilens` repository, and use `payload_transformer.launch`. See the paragraphs below for a detailed explanation.
 
-Once you have the data in the same UTM frame, it makes things simpler to convert all the data into the `map` frame. See `Point cloud preprocessing for frontier`.
 The last step is to make sure that the uav cloud has normals. If it doesn't have normals, you can use CloudCompare to compute them. The normals are used by the pipeline to extract the ground and the trees.
 
 #### Point cloud preprocessing for stein am rhein
@@ -48,10 +47,13 @@ The last step is to make sure that the uav cloud has normals. If it doesn't have
 pdal translate -i prefor_steim_am_rhein.las -o prefor_steim_am_rhein_epsg25832.las  -f filters.reprojection --filters.reprojection.out_srs="EPSG:25832"  --filters.reprojection.in_srs="EPSG:2056"
 ```
 - convert `prefor_steim_am_rhein_epsg25832.las` to ply using CloudCompare.
-- use payload_transformer.launch to convert the file converted above to map frame. You need to change the output frame argument of this launch file to `map`.
+- use `payload_transformer.launch` to convert the file converted above to map frame. You need to change the output frame argument of this launch file to `map`.
+This conversion requires the g2o file recorded during the frontier mission recording.
+```sh
+roslaunch vilens_slam payload_tranformer.launch
+```
 
-
-#### Point cloud preprocessing for frontier
+#### Point cloud preprocessing for frontier data
 - the frontier data consists in a `payload_cloud` folder (data in sensor frame) and a g2o file.
 - use `payload_transformer.launch` to convert the data to map or utm frame. Change the output frame to select the desired frame.
 ```sh
@@ -86,7 +88,7 @@ Inside the `conf` folder you will find an example configuration file `registrati
 * **`debug`** : set it to True to output debug information about the pose graph and the pose graph optimization.
 * **`load_clouds`** : set it to True to load the point clouds inside the **`frontier_cloud_folder`** folder. Depending on the number of clouds, it can take a significant amount of time to load them.
 
-## Execution
+## Installation
 
 #### With ROS
 Build the package and run it with:
@@ -118,11 +120,27 @@ cd ~/git/digiforest_registration/
 pip install -e .
 ```
 
+## Execution of the registration pipeline
 
-
+Inside the `config` folder, you can find a configuration file `registration.yaml` containing all the parameters that you need to set. Edit the parameters that you need and run the registration with :
+ 
 ```sh
 python3  main.py --config ../config/registration.yaml 
 ```
 
+At the end of execution, it will display the final icp fitness score for each mls clouds and whether the registration is considered as successful or not. A registration is considered successful solely on this fitness score and the **`icp_fitness_score_threshold`** set in your yaml file.
+
+## Execution of the optimization pipeline
+
+Inside the `config` folder, there is the file `optimization.yaml` containing all the parameters that you need to set.
+Run the optimization with:
+
+```sh
+python3  optimization.py --config ../config/optimization.yaml 
+```
+
 ## Troubleshooting
+
+* If a registration isn't successful, and you would like to understand why, set **`debug`** to `True` in your yaml file. The program will display additional information about each step of the algorithm (refer to the paper for a detailed explanation of each step).
+
 
