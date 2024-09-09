@@ -26,6 +26,7 @@ class Registration:
         bls_feature_extraction_method,
         icp_fitness_threshold,
         min_distance_between_peaks,
+        max_number_of_clique,
         debug=False,
     ):
         self.uav_cloud = uav_cloud
@@ -36,6 +37,7 @@ class Registration:
         self.debug = debug
         self.icp_fitness_threshold = icp_fitness_threshold
         self.min_distance_between_peaks = min_distance_between_peaks
+        self.max_number_of_clique = max_number_of_clique
         self.transform = np.identity(4)
         self.success = False
         self.report = {"icp_fitness": 0, "clique_size": 0}
@@ -138,6 +140,7 @@ class Registration:
             self.frontier_cloud,
             frontier_ground_plane,
             min_distance_between_peaks=self.min_distance_between_peaks,
+            max_number_of_clique=self.max_number_of_clique,
             correspondence_matching_method=self.correspondence_matching_method,
             bls_feature_extraction_method=self.bls_feature_extraction_method,
             debug=self.debug,

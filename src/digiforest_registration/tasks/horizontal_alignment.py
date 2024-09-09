@@ -18,6 +18,7 @@ class HorizontalRegistration:
         cloud,
         cloud_ground_plane,
         min_distance_between_peaks,
+        max_number_of_clique,
         debug=False,
         correspondence_matching_method="graph",
         bls_feature_extraction_method="canopy_map",
@@ -28,7 +29,7 @@ class HorizontalRegistration:
         self.cloud_ground_plane = cloud_ground_plane
         self.debug = debug
         self.transforms = []
-        self.max_number_of_clique = 5
+        self.max_number_of_clique = max_number_of_clique
         self.clique_size = 0
         self.frontier_peaks_size = 0
         self.feature_association_method = (
