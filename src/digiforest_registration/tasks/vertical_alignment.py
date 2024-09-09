@@ -79,10 +79,15 @@ class VerticalRegistration:
         print([a_r, b_r, c_r, d_r], [a, b, c, d])
         print("dot product of normals: ", np.dot(n_r, n))
 
-        uav_point = ground_uav_cloud.point.positions.numpy().mean(axis=0)
+        uav_point = (
+            ground_uav_cloud.select_by_index(inliers_uav)
+            .point.positions.numpy()
+            .mean(axis=0)
+        )
         p_proj = self.project_point_onto_plane(uav_point, n, d)
         z_offset = np.sign(uav_point[2] - p_proj[2]) * np.linalg.norm(
             p_proj - uav_point
         )
         print("Signed Distance between planes", z_offset)
+
         return [a_r, b_r, c_r, d_r], [a, b, c, d], z_offset
