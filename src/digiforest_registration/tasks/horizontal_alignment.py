@@ -176,6 +176,9 @@ class HorizontalRegistration:
                 correspondence_graph.distance_threshold = 0.25
 
             print("Computing the maximum clique")
+            if correspondence_graph.graph.number_of_edges() > 1800000:
+                print("Too many edges in the correspondence graph")
+                return False
             correspondences_list = correspondence_graph.maximum_clique()
 
             if len(correspondences_list) > self.max_number_of_clique:

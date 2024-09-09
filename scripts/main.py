@@ -135,6 +135,7 @@ if __name__ == "__main__":
 
     # Registration
     failures = []
+    successes = []
     registration_results = {}
     for frontier_cloud_filename in frontier_cloud_filenames:
 
@@ -174,6 +175,8 @@ if __name__ == "__main__":
         print("File: ", frontier_cloud_filename.name, success)
         if not success:
             failures.append((frontier_cloud_filename.name, registration.report))
+        else:
+            successes.append((frontier_cloud_filename.name, registration.report))
 
         result = RegistrationResult()
         result.transform = registration.transform
@@ -194,6 +197,7 @@ if __name__ == "__main__":
     print("Total number of failures: ", len(failures))
     print("Total number of clouds: ", len(frontier_cloud_filenames))
     print("Failures: ", failures)
+    print("Successes: ", successes)
 
     # save registration results
     if args.output_folder is not None:
