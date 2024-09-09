@@ -9,13 +9,14 @@ import cv2
 
 
 class HeightImage:
-    def __init__(self, debug=False):
+    def __init__(self, min_distance_between_peaks, debug=False):
         self.kernel_size = (3, 3)
         self.debug = debug
         self.min_distance_to_ground = 3.0
         self.image_resolution = 0.1  # meters per pixel
         # coordinates of the top left corner of the image in the utm frame
         self.top_left_corner = [0, 0, 0]
+        self.min_distance_between_peaks = min_distance_between_peaks  # in meters
 
     @staticmethod
     def cloud_point_to_pixel(point, cloud_bounding_box, image_resolution):
@@ -166,7 +167,16 @@ class HeightImage:
         # preprocessing the image by remove noise
         img = self._remove_small_objects(img)
 
-        kernel_size = (25, 25)
+        kernel_size = (
+            int(self.min_distance_between_peaks / self.image_resolution),
+            int(self.min_distance_between_peaks / self.image_resolution),
+        )
+        print(
+            "kernel_size",
+            int(self.min_distance_between_peaks / self.image_resolution),
+            "min_distance_between_peaks",
+            self.min_distance_between_peaks,
+        )
         kernel = np.ones(kernel_size, np.uint8)
         dilated_img = cv2.dilate(img, kernel)
         mask = cv2.compare(

@@ -25,6 +25,7 @@ class Registration:
         correspondence_matching_method,
         bls_feature_extraction_method,
         icp_fitness_threshold,
+        min_distance_between_peaks,
         debug=False,
     ):
         self.uav_cloud = uav_cloud
@@ -34,6 +35,7 @@ class Registration:
         self.bls_feature_extraction_method = bls_feature_extraction_method
         self.debug = debug
         self.icp_fitness_threshold = icp_fitness_threshold
+        self.min_distance_between_peaks = min_distance_between_peaks
         self.transform = np.identity(4)
         self.success = False
         self.report = {"icp_fitness": 0, "clique_size": 0}
@@ -135,6 +137,7 @@ class Registration:
             uav_groud_plane,
             self.frontier_cloud,
             frontier_ground_plane,
+            min_distance_between_peaks=self.min_distance_between_peaks,
             correspondence_matching_method=self.correspondence_matching_method,
             bls_feature_extraction_method=self.bls_feature_extraction_method,
             debug=self.debug,
@@ -150,11 +153,11 @@ class Registration:
     def colorize_cloud(self, cloud, icp_fitness):
         import matplotlib.pyplot as plt
 
-        colormap = plt.get_cmap("coolwarm")
+        colormap = plt.get_cmap("RdYlBu")
 
         num_colors = 10
         values = np.linspace(0, 1, num_colors)
-        values = np.flip(values)  # to have the blue color for the best fitness
+        # values = np.flip(values)  # to have the blue color for the best fitness
 
         index = np.floor(icp_fitness * num_colors).astype(int)
         cloud.paint_uniform_color(colormap(values[index])[:3])

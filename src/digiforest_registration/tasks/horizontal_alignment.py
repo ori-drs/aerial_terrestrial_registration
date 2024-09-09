@@ -17,6 +17,7 @@ class HorizontalRegistration:
         uav_ground_plane,
         cloud,
         cloud_ground_plane,
+        min_distance_between_peaks,
         debug=False,
         correspondence_matching_method="graph",
         bls_feature_extraction_method="canopy_map",
@@ -36,6 +37,7 @@ class HorizontalRegistration:
         self.bls_feature_extraction_method = (
             bls_feature_extraction_method  # canopy_map or tree_segmentation
         )
+        self.min_distance_between_peaks = min_distance_between_peaks
 
     def find_transform(self, src, dst, estimate_scale=False):
         """Estimate N-D similarity transformation with or without scaling.
@@ -112,8 +114,12 @@ class HorizontalRegistration:
         return T
 
     def process(self) -> bool:
-        uav_proc = HeightImage(self.debug)
-        bls_proc = HeightImage(self.debug)
+        uav_proc = HeightImage(
+            min_distance_between_peaks=self.min_distance_between_peaks, debug=self.debug
+        )
+        bls_proc = HeightImage(
+            min_distance_between_peaks=self.min_distance_between_peaks, debug=self.debug
+        )
 
         uav_canopy = uav_proc.compute_canopy_image(
             self.uav_cloud, *self.uav_ground_plane

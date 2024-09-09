@@ -53,6 +53,7 @@ def parse_inputs():
     )
     parser.add_argument("--grid_size_row", type=int, default=0)
     parser.add_argument("--grid_size_col", type=int, default=0)
+    parser.add_argument("--min_distance_between_peaks", type=float, default=2.5)
     parser.add_argument(
         "--crop_frontier_cloud",
         default=False,
@@ -168,6 +169,7 @@ if __name__ == "__main__":
             args.correspondence_matching_method,
             args.bls_feature_extraction_method,
             args.icp_fitness_score_threshold,
+            args.min_distance_between_peaks,
             debug=args.debug,
         )
         success = registration.registration()
