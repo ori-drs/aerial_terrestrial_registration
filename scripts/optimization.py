@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from digiforest_registration.optimization.io import load_pose_graph
+from digiforest_registration.optimization.io import load_pose_graph, write_pose_graph
 from digiforest_registration.optimization.optimize_graph import PoseGraphOptimization
 from digiforest_registration.utils import CloudIO
 from pathlib import Path
@@ -31,6 +31,7 @@ def parse_inputs():
     parser.add_argument(
         "--tiles", default=False, action="store_true", help="processing tiles"
     )
+    parser.add_argument("--initial_transform", nargs="+", type=float, default=None)
     args = parser.parse_args()
 
     if args.config is not None:
@@ -77,6 +78,19 @@ if __name__ == "__main__":
     cloud_io = CloudIO(offset)
 
     # load the pose graph
+    initial_transform = None
+    if args.initial_transform is not None and len(args.initial_transform) == 16:
+        m = args.initial_transform
+        initial_transform = np.array(
+            [
+                [m[0], m[1], m[2], m[3]],
+                [m[4], m[5], m[6], m[7]],
+                [m[8], m[9], m[10], m[11]],
+                [m[12], m[13], m[14], m[15]],
+            ],
+            dtype=np.float32,
+        )
+
     pose_graph = load_pose_graph(
         args.pose_graph_file,
         frontier_cloud_folder,
@@ -91,6 +105,10 @@ if __name__ == "__main__":
     optimizer.optimize()
 
     # save the results
+    if args.output_folder is not None:
+        pose_graph_output_file = Path(args.output_folder) / "optimized_pose_graph.g2o"
+        write_pose_graph(pose_graph, str(pose_graph_output_file))
+
     if args.output_folder is not None and args.load_clouds:
         for id, _ in pose_graph.nodes.items():
             try:
@@ -103,6 +121,7 @@ if __name__ == "__main__":
                     node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
                 )
                 # TODO it's still not the correct transformation
+                # if args.tiles:
                 # center = get_cloud_center(cloud)
                 # center_pose = np.eye(4)
                 # center_pose[0:3, 3] = center
@@ -115,3 +134,15 @@ if __name__ == "__main__":
                 cloud_io.save_cloud(cloud, str(cloud_path))
             except Exception:
                 pass
+
+    # get statistics about how much the graph moved
+    # displacements = []
+    # displacements_xy = []
+    # for id, _ in pose_graph.nodes.items():
+    #     initial_node_pose = pose_graph.get_initial_node_pose(id)
+    #     transformed_pose_node = gtsam.Pose3(initial_transform)*initial_node_pose
+    #     node_pose = pose_graph.get_node_pose(id)
+    #     displacements.append(np.linalg.norm(node_pose.matrix()[0:3, 3] - transformed_pose_node.matrix()[0:3, 3]))
+
+    # print(f"Average node displacement {np.mean(displacements)} meters, max node displacement {np.max(displacements)} meters, index {np.argmax(displacements)}")
+    # print(f"Min node displacement {np.min(displacements)} meters")
