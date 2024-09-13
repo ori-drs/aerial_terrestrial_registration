@@ -38,7 +38,7 @@ The first step is to make sure that the uav and mls clouds are in the same frame
 
 If they are not, you can use a tool to convert them. Checkout the `save-pose-graph-utm` branch of the `vilens` repository, and use `payload_transformer.launch`. See the paragraphs below for a detailed explanation.
 
-The last step is to make sure that the uav cloud has normals. If it doesn't have normals, you can use CloudCompare to compute them. The normals are used by the pipeline to extract the ground and the trees.
+The last step is to make sure that the uav cloud has normals. If it doesn't have normals, you can use CloudCompare to compute them. The normals are used by the pipeline to extract the ground and the trees. In CloudCompare go to Edit/Normals/Compute. Settings that seem to work well in most cases are `Local Surface model : Quadric`, `Octree radius : Auto` and `Use preferred orientation: +z`.
 
 #### Point cloud preprocessing for stein am rhein
 - the uav cloud provided by Prefor is in EPSG:2056. We don't use this UTM frame but EPSG:25832, so the first step is to convert it to EPSG:25832.
@@ -76,6 +76,7 @@ Inside the `conf` folder you will find an example configuration file `registrati
 * **`save_pose_graph`** : set it to True to save the pose graph with the additional constraints in the **`output_folder`**.
 * **`crop_frontier_cloud`** : the frontier cloud can be large. Setting this flag to True will crop the clouds to make them smaller.
 * **`icp_fitness_score_threshold`** (double): a registration is considered successful if the ICP fitness score of the last ICP registration is lower than this parameter.
+* **`min_distance_between_peaks`** (double): it's an important parameter, it's define the minimum distance between two peaks in the canopy map. It represents the minimum distance between two tree trunks in the point clouds. If this parameter is too small, peaks that don't correspond to real tree peaks will be found. 
 
 ## Parameters of the optimization pipeline
 
