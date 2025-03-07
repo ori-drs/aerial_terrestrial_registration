@@ -1,0 +1,6 @@
+frontier_cloud_folder: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/payload_clouds_in_map
+offset: [0,0,0]
+pose_graph_file: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/transformed_clouds_payloads_in_map/pose_graph.g2o
+output_folder: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/optimized_payloads_in_map
+load_clouds: True
+tiles: False

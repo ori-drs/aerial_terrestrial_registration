@@ -1,0 +1,10 @@
+uav_cloud: /data/digiforest/evo/2023-05-19-15-37-55-exp01/uav_normals_for_exp01_in_map.ply
+frontier_cloud_folder: /data/digiforest/evo/2023-05-19-15-37-55-exp01/payload_clouds_in_map
+#frontier_cloud: /data/digiforest/evo/2023-05-19-16-13-03-exp02/payload_clouds_in_map/cloud_1682948314_340424000.ply
+offset: [0.0,0.0,0.0]
+output_folder: /data/digiforest/evo/2023-05-19-15-37-55-exp01/transformed_clouds_payloads_in_map
+crop_frontier_cloud: True
+bls_feature_extraction_method: "tree_segmentation"
+debug: False
+pose_graph_file: /data/digiforest/evo/2023-05-19-15-37-55-exp01/slam_pose_graph.g2o
+save_pose_graph: True

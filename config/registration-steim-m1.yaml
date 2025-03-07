@@ -1,0 +1,12 @@
+uav_cloud: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/prefor_steim_am_rhein_m1_normals_map_quad.ply
+frontier_cloud_folder: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/payload_clouds_in_map
+offset: [0.0,0.0,0.0]
+output_folder: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/transformed_clouds_payloads_in_map
+crop_frontier_cloud: True
+bls_feature_extraction_method: "tree_segmentation"
+debug: False
+min_distance_between_peaks: 4.0
+max_number_of_clique: 6
+pose_graph_file: /data/digiforest/steim_am_rhein/new_data/m1/2023-08-15-11-18-42-exp07-m1/slam_pose_graph.g2o
+save_pose_graph: True
+icp_fitness_score_threshold: 0.75
