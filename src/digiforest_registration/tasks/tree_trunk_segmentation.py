@@ -34,7 +34,7 @@ class TreeTrunkSegmentation:
         """
         ground_plane is the equation of the ground plane in the form [a, b, c, d]
         Returns an array of tree trunk positions"""
-        assert isinstance(cloud, o3d.cuda.pybind.t.geometry.PointCloud)
+        #assert isinstance(cloud, o3d.cuda.pybind.t.geometry.PointCloud)
 
         points = np.asarray(cloud.to_legacy().points)
         dist = self._point_plane_distance(

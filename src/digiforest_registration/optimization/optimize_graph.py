@@ -56,8 +56,9 @@ class PoseGraphOptimization:
                 # if e["parent_id"] == self.pose_graph.root_id:
                 #     # the root node is fixed by a prior constraint already
                 #     continue
-
                 noise = gtsam.noiseModel.Gaussian.Information(e["info"])
+                # info_matrix = e["info"] * 10**1
+                # noise = gtsam.noiseModel.Gaussian.Information(info_matrix)
                 factor_graph.add(
                     gtsam.PriorFactorPose3(e["parent_id"], e["pose"], noise)
                 )
@@ -104,7 +105,7 @@ class PoseGraphOptimization:
                 window_name="Initial Pose Graph",
             )
 
-        if self.show_clouds:
+        if self.show_clouds and self.debug:
             geometries = vis.graph_to_geometries(
                 self.pose_graph,
                 show_frames=True,
@@ -162,7 +163,7 @@ class PoseGraphOptimization:
                 window_name="Optimized Pose Graph",
             )
 
-        if self.show_clouds:
+        if self.show_clouds and self.debug:
             geometries = vis.graph_to_geometries(
                 self.pose_graph,
                 show_frames=True,
