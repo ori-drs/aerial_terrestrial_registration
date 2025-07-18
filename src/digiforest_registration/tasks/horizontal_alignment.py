@@ -1,7 +1,5 @@
 from digiforest_registration.tasks.height_image import (
     HeightImage,
-    CanopyFeatureDescriptor,
-    CanopyFeatureMatcher,
     draw_correspondences,
 )
 from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
@@ -199,16 +197,6 @@ class HorizontalRegistration:
             elif len(correspondences_list) == 0:
                 return False
 
-        elif self.feature_association_method == "feature_extraction":
-            # find correspondences using feature extraction
-            print("Computing correspondences using feature extraction")
-            descriptor = CanopyFeatureDescriptor()
-            uav_descriptors = descriptor.compute_feature_descriptors(uav_height_pts)
-            bls_descriptors = descriptor.compute_feature_descriptors(bls_height_pts)
-            feature_matcher = CanopyFeatureMatcher()
-            correspondences_list = feature_matcher.match(
-                bls_height_pts, bls_descriptors, uav_height_pts, uav_descriptors
-            )
         else:
             raise ValueError("Unknown method: " + self.feature_association_method)
 
@@ -284,31 +272,3 @@ class HorizontalRegistration:
 
         np.savetxt("/tmp/uav_pts.txt", uav_pts, fmt="%.2f", delimiter=",")
         np.savetxt("/tmp/bls_pts.txt", bls_pts, fmt="%.2f", delimiter=",")
-
-
-if __name__ == "__main__":
-    import pickle
-
-    bls_height_pts = pickle.load(open("/tmp/bls_height_pts.pkl", "rb"))
-    uav_height_pts = pickle.load(open("/tmp/uav_height_pts.pkl", "rb"))
-    bls_height_img = pickle.load(open("/tmp/bls_height_img.pkl", "rb"))
-    uav_height_img = pickle.load(open("/tmp/uav_height_img.pkl", "rb"))
-
-    descriptor = CanopyFeatureDescriptor()
-    uav_descriptors = descriptor.compute_feature_descriptors(uav_height_pts)
-    bls_descriptors = descriptor.compute_feature_descriptors(bls_height_pts)
-    feature_matcher = CanopyFeatureMatcher()
-    correspondences_list = feature_matcher.match(
-        bls_height_pts, bls_descriptors, uav_height_pts, uav_descriptors
-    )
-
-    for i in range(len(correspondences_list)):
-        correspondences = correspondences_list[i]
-
-        draw_correspondences(
-            bls_height_img,
-            bls_height_pts,
-            uav_height_img,
-            uav_height_pts,
-            correspondences,
-        )
