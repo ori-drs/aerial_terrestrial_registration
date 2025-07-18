@@ -62,6 +62,7 @@ def parse_inputs():
         help="crop frontier cloud",
     )
     parser.add_argument("--icp_fitness_score_threshold", type=float, default=0.85)
+    parser.add_argument("--logging_dir", type=str)
     args = parser.parse_args()
 
     if args.config is not None:
@@ -162,6 +163,11 @@ if __name__ == "__main__":
                 [cropped_uav_cloud.to_legacy()],
                 window_name="Initial uav",
             )
+            
+        logging_dir = args.logging_dir
+        if args.logging_dir is None:
+            logging_dir = './logs'
+        logging_dir = os.path.join(logging_dir, frontier_cloud_filename.stem)
 
         registration = Registration(
             cropped_uav_cloud,
@@ -172,6 +178,7 @@ if __name__ == "__main__":
             args.icp_fitness_score_threshold,
             args.min_distance_between_peaks,
             args.max_number_of_clique,
+            logging_dir,
             debug=args.debug,
         )
         success = registration.registration()

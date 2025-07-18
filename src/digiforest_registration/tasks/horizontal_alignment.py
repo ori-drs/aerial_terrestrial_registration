@@ -1,5 +1,6 @@
 from digiforest_registration.tasks.height_image import (
     HeightImage,
+    display_correspondences,
     draw_correspondences,
 )
 from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
@@ -17,15 +18,17 @@ class HorizontalRegistration:
         cloud_ground_plane,
         min_distance_between_peaks,
         max_number_of_clique,
-        debug=False,
-        correspondence_matching_method="graph",
-        bls_feature_extraction_method="canopy_map",
+        logger,
+        debug = False,
+        correspondence_matching_method = "graph",
+        bls_feature_extraction_method = "canopy_map",
     ):
         self.uav_cloud = uav_cloud
         self.uav_ground_plane = uav_ground_plane
         self.cloud = cloud
         self.cloud_ground_plane = cloud_ground_plane
         self.debug = debug
+        self.logger = logger
         self.transforms = []
         self.max_number_of_clique = max_number_of_clique
         self.clique_size = 0
@@ -113,6 +116,7 @@ class HorizontalRegistration:
         return T
 
     def process(self) -> bool:
+        
         uav_proc = HeightImage(
             min_distance_between_peaks=self.min_distance_between_peaks, debug=self.debug
         )
@@ -138,13 +142,12 @@ class HorizontalRegistration:
             )
             bounding_box = self.cloud.get_axis_aligned_bounding_box()
             # convert to pixel coordinates
-            bls_height_pts2 = np.zeros((bls_pts.shape[0], 2), dtype=np.int32)
+            bls_height_pts = np.zeros((bls_pts.shape[0], 2), dtype=np.int32)
             for i in range(bls_pts.shape[0]):
-                bls_height_pts2[i] = bls_proc.cloud_point_to_pixel(
+                bls_height_pts[i] = bls_proc.cloud_point_to_pixel(
                     bls_pts[i], bounding_box, image_resolution=0.1
                 )
 
-            bls_height_pts = bls_height_pts2  # TODO improve that
         elif self.bls_feature_extraction_method != "canopy_map":
             raise ValueError("Unknown method: " + self.bls_feature_extraction_method)
 
@@ -203,7 +206,7 @@ class HorizontalRegistration:
         for i in range(len(correspondences_list)):
             correspondences = correspondences_list[i]
             if self.debug:
-                draw_correspondences(
+                display_correspondences(
                     bls_height_img,
                     bls_height_pts,
                     uav_height_img,
@@ -213,6 +216,17 @@ class HorizontalRegistration:
                     G,
                     H,
                 )
+            correspondences_img = draw_correspondences(
+                    bls_height_img,
+                    bls_height_pts,
+                    uav_height_img,
+                    uav_height_pts,
+                    correspondences,
+                    False,
+                    G,
+                    H,
+                )
+            self.logger.log_image(correspondences_img, "correspondences")
 
             # find transformation using maximum clique
             bls_pts = np.zeros((len(correspondences), 2))
@@ -234,6 +248,7 @@ class HorizontalRegistration:
 
         return True
 
+    # TODO delete
     def _test_edges(self, G, H, correspondence_graph):
         edges = []
         edges.append([("f_1", "f_2"), ("uav_31", "uav_36")])
@@ -260,6 +275,7 @@ class HorizontalRegistration:
                 )
             )
 
+    # TODO delete
     def _save_tree_location_to_disk(
         self, uav_proc, uav_img_pts: np.ndarray, bls_proc, bls_img_pts: np.ndarray
     ):

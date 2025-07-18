@@ -13,3 +13,5 @@ from .transformations import (
     rotation_matrix_to_euler,
 )
 from .cloud_processing import crop_cloud, crop_cloud_to_size, get_cloud_center
+
+from .logger import ExperimentLogger

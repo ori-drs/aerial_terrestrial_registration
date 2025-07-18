@@ -210,8 +210,6 @@ class HeightImage:
 
         return np.array(valid_points), img
 
-
-
 def draw_correspondences(
     height_img1: np.ndarray,
     height_pts1: np.ndarray,
@@ -281,6 +279,23 @@ def draw_correspondences(
             (0, 255, 0),
             1,
         )
+        
+    return img
+
+
+def display_correspondences(
+    height_img1: np.ndarray,
+    height_pts1: np.ndarray,
+    height_img2: np.ndarray,
+    height_pts2: np.ndarray,
+    correspondences: list,
+    draw_node_names=False,
+    graph1=None,
+    graph2=None,
+):
+    img = draw_correspondences(height_img1, height_pts1, height_img2,
+                               height_pts2, correspondences, draw_node_names,
+                               graph1, graph2)
 
     cv2.imshow("Image", img)
     cv2.waitKey(0)

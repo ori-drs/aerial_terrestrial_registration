@@ -94,7 +94,7 @@ Inside the `conf` folder you will find an example configuration file `registrati
 #### With ROS
 Build the package and run it with:
 ```sh
-rosrun  digiforest_registration main.py --config ../config/registration.yaml 
+rosrun  digiforest_registration registration.py --config ../config/registration.yaml 
 ```
 
 
@@ -126,7 +126,7 @@ pip install -e .
 Inside the `config` folder, you can find a configuration file `registration.yaml` containing all the parameters that you need to set. Edit the parameters that you need and run the registration with :
  
 ```sh
-python3  main.py --config ../config/registration.yaml 
+python3  registration.py --config ../config/registration.yaml 
 ```
 
 At the end of execution, it will display the final icp fitness score for each mls clouds and whether the registration is considered as successful or not. A registration is considered successful solely on this fitness score and the **`icp_fitness_score_threshold`** set in your yaml file.

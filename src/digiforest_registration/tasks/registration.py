@@ -4,6 +4,7 @@ from digiforest_registration.tasks.horizontal_alignment import HorizontalRegistr
 from digiforest_registration.tasks.icp import icp
 from digiforest_registration.utils import euler_to_rotation_matrix
 from digiforest_registration.utils import crop_cloud
+from digiforest_registration.utils import ExperimentLogger
 
 import numpy as np
 import open3d as o3d
@@ -27,6 +28,7 @@ class Registration:
         icp_fitness_threshold,
         min_distance_between_peaks,
         max_number_of_clique,
+        logging_dir: str,
         debug=False,
     ):
         self.uav_cloud = uav_cloud
@@ -40,7 +42,8 @@ class Registration:
         self.max_number_of_clique = max_number_of_clique
         self.transform = np.identity(4)
         self.success = False
-        self.report = {"icp_fitness": 0, "clique_size": 0}
+        self.report = {"icp_fitness": 0, "clique_size": 0} # TODO: replace with logger
+        self.logger = ExperimentLogger(base_dir=logging_dir)
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
         best_icp_fitness_score = 0
@@ -143,6 +146,7 @@ class Registration:
             max_number_of_clique=self.max_number_of_clique,
             correspondence_matching_method=self.correspondence_matching_method,
             bls_feature_extraction_method=self.bls_feature_extraction_method,
+            logger=self.logger,
             debug=self.debug,
         )
         self.success = horizontal_registration.process()
