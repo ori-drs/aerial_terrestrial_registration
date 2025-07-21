@@ -56,8 +56,8 @@ class Registration:
             tx = M[0, 2]
             ty = M[1, 2]
             yaw = np.arctan2(M[1, 0], M[0, 0])
-            print(
-                "Transformation from mls cloud to uav (x, y, yaw, scale):", tx, ty, yaw
+            self.logger.debug(
+                f"Transformation from mls cloud to uav (x, y, yaw, scale): {tx}, {ty}, {yaw}"
             )
 
             R = euler_to_rotation_matrix(yaw, 0, 0)
@@ -82,6 +82,7 @@ class Registration:
                 cropped_uav_cloud,
                 mls_cloud,
                 ground_segmentation_method=self.ground_segmentation_method,
+                logger=self.logger,
                 debug=self.debug,
             )
             (_, _, tz) = vertical_registration.process()
@@ -90,8 +91,8 @@ class Registration:
 
             mls_cloud.transform(vertical_transform)
             transform[2, 3] = tz + transform[2, 3]
-            print("Transformation matrix before icp:")
-            print(transform)
+            self.logger.debug("Transformation matrix before icp:")
+            self.logger.debug(transform)
 
             # Use cropped uav cloud in the rest of the code
             if self.debug:
@@ -101,7 +102,7 @@ class Registration:
                 )
 
             # Apply final icp registration
-            icp_transform, icp_fitness = icp(mls_cloud, cropped_uav_cloud)
+            icp_transform, icp_fitness = icp(mls_cloud, cropped_uav_cloud, self.logger)
             mls_cloud.transform(icp_transform)
             if self.debug:
                 o3d.visualization.draw_geometries(
@@ -109,8 +110,8 @@ class Registration:
                     window_name="Final registration",
                 )
 
-            print("Final transformation matrix:")
-            print(icp_transform @ transform)
+            self.logger.debug("Final transformation matrix:")
+            self.logger.debug(icp_transform @ transform)
 
             if icp_fitness >= best_icp_fitness_score:
                 best_icp_fitness_score = icp_fitness
@@ -131,6 +132,7 @@ class Registration:
             self.uav_cloud,
             self.mls_cloud,
             ground_segmentation_method=self.ground_segmentation_method,
+            logger=self.logger,
             debug=self.debug,
         )
         (uav_groud_plane, mls_ground_plane, tz) = vertical_registration.process()

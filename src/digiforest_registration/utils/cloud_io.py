@@ -33,8 +33,9 @@ def get_tile_filename(id: int):
 
 
 class CloudIO:
-    def __init__(self, offset: np.ndarray, downsample_cloud=False):
+    def __init__(self, offset: np.ndarray, logger, downsample_cloud=False):
         self.offset = offset  # to transform cloud to local coordinates
+        self.logger = logger
         self.downsample_cloud = downsample_cloud
 
     def load_cloud(self, filename: str):
@@ -42,11 +43,11 @@ class CloudIO:
         Loads a point cloud from a file and translates it if its coordinates are too large."""
 
         cloud = o3d.t.io.read_point_cloud(filename)
-        print("Loaded cloud with", len(cloud.point.positions), "points")
+        self.logger.debug(f"Loaded cloud with {len(cloud.point.positions)} points")
         if self.downsample_cloud:
             # TODO there can be a problem if the voxel_size is greater than the resolution of the canopy height image
             cloud = cloud.voxel_down_sample(voxel_size=0.1)
-            print(len(cloud.point.positions), "points remaining")
+            self.logger.debug(f"{len(cloud.point.positions)} points remaining")
 
         threshold = 10**6
         if self.offset is not None:
@@ -59,7 +60,6 @@ class CloudIO:
                 or (np.abs(point[2]) > threshold)
             ):
                 self.offset = -point
-                print("Offset", self.offset)
                 cloud = cloud.translate(self.offset)
 
         return cloud

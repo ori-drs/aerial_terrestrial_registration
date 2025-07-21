@@ -1,19 +1,18 @@
-import os
-from datetime import datetime
 from pathlib import Path
-import cv2  # or use PIL
-import numpy as np
+import cv2
+import logging
 
 
-class ExperimentLogger():
-    
+class ExperimentLogger:
     def __init__(self, base_dir: str, version: str = None):
         self._root = Path(base_dir)
         self._root.mkdir(parents=True, exist_ok=True)
         self._version = version if version is not None else self._get_next_version()
         self._log_dir = self._root / f"version_{self._version}"
         self._log_dir.mkdir(parents=True, exist_ok=True)
-            
+        self.logger = logging.getLogger("digiforest_registration")
+        # self.logger.setLevel(logging.DEBUG)
+
     def log_image(self, img, name):
         """Save image in log folder
         If an image with the same name already exists, it will create
@@ -28,7 +27,7 @@ class ExperimentLogger():
                 img_path = self._log_dir / f"{name}_{version}.png"
                 version += 1
         cv2.imwrite(str(img_path), img)
-    
+
     def _get_next_version(self) -> int:
         if not self._root.is_dir():
             return 0
@@ -45,3 +44,15 @@ class ExperimentLogger():
             return 0
 
         return max(existing_versions) + 1
+
+    def info(self, data):
+        self.logger.info(data)
+
+    def debug(self, data):
+        self.logger.debug(data)
+
+    def warning(self, data):
+        self.logger.warning(data)
+
+    def error(self, data):
+        self.logger.error(data)

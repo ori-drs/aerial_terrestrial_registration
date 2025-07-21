@@ -92,7 +92,7 @@ class HeightImage:
         # Create the canopy image
         height = int(np.ceil((max_bound[1] - min_bound[1]) / self.image_resolution))
         width = int(np.ceil((max_bound[0] - min_bound[0]) / self.image_resolution))
-        print("height, width", height, width)
+        self.logger.debug(f"height: {height}, width: {width}")
 
         image = np.zeros((height, width, 1), dtype=np.float32)
 
@@ -164,11 +164,8 @@ class HeightImage:
             int(self.min_distance_between_peaks / self.image_resolution),
             int(self.min_distance_between_peaks / self.image_resolution),
         )
-        print(
-            "kernel_size",
-            int(self.min_distance_between_peaks / self.image_resolution),
-            "min_distance_between_peaks",
-            self.min_distance_between_peaks,
+        self.logger.debug(
+            f"kernel_size {int(self.min_distance_between_peaks / self.image_resolution)}, min_distance_between_peaks {self.min_distance_between_peaks}"
         )
         kernel = np.ones(kernel_size, np.uint8)
         dilated_img = cv2.dilate(img, kernel)

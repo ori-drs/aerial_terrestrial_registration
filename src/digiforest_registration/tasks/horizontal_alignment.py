@@ -168,40 +168,35 @@ class HorizontalRegistration:
         if self.feature_association_method == "graph":
 
             # create feature graphs
-            print("Creating the feature graphs")
+            self.logger.debug("Creating the feature graphs")
             G = Graph(mls_height_pts, node_prefix="f")
             H = Graph(uav_height_pts, node_prefix="uav")
 
-            print(
-                "Number of nodes and edges of the mls graph",
-                G.graph.number_of_nodes(),
-                G.graph.number_of_edges(),
+            self.logger.debug(
+                f"Number of nodes and edges of the mls graph {G.graph.number_of_nodes()} {G.graph.number_of_edges()}"
             )
-            print(
-                "Number of nodes and edges of the uav graph",
-                H.graph.number_of_nodes(),
-                H.graph.number_of_edges(),
+            self.logger.debug(
+                f"Number of nodes and edges of the uav graph {H.graph.number_of_nodes()} {H.graph.number_of_edges()}"
             )
 
             # find maximum clique in the correspondence graph
-            correspondence_graph = CorrespondenceGraph(G, H)
+            correspondence_graph = CorrespondenceGraph(G, H, self.logger)
             if self.mls_feature_extraction_method == "tree_segmentation":
                 correspondence_graph.distance_threshold = 0.25
 
-            print("Computing the maximum clique")
+            self.logger.debug("Computing the maximum clique")
             if correspondence_graph.graph.number_of_edges() > 1800000:
-                print("Too many edges in the correspondence graph")
+                self.logger.debug("Too many edges in the correspondence graph")
                 return False
             correspondences_list = correspondence_graph.maximum_clique()
 
             if len(correspondences_list) > self.max_number_of_clique:
                 # too many cliques, something is wrong
-                print("Too many cliques, downsampling them")
+                self.logger.debug("Too many cliques, downsampling them")
                 # TODO it's not great
                 correspondences_list = correspondences_list[
                     0 : self.max_number_of_clique
                 ]
-                # return False
             elif len(correspondences_list) == 0:
                 return False
 
@@ -264,17 +259,17 @@ class HorizontalRegistration:
         for edge in edges:
             edge1 = G.graph.get_edge_data(edge[0][0], edge[0][1])
             edge2 = H.graph.get_edge_data(edge[1][0], edge[1][1])
-            print(
+            self.logger.debug(
                 G.pos[edge[0][0]],
                 G.pos[edge[0][1]],
                 G.get_angle(G.pos[edge[0][0]], G.pos[edge[0][1]]),
             )
-            print(
+            self.logger.debug(
                 H.pos[edge[1][0]],
                 H.pos[edge[1][1]],
                 H.get_angle(H.pos[edge[1][0]], H.pos[edge[1][1]]),
             )
-            print(
+            self.logger.info(
                 correspondence_graph.compare_edge(
                     edge1, edge2, use_angle=True, debug=True
                 )

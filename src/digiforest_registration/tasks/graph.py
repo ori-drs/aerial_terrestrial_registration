@@ -96,15 +96,14 @@ class Graph:
 
 
 class CorrespondenceGraph:
-    def __init__(self, graph1: Graph, graph2: Graph):
+    def __init__(self, graph1: Graph, graph2: Graph, logger):
         self.graph = nx.cartesian_product(graph1.graph, graph2.graph)
         self.g1 = graph1
         self.g2 = graph2
         self.graph.remove_edges_from(list(self.graph.edges()))
-        # self.distance_threshold = 0.22
-        # self.angle_threshold = 0.26
         self.distance_threshold = 0.2
         self.angle_threshold = 0.25
+        self.logger = logger
 
         # Creating the edges
         for node1 in self.graph.nodes():
@@ -115,13 +114,11 @@ class CorrespondenceGraph:
                     if self.compare_edge(edge1, edge2, use_angle=True):
                         self.graph.add_edge(node1, node2, weight=0)
 
-        print(
-            "Number of nodes in the correspondence graph: ",
-            self.graph.number_of_nodes(),
+        self.logger.debug(
+            f"Number of nodes in the correspondence graph: {self.graph.number_of_nodes()}"
         )
-        print(
-            "Number of edges in the correspondence graph: ",
-            self.graph.number_of_edges(),
+        self.logger.debug(
+            f"Number of edges in the correspondence graph: {self.graph.number_of_edges()}"
         )
 
     def compare_edge(self, edge1, edge2, use_angle=False, debug=False) -> bool:
@@ -168,8 +165,8 @@ class CorrespondenceGraph:
             return []
 
         # Print the maximum cliques
-        print("Length of the maximum clique", len(max_cliques[0]))
-        print("Number of maximum cliques: ", len(max_cliques))
+        self.logger.debug(f"Length of the maximum clique {len(max_cliques[0])}")
+        self.logger.debug(f"Number of maximum cliques: {len(max_cliques)}")
 
         # Create the edges
         edges = []

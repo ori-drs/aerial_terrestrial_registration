@@ -5,7 +5,9 @@ import open3d as o3d
 
 
 class VerticalRegistration:
-    def __init__(self, uav_cloud, mls_cloud, ground_segmentation_method, debug=False):
+    def __init__(
+        self, uav_cloud, mls_cloud, ground_segmentation_method, logger, debug=False
+    ):
         self._max_distance_to_plane = 0.5
         self.ground_segmentation = GroundSegmentation(
             max_distance_to_plane=self._max_distance_to_plane,
@@ -16,6 +18,7 @@ class VerticalRegistration:
         )
         self.uav_cloud = uav_cloud
         self.mls_cloud = mls_cloud
+        self.logger = logger
         self.debug = debug
 
     def project_point_onto_plane(self, point, plane_normal, plane_constant):
@@ -76,8 +79,8 @@ class VerticalRegistration:
 
         # todo find rotation between the two normal vectors
 
-        print([a_r, b_r, c_r, d_r], [a, b, c, d])
-        print("dot product of normals: ", np.dot(n_r, n))
+        self.logger.debug(f"f{[a_r, b_r, c_r, d_r]}, {[a, b, c, d]}")
+        self.logger.debug(f"dot product of normals: {np.dot(n_r, n)}")
 
         uav_point = (
             ground_uav_cloud.select_by_index(inliers_uav)
@@ -88,6 +91,6 @@ class VerticalRegistration:
         z_offset = np.sign(uav_point[2] - p_proj[2]) * np.linalg.norm(
             p_proj - uav_point
         )
-        print("Signed Distance between planes", z_offset)
+        self.logger.debug(f"Signed Distance between planes {z_offset}")
 
         return [a_r, b_r, c_r, d_r], [a, b, c, d], z_offset

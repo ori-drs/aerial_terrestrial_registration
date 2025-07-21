@@ -14,6 +14,7 @@ import open3d as o3d
 
 import argparse
 import yaml
+import logging
 
 
 def parse_inputs():
@@ -61,6 +62,11 @@ def parse_inputs():
     )
     parser.add_argument("--icp_fitness_score_threshold", type=float, default=0.85)
     parser.add_argument("--logging_dir", type=str)
+    parser.add_argument(
+        "--log_level",
+        default="DEBUG",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
     args = parser.parse_args()
 
     if args.config is not None:
@@ -117,6 +123,13 @@ if __name__ == "__main__":
         uav_cloud_filename,
     ) = check_inputs_validity(args)
 
+    # Logger
+    numeric_level = getattr(logging, args.log_level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f"Invalid log level: {args.log_level}")
+    logging.basicConfig(level=numeric_level, format="%(levelname)s: %(message)s")
+    logger = logging.getLogger("digiforest_registration")
+
     # Loading the data
     offset = None
     if args.offset is not None and len(args.offset) == 3:
@@ -124,7 +137,7 @@ if __name__ == "__main__":
             [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
         )
 
-    cloud_io = CloudIO(offset, args.downsample_cloud)
+    cloud_io = CloudIO(offset, logger, args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
 
     if args.output_folder is not None and args.tiles_conf_file is not None:
@@ -138,7 +151,7 @@ if __name__ == "__main__":
     registration_results = {}
     for mls_cloud_filename in mls_cloud_filenames:
 
-        print("Processing file: ", mls_cloud_filename.name)
+        logger.info(f"Processing file: {mls_cloud_filename.name}")
         original_mls_cloud = cloud_io.load_cloud(str(mls_cloud_filename))
 
         # cropping input clouds
@@ -179,7 +192,7 @@ if __name__ == "__main__":
         )
         success = registration.registration()
 
-        print("File: ", mls_cloud_filename.name, success)
+        logger.info(f"File: {mls_cloud_filename.name}, {success}")
         if not success:
             failures.append((mls_cloud_filename.name, registration.report))
         else:
@@ -199,10 +212,10 @@ if __name__ == "__main__":
                 local_coordinates=False,
             )
 
-    print("Total number of failures: ", len(failures))
-    print("Total number of clouds: ", len(mls_cloud_filenames))
-    print("Failures: ", failures)
-    print("Successes: ", successes)
+    logger.info(f"Total number of failures: {len(failures)}")
+    logger.info(f"Total number of clouds: {len(mls_cloud_filenames)}")
+    logger.info(f"Failures: {failures}")
+    logger.info(f"Successes: {successes}")
 
     # save registration results
     if args.output_folder is not None:

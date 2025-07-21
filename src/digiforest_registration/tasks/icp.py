@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 
 
-def icp(source, target):
+def icp(source, target, logger):
     # Search distance for Nearest Neighbour Search [Hybrid-Search is used].
     max_correspondence_distance = 0.5
 
@@ -24,8 +24,8 @@ def icp(source, target):
         criteria,
     )
 
-    print("Inlier Fitness: ", registration_icp.fitness)
-    print("Inlier RMSE: ", registration_icp.inlier_rmse)
-    print("ICP transform is:")
-    print(registration_icp.transformation)
+    logger.debug(f"Inlier Fitness: {registration_icp.fitness}")
+    logger.debug("Inlier RMSE: {registration_icp.inlier_rmse}")
+    logger.debug("ICP transform is:")
+    logger.debug(registration_icp.transformation)
     return registration_icp.transformation, registration_icp.fitness
