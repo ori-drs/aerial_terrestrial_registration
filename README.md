@@ -64,14 +64,14 @@ roslaunch vilens_slam payload_tranformer.launch
 
 Inside the `conf` folder you will find an example configuration file `registration.yaml`.
 
-* **`uav_cloud`** : The path to the uav point cloud.
+* **`uav_cloud`** : the path to the uav point cloud.
 * **`mls_cloud`** : the path to the mls cloud.
 * **`mls_cloud_folder`** : the path to the folder containing the mls clouds. Set either this parameter or **`mls_cloud`**.
 * **`ground_segmentation_method`** ( default or csf ): method to use to segment the ground of the clouds. 'Default' should use most of the time. See the documentation of digiforest_analysis for an explanation of this parameter.
 * **`correspondence_matching_method`** ( graph ) : there is a single method implemented so far to match the features from the uav and mls clouds.
-* **`bls_feature_extraction_method`** ( canopy_map or tree_segmentation): the method to extract the features of the mls cloud. 'canopy_map' works well if the canopy is visible in the mls cloud. If the canopy is not visible, the other method must be used.
-* **`offset`** (default [0., 0., 0.]): translation offset to apply to the frontier clouds. With the recommended 'map' frame, setting the offset to [0., 0., 0.] ( no offset ) is sufficient.
-* **`output_folder`** : path to the output folder where the transformed mls clouds and the new pose graph will be stored. The transformed mls is.
+* **`mls_feature_extraction_method`** ( canopy_map or tree_segmentation): the method to extract the features of the mls cloud. 'canopy_map' works well if the canopy is visible in the mls cloud. If the canopy is not visible, the other method must be used.
+* **`offset`** (default [0., 0., 0.]): translation offset to apply to the mls clouds. With the recommended 'map' frame, setting the offset to [0., 0., 0.] ( no offset ) is sufficient.
+* **`output_folder`** : path to the output folder where the transformed mls clouds and the new pose graph will be stored.
 * **`debug`** : set it to True to output debug information about the execution of the pipeline.
 * **`save_pose_graph`** : set it to True to save the pose graph with the additional constraints in the **`output_folder`**.
 * **`crop_mls_cloud`** : the mls cloud can be large. Setting this flag to True will crop the clouds to make them smaller.
