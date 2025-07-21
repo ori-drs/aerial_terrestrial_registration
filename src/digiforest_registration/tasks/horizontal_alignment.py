@@ -14,30 +14,29 @@ class HorizontalRegistration:
         self,
         uav_cloud,
         uav_ground_plane,
-        cloud,
-        cloud_ground_plane,
+        mls_cloud,
+        mls_cloud_ground_plane,
         min_distance_between_peaks,
         max_number_of_clique,
         logger,
-        debug = False,
-        correspondence_matching_method = "graph",
-        bls_feature_extraction_method = "canopy_map",
+        debug=False,
+        correspondence_matching_method="graph",
+        mls_feature_extraction_method="canopy_map",
     ):
         self.uav_cloud = uav_cloud
         self.uav_ground_plane = uav_ground_plane
-        self.cloud = cloud
-        self.cloud_ground_plane = cloud_ground_plane
+        self.mls_cloud = mls_cloud
+        self.mls_cloud_ground_plane = mls_cloud_ground_plane
         self.debug = debug
         self.logger = logger
         self.transforms = []
         self.max_number_of_clique = max_number_of_clique
         self.clique_size = 0
-        self.frontier_peaks_size = 0
         self.feature_association_method = (
             correspondence_matching_method  # graph or feature_extraction
         )
-        self.bls_feature_extraction_method = (
-            bls_feature_extraction_method  # canopy_map or tree_segmentation
+        self.mls_feature_extraction_method = (
+            mls_feature_extraction_method  # canopy_map or tree_segmentation
         )
         self.min_distance_between_peaks = min_distance_between_peaks
 
@@ -116,47 +115,53 @@ class HorizontalRegistration:
         return T
 
     def process(self) -> bool:
-        
+
         uav_proc = HeightImage(
-            min_distance_between_peaks=self.min_distance_between_peaks, debug=self.debug
+            min_distance_between_peaks=self.min_distance_between_peaks,
+            logger=self.logger,
+            debug=self.debug,
         )
-        bls_proc = HeightImage(
-            min_distance_between_peaks=self.min_distance_between_peaks, debug=self.debug
+        mls_proc = HeightImage(
+            min_distance_between_peaks=self.min_distance_between_peaks,
+            logger=self.logger,
+            debug=self.debug,
         )
 
         uav_canopy = uav_proc.compute_canopy_image(
             self.uav_cloud, *self.uav_ground_plane
         )
-        bls_canopy = bls_proc.compute_canopy_image(self.cloud, *self.cloud_ground_plane)
+        mls_canopy = mls_proc.compute_canopy_image(
+            self.mls_cloud, *self.mls_cloud_ground_plane
+        )
 
         # find maxima in the heigh image
-        bls_height_pts, bls_height_img = bls_proc.find_local_maxima(bls_canopy)
+        mls_height_pts, mls_height_img = mls_proc.find_local_maxima(mls_canopy)
 
         uav_height_pts, uav_height_img = uav_proc.find_local_maxima(uav_canopy)
 
-        if self.bls_feature_extraction_method == "tree_segmentation":
+        if self.mls_feature_extraction_method == "tree_segmentation":
             # find tree trunks
             tree_trunk_segmentation = TreeTrunkSegmentation()
-            bls_pts = tree_trunk_segmentation.find_tree_trunks(
+            mls_pts = tree_trunk_segmentation.find_tree_trunks(
                 self.cloud, self.cloud_ground_plane
             )
             bounding_box = self.cloud.get_axis_aligned_bounding_box()
             # convert to pixel coordinates
-            bls_height_pts = np.zeros((bls_pts.shape[0], 2), dtype=np.int32)
-            for i in range(bls_pts.shape[0]):
-                bls_height_pts[i] = bls_proc.cloud_point_to_pixel(
-                    bls_pts[i], bounding_box, image_resolution=0.1
+            mls_height_pts = np.zeros((mls_pts.shape[0], 2), dtype=np.int32)
+            for i in range(mls_pts.shape[0]):
+                mls_height_pts[i] = mls_proc.cloud_point_to_pixel(
+                    mls_pts[i], bounding_box, image_resolution=0.1
                 )
 
-        elif self.bls_feature_extraction_method != "canopy_map":
-            raise ValueError("Unknown method: " + self.bls_feature_extraction_method)
+        elif self.mls_feature_extraction_method != "canopy_map":
+            raise ValueError("Unknown method: " + self.mls_feature_extraction_method)
 
         # save points to disk
-        # self._save_tree_location_to_disk(uav_proc, uav_height_pts, bls_proc, bls_height_pts)
+        # self._save_tree_location_to_disk(uav_proc, uav_height_pts, mls_proc, mls_height_pts)
 
         # import pickle
-        # pickle.dump(bls_height_pts, open("/tmp/bls_height_pts.pkl", "wb"))
-        # pickle.dump(bls_height_img, open("/tmp/bls_height_img.pkl", "wb"))
+        # pickle.dump(mls_height_pts, open("/tmp/mls_height_pts.pkl", "wb"))
+        # pickle.dump(mls_height_img, open("/tmp/mls_height_img.pkl", "wb"))
         # pickle.dump(uav_height_pts, open("/tmp/uav_height_pts.pkl", "wb"))
         # pickle.dump(uav_height_img, open("/tmp/uav_height_img.pkl", "wb"))
 
@@ -164,11 +169,11 @@ class HorizontalRegistration:
 
             # create feature graphs
             print("Creating the feature graphs")
-            G = Graph(bls_height_pts, node_prefix="f")
+            G = Graph(mls_height_pts, node_prefix="f")
             H = Graph(uav_height_pts, node_prefix="uav")
 
             print(
-                "Number of nodes and edges of the frontier graph",
+                "Number of nodes and edges of the mls graph",
                 G.graph.number_of_nodes(),
                 G.graph.number_of_edges(),
             )
@@ -180,7 +185,7 @@ class HorizontalRegistration:
 
             # find maximum clique in the correspondence graph
             correspondence_graph = CorrespondenceGraph(G, H)
-            if self.bls_feature_extraction_method == "tree_segmentation":
+            if self.mls_feature_extraction_method == "tree_segmentation":
                 correspondence_graph.distance_threshold = 0.25
 
             print("Computing the maximum clique")
@@ -207,8 +212,8 @@ class HorizontalRegistration:
             correspondences = correspondences_list[i]
             if self.debug:
                 display_correspondences(
-                    bls_height_img,
-                    bls_height_pts,
+                    mls_height_img,
+                    mls_height_pts,
                     uav_height_img,
                     uav_height_pts,
                     correspondences,
@@ -217,22 +222,22 @@ class HorizontalRegistration:
                     H,
                 )
             correspondences_img = draw_correspondences(
-                    bls_height_img,
-                    bls_height_pts,
-                    uav_height_img,
-                    uav_height_pts,
-                    correspondences,
-                    False,
-                    G,
-                    H,
-                )
+                mls_height_img,
+                mls_height_pts,
+                uav_height_img,
+                uav_height_pts,
+                correspondences,
+                False,
+                G,
+                H,
+            )
             self.logger.log_image(correspondences_img, "correspondences")
 
             # find transformation using maximum clique
-            bls_pts = np.zeros((len(correspondences), 2))
+            mls_pts = np.zeros((len(correspondences), 2))
             uav_pts = np.zeros((len(correspondences), 2))
             for i in range(len(correspondences)):
-                bls_pts[i] = bls_proc.pixel_to_cloud(
+                mls_pts[i] = mls_proc.pixel_to_cloud(
                     correspondences[i][0][0], correspondences[i][0][1]
                 )
                 uav_pts[i] = uav_proc.pixel_to_cloud(
@@ -240,10 +245,10 @@ class HorizontalRegistration:
                 )
 
             # need at least 3 pairs of points to find a transformation
-            if bls_pts.shape[0] < 3:
+            if mls_pts.shape[0] < 3:
                 return False
 
-            M = self.find_transform(bls_pts, uav_pts)
+            M = self.find_transform(mls_pts, uav_pts)
             self.transforms.append(M)
 
         return True
@@ -277,14 +282,14 @@ class HorizontalRegistration:
 
     # TODO delete
     def _save_tree_location_to_disk(
-        self, uav_proc, uav_img_pts: np.ndarray, bls_proc, bls_img_pts: np.ndarray
+        self, uav_proc, uav_img_pts: np.ndarray, mls_proc, mls_img_pts: np.ndarray
     ):
-        bls_pts = np.zeros((bls_img_pts.shape[0], 2))
+        mls_pts = np.zeros((mls_img_pts.shape[0], 2))
         uav_pts = np.zeros((uav_img_pts.shape[0], 2))
-        for i in range(bls_img_pts.shape[0]):
-            bls_pts[i] = bls_proc.pixel_to_cloud(bls_img_pts[i][0], bls_img_pts[i][1])
+        for i in range(mls_img_pts.shape[0]):
+            mls_pts[i] = mls_proc.pixel_to_cloud(mls_img_pts[i][0], mls_img_pts[i][1])
         for i in range(uav_img_pts.shape[0]):
             uav_pts[i] = uav_proc.pixel_to_cloud(uav_img_pts[i][0], uav_img_pts[i][1])
 
         np.savetxt("/tmp/uav_pts.txt", uav_pts, fmt="%.2f", delimiter=",")
-        np.savetxt("/tmp/bls_pts.txt", bls_pts, fmt="%.2f", delimiter=",")
+        np.savetxt("/tmp/mls_pts.txt", mls_pts, fmt="%.2f", delimiter=",")

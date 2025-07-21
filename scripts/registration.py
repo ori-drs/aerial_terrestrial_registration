@@ -19,13 +19,13 @@ import yaml
 def parse_inputs():
     parser = argparse.ArgumentParser(
         prog="cloud_registration",
-        description="Registers a frontier cloud to a reference UAV cloud",
+        description="Registers a MLS cloud to a reference UAV cloud",
         epilog="Text at the bottom of help",
     )
     parser.add_argument("--config", default=None, help="yaml config file")
     parser.add_argument("--uav_cloud")
-    parser.add_argument("--frontier_cloud", default=None)
-    parser.add_argument("--frontier_cloud_folder", default=None)
+    parser.add_argument("--mls_cloud", default=None)
+    parser.add_argument("--mls_cloud_folder", default=None)
     parser.add_argument(
         "--tiles_conf_file", default=None, help="tiles configuration file"
     )
@@ -42,9 +42,7 @@ def parse_inputs():
     parser.add_argument(
         "--save_pose_graph", default=False, action="store_true", help="save pose graph"
     )
-    parser.add_argument(
-        "--pose_graph_file", default=None, help="frontier pose graph file"
-    )
+    parser.add_argument("--pose_graph_file", default=None, help="mls pose graph file")
     parser.add_argument(
         "--downsample-cloud",
         default=False,
@@ -56,10 +54,10 @@ def parse_inputs():
     parser.add_argument("--min_distance_between_peaks", type=float, default=2.5)
     parser.add_argument("--max_number_of_clique", type=int, default=5)
     parser.add_argument(
-        "--crop_frontier_cloud",
+        "--crop_mls_cloud",
         default=False,
         action="store_true",
-        help="crop frontier cloud",
+        help="crop mls cloud",
     )
     parser.add_argument("--icp_fitness_score_threshold", type=float, default=0.85)
     parser.add_argument("--logging_dir", type=str)
@@ -76,35 +74,33 @@ def parse_inputs():
 
 def check_inputs_validity(args) -> Tuple[str, str, str]:
 
-    frontier_cloud_filenames = []
-    frontier_cloud_folder = None
+    mls_cloud_filenames = []
+    mls_cloud_folder = None
     uav_cloud_filename = Path(args.uav_cloud)
     if not uav_cloud_filename.exists():
         raise ValueError(f"Input file [{uav_cloud_filename}] does not exist")
 
-    if args.frontier_cloud_folder is None and args.frontier_cloud is None:
-        raise ValueError(
-            "Either --frontier_cloud or --frontier_cloud_folder must be specified"
-        )
+    if args.mls_cloud_folder is None and args.mls_cloud is None:
+        raise ValueError("Either --mls_cloud or --mls_cloud_folder must be specified")
 
-    if args.frontier_cloud is not None:
-        frontier_cloud_filename = Path(args.frontier_cloud)
-        frontier_cloud_filenames.append(frontier_cloud_filename)
-        if not frontier_cloud_filename.exists():
-            raise ValueError(f"Input file [{frontier_cloud_filename}] does not exist")
+    if args.mls_cloud is not None:
+        mls_cloud_filename = Path(args.mls_cloud)
+        mls_cloud_filenames.append(mls_cloud_filename)
+        if not mls_cloud_filename.exists():
+            raise ValueError(f"Input file [{mls_cloud_filename}] does not exist")
 
-    if args.frontier_cloud_folder is not None:
-        frontier_cloud_folder = Path(args.frontier_cloud_folder)
-        if not frontier_cloud_folder.is_dir():
-            raise ValueError(f"Input folder [{frontier_cloud_folder}] does not exist")
+    if args.mls_cloud_folder is not None:
+        mls_cloud_folder = Path(args.mls_cloud_folder)
+        if not mls_cloud_folder.is_dir():
+            raise ValueError(f"Input folder [{mls_cloud_folder}] does not exist")
         else:
             # Get all the ply files in the folder
-            for entry in frontier_cloud_folder.iterdir():
+            for entry in mls_cloud_folder.iterdir():
                 if entry.is_file():
                     if is_cloud_name(entry):
-                        frontier_cloud_filenames.append(entry)
+                        mls_cloud_filenames.append(entry)
 
-    return frontier_cloud_filenames, frontier_cloud_folder, uav_cloud_filename
+    return mls_cloud_filenames, mls_cloud_folder, uav_cloud_filename
 
 
 if __name__ == "__main__":
@@ -116,8 +112,8 @@ if __name__ == "__main__":
 
     # Check validity of inputs
     (
-        frontier_cloud_filenames,
-        frontier_cloud_folder,
+        mls_cloud_filenames,
+        mls_cloud_folder,
         uav_cloud_filename,
     ) = check_inputs_validity(args)
 
@@ -140,38 +136,38 @@ if __name__ == "__main__":
     failures = []
     successes = []
     registration_results = {}
-    for frontier_cloud_filename in frontier_cloud_filenames:
+    for mls_cloud_filename in mls_cloud_filenames:
 
-        print("Processing file: ", frontier_cloud_filename.name)
-        original_frontier_cloud = cloud_io.load_cloud(str(frontier_cloud_filename))
+        print("Processing file: ", mls_cloud_filename.name)
+        original_mls_cloud = cloud_io.load_cloud(str(mls_cloud_filename))
 
         # cropping input clouds
-        if args.crop_frontier_cloud:
-            frontier_cloud = crop_cloud_to_size(original_frontier_cloud, size=30)
+        if args.crop_mls_cloud:
+            mls_cloud = crop_cloud_to_size(original_mls_cloud, size=30)
         else:
-            frontier_cloud = original_frontier_cloud
-        cropped_uav_cloud = crop_cloud(uav_cloud, frontier_cloud, padding=20)
+            mls_cloud = original_mls_cloud
+        cropped_uav_cloud = crop_cloud(uav_cloud, mls_cloud, padding=20)
 
         if args.debug:
-            frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+            mls_cloud.paint_uniform_color([0.8, 0.8, 0.8])
             cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
             o3d.visualization.draw_geometries(
-                [frontier_cloud.to_legacy()],
-                window_name="Initial frontier cloud",
+                [mls_cloud.to_legacy()],
+                window_name="Initial MLS cloud",
             )
             o3d.visualization.draw_geometries(
                 [cropped_uav_cloud.to_legacy()],
                 window_name="Initial uav",
             )
-            
+
         logging_dir = args.logging_dir
         if args.logging_dir is None:
-            logging_dir = './logs'
-        logging_dir = os.path.join(logging_dir, frontier_cloud_filename.stem)
+            logging_dir = "./logs"
+        logging_dir = os.path.join(logging_dir, mls_cloud_filename.stem)
 
         registration = Registration(
             cropped_uav_cloud,
-            frontier_cloud,
+            mls_cloud,
             args.ground_segmentation_method,
             args.correspondence_matching_method,
             args.bls_feature_extraction_method,
@@ -183,30 +179,28 @@ if __name__ == "__main__":
         )
         success = registration.registration()
 
-        print("File: ", frontier_cloud_filename.name, success)
+        print("File: ", mls_cloud_filename.name, success)
         if not success:
-            failures.append((frontier_cloud_filename.name, registration.report))
+            failures.append((mls_cloud_filename.name, registration.report))
         else:
-            successes.append((frontier_cloud_filename.name, registration.report))
+            successes.append((mls_cloud_filename.name, registration.report))
 
         result = RegistrationResult()
         result.transform = registration.transform
         result.success = success
         result.icp_fitness = registration.report["icp_fitness"]
-        registration_results[frontier_cloud_filename.name] = result
+        registration_results[mls_cloud_filename.name] = result
 
         if args.output_folder is not None:
-            output_filename = os.path.join(
-                args.output_folder, frontier_cloud_filename.name
-            )
+            output_filename = os.path.join(args.output_folder, mls_cloud_filename.name)
             cloud_io.save_cloud(
-                registration.transform_cloud(original_frontier_cloud),
+                registration.transform_cloud(original_mls_cloud),
                 output_filename,
                 local_coordinates=False,
             )
 
     print("Total number of failures: ", len(failures))
-    print("Total number of clouds: ", len(frontier_cloud_filenames))
+    print("Total number of clouds: ", len(mls_cloud_filenames))
     print("Failures: ", failures)
     print("Successes: ", successes)
 
@@ -224,7 +218,7 @@ if __name__ == "__main__":
         if args.save_pose_graph and args.output_folder is not None:
             pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
             write_tiles_to_pose_graph_file(
-                frontier_cloud_folder,
+                mls_cloud_folder,
                 pose_graph_path,
                 args.grid_size_row,
                 args.grid_size_col,
@@ -234,7 +228,7 @@ if __name__ == "__main__":
             )
 
     elif args.pose_graph_file is not None:
-        # processing frontier clouds
+        # processing mls clouds
         if args.save_pose_graph and args.output_folder is not None:
             output_pose_graph_path = os.path.join(args.output_folder, "pose_graph.g2o")
             write_aerial_transforms_to_pose_graph_file(

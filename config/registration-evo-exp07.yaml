@@ -1,9 +1,9 @@
 uav_cloud: /data/digiforest/evo/2023-05-19-20-30-18-exp07/uav_for_exp07_in_map.ply
-frontier_cloud_folder: /data/digiforest/evo/2023-05-19-20-30-18-exp07/payload_clouds_in_map
+mls_cloud_folder: /data/digiforest/evo/2023-05-19-20-30-18-exp07/payload_clouds_in_map
 offset: [0.0,0.0,0.0]
 output_folder: /data/digiforest/evo/2023-05-19-20-30-18-exp07/transformed_clouds_payloads_in_map
-crop_frontier_cloud: True
-bls_feature_extraction_method: "tree_segmentation"
+crop_mls_cloud: True
+mls_feature_extraction_method: "tree_segmentation"
 debug: False
 pose_graph_file: /data/digiforest/evo/2023-05-19-20-30-18-exp07/slam_pose_graph.g2o
 save_pose_graph: True

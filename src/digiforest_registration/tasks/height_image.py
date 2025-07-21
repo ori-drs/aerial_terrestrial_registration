@@ -3,15 +3,14 @@ from numpy.typing import NDArray
 from typing import Tuple
 from numpy import float64
 
-from sklearn.neighbors import NearestNeighbors
-
 import cv2
 
 
 class HeightImage:
-    def __init__(self, min_distance_between_peaks, debug=False):
+    def __init__(self, min_distance_between_peaks, logger, debug=False):
         self.kernel_size = (3, 3)
         self.debug = debug
+        self.logger = logger
         self.min_distance_to_ground = 3.0
         self.image_resolution = 0.1  # meters per pixel
         # coordinates of the top left corner of the image in the utm frame
@@ -83,15 +82,6 @@ class HeightImage:
         idx = idx.flatten()  # make it a row vector
         canopy_points = points[idx]
 
-        # if self.debug:
-        #     # Display canopy points as a point cloud
-        #     import open3d as o3d
-
-        #     print(a, b, c, d)
-        #     point_cloud = o3d.geometry.PointCloud()
-        #     point_cloud.points = o3d.utility.Vector3dVector(canopy_points)
-        #     o3d.visualization.draw_geometries([point_cloud], window_name="canopy points")
-
         bounding_box = cloud.get_axis_aligned_bounding_box()
 
         # Get the minimum and maximum points of the bounding box
@@ -145,6 +135,9 @@ class HeightImage:
         img = np.squeeze(img)
         filtered_img = np.multiply(img, opening)
 
+        self.logger.log_image(img, "original_canopy_image")
+        self.logger.log_image(grayscale_image, "grayscale_canopy_image")
+        self.logger.log_image(filtered_img, "filtered_canopy_image")
         if self.debug:
             cv2.imshow("img", img)
             cv2.imshow("grayscale_image", grayscale_image)
@@ -209,6 +202,7 @@ class HeightImage:
             cv2.destroyAllWindows()
 
         return np.array(valid_points), img
+
 
 def draw_correspondences(
     height_img1: np.ndarray,
@@ -279,7 +273,7 @@ def draw_correspondences(
             (0, 255, 0),
             1,
         )
-        
+
     return img
 
 
@@ -293,9 +287,16 @@ def display_correspondences(
     graph1=None,
     graph2=None,
 ):
-    img = draw_correspondences(height_img1, height_pts1, height_img2,
-                               height_pts2, correspondences, draw_node_names,
-                               graph1, graph2)
+    img = draw_correspondences(
+        height_img1,
+        height_pts1,
+        height_img2,
+        height_pts2,
+        correspondences,
+        draw_node_names,
+        graph1,
+        graph2,
+    )
 
     cv2.imshow("Image", img)
     cv2.waitKey(0)

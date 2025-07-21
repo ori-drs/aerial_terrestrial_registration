@@ -1,12 +1,12 @@
 uav_cloud: /data/digiforest/steim_am_rhein/icra2025/m2/2023-08-15-10-24-10-exp04-m2/prefor_steim_am_rhein_epsg25832_map_normals.ply
-frontier_cloud_folder: /data/digiforest/steim_am_rhein/icra2025/m2/2023-08-15-10-24-10-exp04-m2/payload_clouds_in_map
+mls_cloud_folder: /data/digiforest/steim_am_rhein/icra2025/m2/2023-08-15-10-24-10-exp04-m2/payload_clouds_in_map
 offset: [0.0,0.0,0.0]
 output_folder: /data/digiforest/steim_am_rhein/icra2025/m2/2023-08-15-10-24-10-exp04-m2/transformed_clouds_payloads_in_map
-crop_frontier_cloud: True
-bls_feature_extraction_method: "tree_segmentation"
+crop_mls_cloud: True
+mls_feature_extraction_method: "tree_segmentation"
 debug: False
 min_distance_between_peaks: 4.0
 max_number_of_clique: 15
 pose_graph_file: /data/digiforest/steim_am_rhein/icra2025/m2/2023-08-15-10-24-10-exp04-m2/slam_pose_graph.g2o
 save_pose_graph: True
-icp_fitness_score_threshold: 0.75
+icp_fitness_score_threshold: 0.81

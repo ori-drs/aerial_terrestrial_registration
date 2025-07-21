@@ -18,7 +18,7 @@ def parse_inputs():
         epilog="Text at the bottom of help",
     )
     parser.add_argument("--config", default=None, help="yaml config file")
-    parser.add_argument("--frontier_cloud_folder", default=None)
+    parser.add_argument("--mls_cloud_folder", default=None)
     parser.add_argument("--pose_graph_file", default=None)
     parser.add_argument("--offset", nargs="+", type=float, default=None)
     parser.add_argument("--output_folder", default=None)
@@ -50,23 +50,23 @@ if __name__ == "__main__":
     args = parse_inputs()
 
     # Check validity of inputs
-    frontier_cloud_filenames = []
+    mls_cloud_filenames = []
 
-    if args.frontier_cloud_folder is None:
-        raise ValueError("--frontier_cloud_folder must be specified")
+    if args.mls_cloud_folder is None:
+        raise ValueError("--mls_cloud_folder must be specified")
 
     if args.pose_graph_file is None:
         raise ValueError("--pose_graph_file must be specified")
 
-    frontier_cloud_folder = Path(args.frontier_cloud_folder)
-    if not frontier_cloud_folder.is_dir():
-        raise ValueError(f"Input folder [{frontier_cloud_folder}] does not exist")
+    mls_cloud_folder = Path(args.mls_cloud_folder)
+    if not mls_cloud_folder.is_dir():
+        raise ValueError(f"Input folder [{mls_cloud_folder}] does not exist")
     else:
         # Get all the ply files in the folder
-        for entry in frontier_cloud_folder.iterdir():
+        for entry in mls_cloud_folder.iterdir():
             if entry.is_file():
                 if entry.suffix == ".ply":
-                    frontier_cloud_filenames.append(entry)
+                    mls_cloud_filenames.append(entry)
 
     # data loader
     offset = None
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     pose_graph = load_pose_graph(
         args.pose_graph_file,
-        frontier_cloud_folder,
+        mls_cloud_folder,
         cloud_io,
         args.load_clouds,
         args.tiles,

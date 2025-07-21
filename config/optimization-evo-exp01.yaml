@@ -1,4 +1,4 @@
-frontier_cloud_folder: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/payload_clouds_in_map
+mls_cloud_folder: /home/benoit/data/digiforest/finland/2023-05-19-15-37-55-exp01/payload_clouds_in_map
 offset: [0,0,0]
 initial_transform: [0.99876489,0.0480906,0.01248953,5.07529469,-0.04825959,0.99874222,0.01360108,0.54114328,-0.01181974,-0.01418702,0.9998295,-9.79808939,0.,0.,0.,1.]
 #initial_transform: [1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.]

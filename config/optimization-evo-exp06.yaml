@@ -1,4 +1,4 @@
-frontier_cloud_folder: /data/digiforest/evo/2023-05-19-19-44-15-exp06/payload_clouds_in_map
+mls_cloud_folder: /data/digiforest/evo/2023-05-19-19-44-15-exp06/payload_clouds_in_map
 offset: [0,0,0]
 pose_graph_file: /data/digiforest/evo/2023-05-19-19-44-15-exp06/transformed_clouds_payloads_in_map/pose_graph.g2o
 output_folder: /data/digiforest/evo/2023-05-19-19-44-15-exp06/optimized_payloads_in_map

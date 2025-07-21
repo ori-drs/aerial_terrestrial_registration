@@ -1,4 +1,4 @@
-frontier_cloud_folder: /data/digiforest/steim_am_rhein/icra2025/m5/2023-08-15-11-34-36-exp09-m5/payload_clouds_in_map
+mls_cloud_folder: /data/digiforest/steim_am_rhein/icra2025/m5/2023-08-15-11-34-36-exp09-m5/payload_clouds_in_map
 offset: [0,0,0]
 pose_graph_file: /data/digiforest/steim_am_rhein/icra2025/m5/2023-08-15-11-34-36-exp09-m5/transformed_clouds_payloads_in_map/pose_graph.g2o
 output_folder: /data/digiforest/steim_am_rhein/icra2025/m5/2023-08-15-11-34-36-exp09-m5/optimized_payloads_in_map

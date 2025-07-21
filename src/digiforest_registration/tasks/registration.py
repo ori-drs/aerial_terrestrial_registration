@@ -21,10 +21,10 @@ class Registration:
     def __init__(
         self,
         uav_cloud,
-        frontier_cloud,
+        mls_cloud,
         ground_segmentation_method,
         correspondence_matching_method,
-        bls_feature_extraction_method,
+        mls_feature_extraction_method,
         icp_fitness_threshold,
         min_distance_between_peaks,
         max_number_of_clique,
@@ -32,17 +32,17 @@ class Registration:
         debug=False,
     ):
         self.uav_cloud = uav_cloud
-        self.frontier_cloud = frontier_cloud  # shouldn't modify the input cloud
+        self.mls_cloud = mls_cloud  # shouldn't modify the input cloud
         self.ground_segmentation_method = ground_segmentation_method
         self.correspondence_matching_method = correspondence_matching_method
-        self.bls_feature_extraction_method = bls_feature_extraction_method
+        self.mls_feature_extraction_method = mls_feature_extraction_method
         self.debug = debug
         self.icp_fitness_threshold = icp_fitness_threshold
         self.min_distance_between_peaks = min_distance_between_peaks
         self.max_number_of_clique = max_number_of_clique
         self.transform = np.identity(4)
         self.success = False
-        self.report = {"icp_fitness": 0, "clique_size": 0} # TODO: replace with logger
+        self.report = {"icp_fitness": 0, "clique_size": 0}  # TODO: replace with logger
         self.logger = ExperimentLogger(base_dir=logging_dir)
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
@@ -51,13 +51,13 @@ class Registration:
         # and find the one that gives the best icp fitness score
 
         for i in range(len(horizontal_registration.transforms)):
-            frontier_cloud = self.frontier_cloud.clone()
+            mls_cloud = self.mls_cloud.clone()
             M = horizontal_registration.transforms[i]
             tx = M[0, 2]
             ty = M[1, 2]
             yaw = np.arctan2(M[1, 0], M[0, 0])
             print(
-                "Transformation from bls cloud to uav (x, y, yaw, scale):", tx, ty, yaw
+                "Transformation from mls cloud to uav (x, y, yaw, scale):", tx, ty, yaw
             )
 
             R = euler_to_rotation_matrix(yaw, 0, 0)
@@ -65,22 +65,22 @@ class Registration:
             transform[0, 3] = tx
             transform[1, 3] = ty
 
-            frontier_cloud.transform(transform)
+            mls_cloud.transform(transform)
             if self.debug:
                 # Visualize the results
-                frontier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+                mls_cloud.paint_uniform_color([0.8, 0.8, 0.8])
                 self.uav_cloud.paint_uniform_color([0.0, 1.0, 0])
                 o3d.visualization.draw_geometries(
-                    [frontier_cloud.to_legacy(), self.uav_cloud.to_legacy()],
+                    [mls_cloud.to_legacy(), self.uav_cloud.to_legacy()],
                     window_name="Result after horizontal alignment",
                 )
 
-            # Crop the uav cloud around the frontier cloud and reestimate the transformation
+            # Crop the uav cloud around the mls cloud and reestimate the transformation
             # along the z axis
-            cropped_uav_cloud = crop_cloud(self.uav_cloud, frontier_cloud, padding=1)
+            cropped_uav_cloud = crop_cloud(self.uav_cloud, mls_cloud, padding=1)
             vertical_registration = VerticalRegistration(
                 cropped_uav_cloud,
-                frontier_cloud,
+                mls_cloud,
                 ground_segmentation_method=self.ground_segmentation_method,
                 debug=self.debug,
             )
@@ -88,7 +88,7 @@ class Registration:
             vertical_transform = np.identity(4)
             vertical_transform[2, 3] = tz
 
-            frontier_cloud.transform(vertical_transform)
+            mls_cloud.transform(vertical_transform)
             transform[2, 3] = tz + transform[2, 3]
             print("Transformation matrix before icp:")
             print(transform)
@@ -96,16 +96,16 @@ class Registration:
             # Use cropped uav cloud in the rest of the code
             if self.debug:
                 o3d.visualization.draw_geometries(
-                    [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
+                    [mls_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
                     window_name="Result before ICP",
                 )
 
             # Apply final icp registration
-            icp_transform, icp_fitness = icp(frontier_cloud, cropped_uav_cloud)
-            frontier_cloud.transform(icp_transform)
+            icp_transform, icp_fitness = icp(mls_cloud, cropped_uav_cloud)
+            mls_cloud.transform(icp_transform)
             if self.debug:
                 o3d.visualization.draw_geometries(
-                    [frontier_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
+                    [mls_cloud.to_legacy(), cropped_uav_cloud.to_legacy()],
                     window_name="Final registration",
                 )
 
@@ -125,27 +125,27 @@ class Registration:
         return best_icp_fitness_score
 
     def registration(self) -> bool:
-        # we are estimating the transformation matrix from frontier cloud to uav cloud
+        # we are estimating the transformation matrix from mls cloud to uav cloud
         transform = np.identity(4)
         vertical_registration = VerticalRegistration(
             self.uav_cloud,
-            self.frontier_cloud,
+            self.mls_cloud,
             ground_segmentation_method=self.ground_segmentation_method,
             debug=self.debug,
         )
-        (uav_groud_plane, frontier_ground_plane, tz) = vertical_registration.process()
+        (uav_groud_plane, mls_ground_plane, tz) = vertical_registration.process()
         transform[2, 3] = tz
 
         # find the x, y, yaw transformation
         horizontal_registration = HorizontalRegistration(
             self.uav_cloud,
             uav_groud_plane,
-            self.frontier_cloud,
-            frontier_ground_plane,
+            self.mls_cloud,
+            mls_ground_plane,
             min_distance_between_peaks=self.min_distance_between_peaks,
             max_number_of_clique=self.max_number_of_clique,
             correspondence_matching_method=self.correspondence_matching_method,
-            bls_feature_extraction_method=self.bls_feature_extraction_method,
+            mls_feature_extraction_method=self.mls_feature_extraction_method,
             logger=self.logger,
             debug=self.debug,
         )

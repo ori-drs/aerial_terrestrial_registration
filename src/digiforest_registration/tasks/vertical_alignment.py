@@ -5,7 +5,7 @@ import open3d as o3d
 
 
 class VerticalRegistration:
-    def __init__(self, uav_cloud, bls_cloud, ground_segmentation_method, debug=False):
+    def __init__(self, uav_cloud, mls_cloud, ground_segmentation_method, debug=False):
         self._max_distance_to_plane = 0.5
         self.ground_segmentation = GroundSegmentation(
             max_distance_to_plane=self._max_distance_to_plane,
@@ -15,7 +15,7 @@ class VerticalRegistration:
             method=ground_segmentation_method,
         )
         self.uav_cloud = uav_cloud
-        self.bls_cloud = bls_cloud
+        self.mls_cloud = mls_cloud
         self.debug = debug
 
     def project_point_onto_plane(self, point, plane_normal, plane_constant):
@@ -40,7 +40,7 @@ class VerticalRegistration:
 
     def process(self):
         ground_uav_cloud, _ = self.ground_segmentation.process(cloud=self.uav_cloud)
-        ground, _ = self.ground_segmentation.process(cloud=self.bls_cloud)
+        ground, _ = self.ground_segmentation.process(cloud=self.mls_cloud)
 
         # segment the two ground planes
         plane_model_uav, inliers_uav = ground_uav_cloud.to_legacy().segment_plane(
