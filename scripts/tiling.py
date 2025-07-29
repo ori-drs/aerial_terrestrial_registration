@@ -5,6 +5,8 @@ import argparse
 import csv
 from pathlib import Path
 
+from digiforest_registration.utils import CloudIO
+
 
 @dataclass
 class Tile:
@@ -18,16 +20,20 @@ class Tile:
 
 
 class TilesGenerator:
-    def __init__(self, tile_size: float, output_folder: str):
+    def __init__(self, tile_size: float, output_folder: str, cloud_io: CloudIO):
         self.tile_size = tile_size
         self.output_folder = Path(output_folder)
+        self.cloud_io = cloud_io
+
+    def _tile_count(self, row, col):
+        return row * len(self.tile_clouds) + col
 
     def tile_filepath(self, row, col):
-        path = self.output_folder / f"tile_{row*self.tile_size+col}.ply"
+        path = self.output_folder / f"tile_{self._tile_count(row, col)}.ply"
         return str(path.absolute())
 
     def write_point_cloud(self, filepath, cloud: o3d.t.geometry.PointCloud):
-        o3d.t.io.write_point_cloud(filepath, cloud)
+        self.cloud_io.save_cloud(cloud, filepath, local_coordinates=False)
 
     def _init_grid(self, cloud: o3d.t.geometry.PointCloud):
         """Initialize the grid based on the point cloud's bounding box."""
@@ -58,11 +64,12 @@ class TilesGenerator:
                 y += self.tile_size
             x += self.tile_size
 
-    def create_tiles(self, cloud):
+    def create_tiles(self, filename: str):
         """
         Split a point cloud into tiles.
-        cloud: open3d.t.geometry.PointCloud with at least 'positions'
+        filename: file path to the point cloud.
         """
+        cloud = self.cloud_io.load_cloud(filename)
         self._init_grid(cloud)
 
         positions = cloud.point["positions"].numpy()  # (N, 3)
@@ -75,22 +82,17 @@ class TilesGenerator:
             normals = cloud.point["normals"].numpy()
 
         for i in range(positions.shape[0]):
+            if i % (positions.shape[0] // 10) == 0 and i > 0:
+                print(f"Processing cloud: {(100*i)//positions.shape[0]}% done")
             x, y, z = positions[i]
 
-            row = int((x - self.x_min) / self.tile_size)
-            col = int((y - self.y_min) / self.tile_size)
+            row = int((y - self.y_min) / self.tile_size)
+            col = int((x - self.x_min) / self.tile_size)
 
             if row < 0 or row >= self.num_rows or col < 0 or col >= self.num_cols:
                 continue
 
             tile = self.tile_clouds[row][col]
-            if (
-                x < tile.x_min
-                or x > tile.x_min + tile.size_x
-                or y < tile.y_min
-                or y > tile.y_min + tile.size_y
-            ):
-                continue
 
             tile.positions.append([x, y, z])
             if has_colors:
@@ -105,12 +107,15 @@ class TilesGenerator:
                 if tile is None:
                     continue
 
-                if len(tile.positions) == 0:
+                if len(tile.positions) < 10000:
+                    # discard tile if it has too few points
+                    self.tile_clouds[row][col] = None
+                    print(f"Discarding tile {row}, {col}: too few points")
                     continue
 
                 pc_tile = o3d.t.geometry.PointCloud()
                 pc_tile.point["positions"] = o3d.core.Tensor(
-                    tile.positions, dtype=o3d.core.Dtype.Float32
+                    tile.positions, dtype=o3d.core.Dtype.Float64
                 )
 
                 if has_colors:
@@ -133,7 +138,11 @@ class TilesGenerator:
             for row in range(len(self.tile_clouds)):
                 for col in range(len(self.tile_clouds[row])):
                     tile = self.tile_clouds[row][col]
-                    counter = row * self.tile_size + col
+
+                    if tile is None:
+                        continue
+
+                    counter = self._tile_count(row, col)
                     writer.writerow(
                         [
                             counter,
@@ -162,6 +171,13 @@ def parse_inputs():
         default=None,
         help="the path to the folder containing the MLS clouds. Set either this parameter or mls_cloud",
     )
+    parser.add_argument(
+        "--offset",
+        nargs="+",
+        type=float,
+        default=None,
+        help="translation offset to apply to the MLS clouds",
+    )
 
     args = parser.parse_args()
 
@@ -171,7 +187,14 @@ def parse_inputs():
 if __name__ == "__main__":
     args = parse_inputs()
     cloud = o3d.t.io.read_point_cloud(args.cloud)
-    generator = TilesGenerator(args.tile_size, args.output_folder)
-    generator.create_tiles(cloud)
+    offset = None
+    if args.offset is not None and len(args.offset) == 3:
+        offset = np.array(
+            [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
+        )
+
+    cloud_io = CloudIO(offset)
+    generator = TilesGenerator(args.tile_size, args.output_folder, cloud_io)
+    generator.create_tiles(args.cloud)
     generator.save_tiling_file()
     print(f"Tiling completed. Tiles saved in {args.output_folder}.")

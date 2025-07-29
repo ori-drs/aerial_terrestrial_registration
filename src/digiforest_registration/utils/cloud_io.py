@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 from pathlib import Path
+import logging
 
 
 def is_cloud_name(path: Path):
@@ -33,9 +34,11 @@ def get_tile_filename(id: int):
 
 
 class CloudIO:
-    def __init__(self, offset: np.ndarray, logger, downsample_cloud=False):
+    def __init__(self, offset: np.ndarray, logger=None, downsample_cloud=False):
         self.offset = offset  # to transform cloud to local coordinates
-        self.logger = logger
+        self.logger = logger or logging.getLogger(
+            __name__ + ".null"
+        )  # no-op logger if logger is not provided
         self.downsample_cloud = downsample_cloud
 
     def load_cloud(self, filename: str):
@@ -65,14 +68,18 @@ class CloudIO:
         return cloud
 
     def save_cloud(self, cloud, filename: str, local_coordinates=True):
+        """Save a point cloud to a file.
+        cloud: open3d.t.geometry.PointCloud
+        filename: file path to save the point cloud.
+        local_coordinates: if True, the cloud is saved in local coordinates (i.e., translated by the offset).
+        If False, the cloud is saved in global coordinates.
         """
-        Saves a point cloud to a file."""
         if local_coordinates:
             o3d.t.io.write_point_cloud(filename, cloud)
         else:
-            utm_cloud = cloud.clone()
-            utm_cloud = utm_cloud.translate(-self.offset)
-            o3d.t.io.write_point_cloud(filename, utm_cloud)
+            cloud_transformed = cloud.clone()
+            cloud_transformed = cloud_transformed.translate(-self.offset)
+            o3d.t.io.write_point_cloud(filename, cloud_transformed)
 
 
 class TileConfigReader:
