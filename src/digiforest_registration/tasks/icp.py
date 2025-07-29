@@ -25,7 +25,7 @@ def icp(source, target, logger):
     )
 
     logger.debug(f"Inlier Fitness: {registration_icp.fitness}")
-    logger.debug("Inlier RMSE: {registration_icp.inlier_rmse}")
+    logger.debug(f"Inlier RMSE: {registration_icp.inlier_rmse}")
     logger.debug("ICP transform is:")
     logger.debug(registration_icp.transformation)
     return registration_icp.transformation, registration_icp.fitness

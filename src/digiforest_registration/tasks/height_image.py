@@ -135,9 +135,7 @@ class HeightImage:
         img = np.squeeze(img)
         filtered_img = np.multiply(img, opening)
 
-        self.logger.log_image(img, "original_canopy_image")
         self.logger.log_image(grayscale_image, "grayscale_canopy_image")
-        self.logger.log_image(filtered_img, "filtered_canopy_image")
         if self.debug:
             cv2.imshow("img", img)
             cv2.imshow("grayscale_image", grayscale_image)

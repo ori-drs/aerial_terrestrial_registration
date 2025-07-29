@@ -216,7 +216,7 @@ if __name__ == "__main__":
             mls_cloud,
             args.ground_segmentation_method,
             args.correspondence_matching_method,
-            args.bls_feature_extraction_method,
+            args.mls_feature_extraction_method,
             args.icp_fitness_score_threshold,
             args.min_distance_between_peaks,
             args.max_number_of_clique,
