@@ -6,6 +6,7 @@ from digiforest_registration.utils import CloudIO
 from pathlib import Path
 import numpy as np
 import open3d as o3d
+import logging
 
 import argparse
 import yaml
@@ -31,7 +32,14 @@ def parse_inputs():
     parser.add_argument(
         "--tiles", default=False, action="store_true", help="processing tiles"
     )
-    parser.add_argument("--initial_transform", nargs="+", type=float, default=None)
+    parser.add_argument(
+        "--initial_transform", nargs="+", type=float, default=None
+    )  # TODO delete ?
+    parser.add_argument(
+        "--log_level",
+        default="DEBUG",
+        help="set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
     args = parser.parse_args()
 
     if args.config is not None:
@@ -68,6 +76,13 @@ if __name__ == "__main__":
                 if entry.suffix == ".ply":
                     mls_cloud_filenames.append(entry)
 
+    # Logger
+    numeric_level = getattr(logging, args.log_level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f"Invalid log level: {args.log_level}")
+    logging.basicConfig(level=numeric_level, format="%(levelname)s: %(message)s")
+    logger = logging.getLogger("digiforest_registration")
+
     # data loader
     offset = None
     if args.offset is not None and len(args.offset) == 3:
@@ -99,7 +114,7 @@ if __name__ == "__main__":
         args.tiles,
     )
 
-    optimizer = PoseGraphOptimization(pose_graph, args.debug, args.load_clouds)
+    optimizer = PoseGraphOptimization(pose_graph, args.debug, args.load_clouds, logger)
     optimizer.optimize()
 
     # save the results
