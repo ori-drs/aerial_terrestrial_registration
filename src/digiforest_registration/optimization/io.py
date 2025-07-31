@@ -244,6 +244,9 @@ def write_tiles_to_pose_graph_file(
     tiles_config_reader,
 ):
 
+    if grid_size_col <= 0 or grid_size_row <= 0:
+        raise ValueError("Grid size must be greater than 0")
+
     coordinates = tiles_config_reader.get_tiles_coordinates(tiles_folder_path)
 
     # write the pose graph
@@ -264,8 +267,7 @@ def write_tiles_to_pose_graph_file(
         for i in range(len(coordinates)):
             tile_id = coordinates[i][0]
             filename = get_tile_filename(tile_id)
-            # if not registration_results[filename].success:
-            #     continue
+
             # write the edge
             # 4 neighbours
             col = i // grid_size_row
@@ -275,19 +277,20 @@ def write_tiles_to_pose_graph_file(
             neighbours_col = [0, -1, 1, 0]
 
             # write the prior edge, between tile and aerial cloud
-            tile_center = coordinates[i][1]
-            tile_pose = np.eye(4)
-            tile_pose[0:3, 3] = tile_center
-            mat = registration_results[filename].transform
+            if registration_results[filename].success:
+                tile_center = coordinates[i][1]
+                tile_pose = np.eye(4)
+                tile_pose[0:3, 3] = tile_center
+                mat = registration_results[filename].transform
 
-            # transform tile center-to-uav in world frame
-            transformed_tile_pose = mat @ tile_pose
-            quat = rotation_matrix_to_quat(
-                transformed_tile_pose[0:3, 0:3]
-            )  # x, y, z, w
-            file.write(
-                f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
-            )
+                # transform tile center-to-uav in world frame
+                transformed_tile_pose = mat @ tile_pose
+                quat = rotation_matrix_to_quat(
+                    transformed_tile_pose[0:3, 0:3]
+                )  # x, y, z, w
+                file.write(
+                    f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                )
 
             for j in range(4):
                 neighbour_row = row + neighbours_row[j]

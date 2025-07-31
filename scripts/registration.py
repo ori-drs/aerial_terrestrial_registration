@@ -269,7 +269,6 @@ if __name__ == "__main__":
                 args.grid_size_row,
                 args.grid_size_col,
                 registration_results,
-                args.icp_fitness_score_threshold,
                 tile_config_reader,
             )
 

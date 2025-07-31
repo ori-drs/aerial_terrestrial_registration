@@ -135,13 +135,17 @@ class Registration:
             logger=self.logger,
             debug=self.debug,
         )
-        (uav_groud_plane, mls_ground_plane, tz) = vertical_registration.process()
+        try:
+            (uav_ground_plane, mls_ground_plane, tz) = vertical_registration.process()
+        except Exception as e:
+            self.logger.error(f"Vertical registration failed: {e}")
+            return False
         transform[2, 3] = tz
 
         # find the x, y, yaw transformation
         horizontal_registration = HorizontalRegistration(
             self.uav_cloud,
-            uav_groud_plane,
+            uav_ground_plane,
             self.mls_cloud,
             mls_ground_plane,
             min_distance_between_peaks=self.min_distance_between_peaks,

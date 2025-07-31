@@ -98,6 +98,10 @@ class HeightImage:
 
         # Fill the image
         dist = self._point_plane_distance(a, b, c, d, canopy_points)
+        if len(dist) == 0:
+            self.logger.warning("No points above the ground plane")
+            return image
+
         max_height = max(dist)
         index = 0
         for point in canopy_points:
