@@ -108,12 +108,6 @@ class TilesGenerator:
                 if tile is None:
                     continue
 
-                if len(tile.positions) < 10000:
-                    # discard tile if it has too few points
-                    self.tile_clouds[row][col] = None
-                    print(f"Discarding tile {row}, {col}: too few points")
-                    continue
-
                 pc_tile = o3d.t.geometry.PointCloud()
                 pc_tile.point["positions"] = o3d.core.Tensor(
                     tile.positions, dtype=o3d.core.Dtype.Float64
