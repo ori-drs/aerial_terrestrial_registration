@@ -119,7 +119,6 @@ def load_pose_graph(
                 )
                 if load_tiles:
                     # Dealing with tiles
-                    # edges between tiles and aerial constraints
                     if parent_id != child_id:
                         graph.add_edge(
                             parent_id,
@@ -292,6 +291,7 @@ def write_tiles_to_pose_graph_file(
                     f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
                 )
 
+            # write the edges to neighbours
             for j in range(4):
                 neighbour_row = row + neighbours_row[j]
                 neighbour_col = col + neighbours_col[j]
@@ -316,7 +316,7 @@ def write_tiles_to_pose_graph_file(
 
                     center = coordinates[i][1]  # tail
                     center_neighbour = coordinates[neighbour][1]  # head
-                    offset = center - center_neighbour
+                    offset = center_neighbour - center
 
                     # write the edge
                     file.write(

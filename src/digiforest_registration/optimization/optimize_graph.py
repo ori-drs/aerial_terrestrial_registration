@@ -5,13 +5,10 @@ import open3d as o3d
 
 
 class PoseGraphOptimization:
-    def __init__(
-        self, pose_graph: PoseGraph, debug, show_clouds=False, process_tiles=False
-    ):
+    def __init__(self, pose_graph: PoseGraph, debug, show_clouds=False):
         self.pose_graph = pose_graph
         self.show_clouds = show_clouds
         self.factor_graph = None
-        self.process_tiles = process_tiles
         self.debug = debug
         self.initialize_factor_graph()
 
@@ -33,25 +30,12 @@ class PoseGraphOptimization:
         for e in self.pose_graph.edges:
             if e["type"] == "in-between":
                 noise = gtsam.noiseModel.Gaussian.Information(e["info"])
-                # TODO check if the direction of the edge is correct
-                # ie child -> parent of parent -> child
 
-                if self.process_tiles:
-                    # TODO it's for legacy reasons only, there should be no difference
-                    # between tiles and payloads. The in-between transform for the tiles is not
-                    # saved correctly in the pose graph file ( the inverse is saved instead )
-                    factor_graph.add(
-                        gtsam.BetweenFactorPose3(
-                            e["child_id"], e["parent_id"], e["pose"], noise
-                        )
+                factor_graph.add(
+                    gtsam.BetweenFactorPose3(
+                        e["parent_id"], e["child_id"], e["pose"], noise
                     )
-                else:
-                    # payload clouds
-                    factor_graph.add(
-                        gtsam.BetweenFactorPose3(
-                            e["parent_id"], e["child_id"], e["pose"], noise
-                        )
-                    )
+                )
             elif e["type"] == "aerial":
                 # if e["parent_id"] == self.pose_graph.root_id:
                 #     # the root node is fixed by a prior constraint already

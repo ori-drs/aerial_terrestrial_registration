@@ -99,9 +99,7 @@ if __name__ == "__main__":
         args.tiles,
     )
 
-    optimizer = PoseGraphOptimization(
-        pose_graph, args.debug, args.load_clouds, process_tiles=args.tiles
-    )
+    optimizer = PoseGraphOptimization(pose_graph, args.debug, args.load_clouds)
     optimizer.optimize()
 
     # save the results
