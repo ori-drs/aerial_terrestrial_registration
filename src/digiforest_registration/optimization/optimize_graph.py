@@ -16,16 +16,6 @@ class PoseGraphOptimization:
         # Create a factor graph container and add factors to it
         factor_graph = gtsam.NonlinearFactorGraph()
 
-        # set prior on the root node
-        # prior_noise = gtsam.noiseModel.Diagonal.Sigmas(0.000001 * np.ones(6))
-        # factor_graph.add(
-        #     gtsam.PriorFactorPose3(
-        #         self.pose_graph.root_id,
-        #         self.pose_graph.get_node_pose(self.pose_graph.root_id),
-        #         prior_noise,
-        #     )
-        # )
-
         # add the other edges
         for e in self.pose_graph.edges:
             if e["type"] == "in-between":
@@ -37,12 +27,7 @@ class PoseGraphOptimization:
                     )
                 )
             elif e["type"] == "aerial":
-                # if e["parent_id"] == self.pose_graph.root_id:
-                #     # the root node is fixed by a prior constraint already
-                #     continue
                 noise = gtsam.noiseModel.Gaussian.Information(e["info"])
-                # info_matrix = e["info"] * 10**1
-                # noise = gtsam.noiseModel.Gaussian.Information(info_matrix)
                 factor_graph.add(
                     gtsam.PriorFactorPose3(e["parent_id"], e["pose"], noise)
                 )

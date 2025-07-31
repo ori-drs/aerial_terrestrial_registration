@@ -118,13 +118,6 @@ if __name__ == "__main__":
                 cloud.transform(
                     node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
                 )
-                # TODO it's still not the correct transformation
-                # if args.tiles:
-                # center = get_cloud_center(cloud)
-                # center_pose = np.eye(4)
-                # center_pose[0:3, 3] = center
-                # node_pose = pose_graph.get_node_pose(id)
-                # cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
 
                 cloud_name = pose_graph.get_node_cloud_name(id)
                 cloud_path = Path(args.output_folder) / cloud_name
@@ -132,15 +125,3 @@ if __name__ == "__main__":
                 cloud_io.save_cloud(cloud, str(cloud_path))
             except Exception:
                 pass
-
-    # get statistics about how much the graph moved
-    # displacements = []
-    # displacements_xy = []
-    # for id, _ in pose_graph.nodes.items():
-    #     initial_node_pose = pose_graph.get_initial_node_pose(id)
-    #     transformed_pose_node = gtsam.Pose3(initial_transform)*initial_node_pose
-    #     node_pose = pose_graph.get_node_pose(id)
-    #     displacements.append(np.linalg.norm(node_pose.matrix()[0:3, 3] - transformed_pose_node.matrix()[0:3, 3]))
-
-    # print(f"Average node displacement {np.mean(displacements)} meters, max node displacement {np.max(displacements)} meters, index {np.argmax(displacements)}")
-    # print(f"Min node displacement {np.min(displacements)} meters")
