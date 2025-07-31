@@ -26,7 +26,7 @@ class TilesGenerator:
         self.cloud_io = cloud_io
 
     def _tile_count(self, row, col):
-        return row * len(self.tile_clouds) + col
+        return row * self.num_cols + col
 
     def tile_filepath(self, row, col):
         path = self.output_folder / f"tile_{self._tile_count(row, col)}.ply"
@@ -44,6 +44,7 @@ class TilesGenerator:
         self.y_max = np.max(positions[:, 1])
         self.num_rows = int(np.ceil((self.y_max - self.y_min) / self.tile_size))
         self.num_cols = int(np.ceil((self.x_max - self.x_min) / self.tile_size))
+        print(f"Grid initialized: {self.num_rows} rows, {self.num_cols} cols")
         self.tile_clouds = [
             [None for _ in range(self.num_cols)] for _ in range(self.num_rows)
         ]

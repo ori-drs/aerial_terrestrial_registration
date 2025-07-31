@@ -74,7 +74,7 @@ class CloudIO:
         local_coordinates: if True, the cloud is saved in local coordinates (i.e., translated by the offset).
         If False, the cloud is saved in global coordinates.
         """
-        if local_coordinates:
+        if local_coordinates or self.offset is None:
             o3d.t.io.write_point_cloud(filename, cloud)
         else:
             cloud_transformed = cloud.clone()
