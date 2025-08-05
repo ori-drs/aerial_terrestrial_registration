@@ -2,52 +2,11 @@
 
 from digiforest_registration.optimization.io import load_pose_graph, write_pose_graph
 from digiforest_registration.optimization.optimize_graph import PoseGraphOptimization
-from digiforest_registration.utils import CloudIO
+from digiforest_registration.utils import CloudIO, parse_inputs
 from pathlib import Path
 import numpy as np
 import open3d as o3d
 import logging
-
-import argparse
-import yaml
-
-
-def parse_inputs():
-    parser = argparse.ArgumentParser(
-        prog="optimization",
-        description="Optimize a pose graph",
-        epilog="Text at the bottom of help",
-    )
-    parser.add_argument("--config", default=None, help="yaml config file")
-    parser.add_argument("--mls_cloud_folder", default=None)
-    parser.add_argument("--pose_graph_file", default=None)
-    parser.add_argument("--offset", nargs="+", type=float, default=None)
-    parser.add_argument("--output_folder", default=None)
-    parser.add_argument(
-        "--debug", default=False, action="store_true", help="debug mode"
-    )
-    parser.add_argument(
-        "--load_clouds", default=False, action="store_true", help="show clouds"
-    )
-    parser.add_argument(
-        "--tiles", default=False, action="store_true", help="processing tiles"
-    )
-    parser.add_argument(
-        "--initial_transform", nargs="+", type=float, default=None
-    )  # TODO delete ?
-    parser.add_argument(
-        "--log_level",
-        default="DEBUG",
-        help="set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-    )
-    args = parser.parse_args()
-
-    if args.config is not None:
-        with open(args.config, "r") as stream:
-            config = yaml.safe_load(stream)
-            for key, value in config.items():
-                setattr(args, key, value)
-    return args
 
 
 if __name__ == "__main__":
@@ -60,11 +19,13 @@ if __name__ == "__main__":
     # Check validity of inputs
     mls_cloud_filenames = []
 
-    if args.mls_cloud_folder is None:
-        raise ValueError("--mls_cloud_folder must be specified")
+    if args.mls_registered_cloud_folder is None:
+        raise ValueError("--mls_registered_cloud_folder must be specified")
 
-    if args.pose_graph_file is None:
-        raise ValueError("--pose_graph_file must be specified")
+    if args.optimized_cloud_output_folder is None:
+        raise ValueError("--optimized_cloud_output_folder must be specified")
+
+    pose_graph_file = str(Path(args.mls_registered_cloud_folder) / "pose_graph.g2o")
 
     mls_cloud_folder = Path(args.mls_cloud_folder)
     if not mls_cloud_folder.is_dir():
@@ -85,29 +46,28 @@ if __name__ == "__main__":
 
     # data loader
     offset = None
-    if args.offset is not None and len(args.offset) == 3:
-        offset = np.array(
-            [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
-        )
-
+    # if args.offset is not None and len(args.offset) == 3:
+    #     offset = np.array(
+    #         [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
+    #     )
     cloud_io = CloudIO(offset)
 
     # load the pose graph
-    initial_transform = None
-    if args.initial_transform is not None and len(args.initial_transform) == 16:
-        m = args.initial_transform
-        initial_transform = np.array(
-            [
-                [m[0], m[1], m[2], m[3]],
-                [m[4], m[5], m[6], m[7]],
-                [m[8], m[9], m[10], m[11]],
-                [m[12], m[13], m[14], m[15]],
-            ],
-            dtype=np.float32,
-        )
+    # initial_transform = None
+    # if args.initial_transform is not None and len(args.initial_transform) == 16:
+    #     m = args.initial_transform
+    #     initial_transform = np.array(
+    #         [
+    #             [m[0], m[1], m[2], m[3]],
+    #             [m[4], m[5], m[6], m[7]],
+    #             [m[8], m[9], m[10], m[11]],
+    #             [m[12], m[13], m[14], m[15]],
+    #         ],
+    #         dtype=np.float32,
+    #     )
 
     pose_graph = load_pose_graph(
-        args.pose_graph_file,
+        pose_graph_file,
         mls_cloud_folder,
         cloud_io,
         args.load_clouds,
@@ -118,11 +78,13 @@ if __name__ == "__main__":
     optimizer.optimize()
 
     # save the results
-    if args.output_folder is not None:
-        pose_graph_output_file = Path(args.output_folder) / "optimized_pose_graph.g2o"
+    if args.optimized_cloud_output_folder is not None:
+        pose_graph_output_file = (
+            Path(args.optimized_cloud_output_folder) / "optimized_pose_graph.g2o"
+        )
         write_pose_graph(pose_graph, str(pose_graph_output_file))
 
-    if args.output_folder is not None and args.load_clouds:
+    if args.optimized_cloud_output_folder is not None and args.load_clouds:
         for id, _ in pose_graph.nodes.items():
             try:
                 cloud = pose_graph.get_node_cloud(id).clone()
@@ -135,7 +97,7 @@ if __name__ == "__main__":
                 )
 
                 cloud_name = pose_graph.get_node_cloud_name(id)
-                cloud_path = Path(args.output_folder) / cloud_name
+                cloud_path = Path(args.optimized_cloud_output_folder) / cloud_name
 
                 cloud_io.save_cloud(cloud, str(cloud_path))
             except Exception:
