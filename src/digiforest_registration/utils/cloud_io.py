@@ -83,6 +83,8 @@ class CloudIO:
 
 
 class TileConfigReader:
+    """Reads tile configuration from a file."""
+
     def __init__(
         self, path: Path, offset: np.ndarray, num_grid_cols: int, num_grid_rows: int
     ):

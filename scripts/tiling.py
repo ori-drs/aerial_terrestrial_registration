@@ -49,9 +49,9 @@ class TilesGenerator:
             [None for _ in range(self.num_cols)] for _ in range(self.num_rows)
         ]
 
-        x = self.x_min
+        y = self.y_min
         for row in range(0, self.num_rows):
-            y = self.y_min
+            x = self.x_min
             for col in range(0, self.num_cols):
                 self.tile_clouds[row][col] = Tile(
                     x_min=x,
@@ -62,8 +62,8 @@ class TilesGenerator:
                     colors=[],
                     normals=[],
                 )
-                y += self.tile_size
-            x += self.tile_size
+                x += self.tile_size
+            y += self.tile_size
 
     def create_tiles(self, filename: str):
         """
@@ -73,57 +73,34 @@ class TilesGenerator:
         cloud = self.cloud_io.load_cloud(filename)
         self._init_grid(cloud)
 
-        positions = cloud.point["positions"].numpy()  # (N, 3)
-        has_colors = "colors" in cloud.point
-        has_normals = "normals" in cloud.point
+        for row in range(0, self.num_rows):
+            for col in range(0, self.num_cols):
 
-        if has_colors:
-            colors = cloud.point["colors"].numpy()
-        if has_normals:
-            normals = cloud.point["normals"].numpy()
-
-        for i in range(positions.shape[0]):
-            if i % (positions.shape[0] // 10) == 0 and i > 0:
-                print(f"Processing cloud: {(100*i)//positions.shape[0]}% done")
-            x, y, z = positions[i]
-
-            row = int((y - self.y_min) / self.tile_size)
-            col = int((x - self.x_min) / self.tile_size)
-
-            if row < 0 or row >= self.num_rows or col < 0 or col >= self.num_cols:
-                continue
-
-            tile = self.tile_clouds[row][col]
-
-            tile.positions.append([x, y, z])
-            if has_colors:
-                tile.colors.append(colors[i])
-            if has_normals:
-                tile.normals.append(normals[i])
-
-        # Save each tile cloud
-        for row in range(self.num_rows):
-            for col in range(self.num_cols):
                 tile = self.tile_clouds[row][col]
                 if tile is None:
                     continue
-
-                pc_tile = o3d.t.geometry.PointCloud()
-                pc_tile.point["positions"] = o3d.core.Tensor(
-                    tile.positions, dtype=o3d.core.Dtype.Float64
+                large_z_padding = 10**10
+                min_bound = o3d.core.Tensor(
+                    [
+                        tile.x_min,
+                        tile.y_min,
+                        -large_z_padding,
+                    ],
+                    dtype=o3d.core.Dtype.Float32,
                 )
-
-                if has_colors:
-                    pc_tile.point["colors"] = o3d.core.Tensor(
-                        tile.colors, dtype=o3d.core.Dtype.Float32
-                    )
-                if has_normals:
-                    pc_tile.point["normals"] = o3d.core.Tensor(
-                        tile.normals, dtype=o3d.core.Dtype.Float32
-                    )
+                max_bound = o3d.core.Tensor(
+                    [
+                        tile.x_min + tile.size_x,
+                        tile.y_min + tile.size_y,
+                        large_z_padding,
+                    ],
+                    dtype=o3d.core.Dtype.Float32,
+                )
+                crop_box = o3d.t.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+                cropped_tile = cloud.crop(crop_box)
 
                 filepath = self.tile_filepath(row, col)
-                self.write_point_cloud(filepath, pc_tile)
+                self.write_point_cloud(filepath, cropped_tile)
 
     def save_tiling_file(self):
         tiles_filename = self.output_folder / "tiles.csv"
