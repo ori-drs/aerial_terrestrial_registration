@@ -1,10 +1,12 @@
-from digiforest_registration.tasks.height_image import (
+from digiforest_registration.registration.height_image import (
     HeightImage,
     display_correspondences,
     draw_correspondences,
 )
-from digiforest_registration.tasks.graph import Graph, CorrespondenceGraph
-from digiforest_registration.tasks.tree_trunk_segmentation import TreeTrunkSegmentation
+from digiforest_registration.registration.graph import Graph, CorrespondenceGraph
+from digiforest_registration.registration.tree_trunk_segmentation import (
+    TreeTrunkSegmentation,
+)
 
 import numpy as np
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-from digiforest_registration.tasks.vertical_alignment import VerticalRegistration
-from digiforest_registration.tasks.horizontal_alignment import HorizontalRegistration
-from digiforest_registration.tasks.icp import icp
+from digiforest_registration.registration.vertical_alignment import VerticalRegistration
+from digiforest_registration.registration.horizontal_alignment import (
+    HorizontalRegistration,
+)
+from digiforest_registration.registration.icp import icp
 from digiforest_registration.utils import euler_to_rotation_matrix
 from digiforest_registration.utils import crop_cloud
 from digiforest_registration.utils import ExperimentLogger

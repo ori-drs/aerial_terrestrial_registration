@@ -1,3 +1,3 @@
-from .tasks import (
+from .registration import (
     vertical_alignment,
 )

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-from digiforest_registration.tasks.registration import Registration, RegistrationResult
+from digiforest_registration.registration.registration import (
+    Registration,
+    RegistrationResult,
+)
 from digiforest_registration.optimization.io import (
     write_tiles_to_pose_graph_file,
     write_aerial_transforms_to_pose_graph_file,
