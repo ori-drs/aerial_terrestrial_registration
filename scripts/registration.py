@@ -67,11 +67,13 @@ if __name__ == "__main__":
     logger = logging.getLogger("digiforest_registration")
 
     # Loading the data
-    offset = None
     if args.offset is not None and len(args.offset) == 3:
         offset = np.array(
             [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
         )
+    else:
+        # default offset
+        offset = np.array([0, 0, 0], dtype=np.float32)
 
     cloud_io = CloudIO(offset, logger, args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
@@ -183,6 +185,7 @@ if __name__ == "__main__":
                 args.grid_size_col,
                 registration_results,
                 tile_config_reader,
+                offset,
             )
 
     elif args.pose_graph_file is not None:

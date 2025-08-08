@@ -46,10 +46,10 @@ if __name__ == "__main__":
 
     # data loader
     offset = None
-    # if args.offset is not None and len(args.offset) == 3:
-    #     offset = np.array(
-    #         [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
-    #     )
+    if args.offset is not None and len(args.offset) == 3:
+        offset = np.array(
+            [args.offset[0], args.offset[1], args.offset[2]], dtype=np.float32
+        )
     cloud_io = CloudIO(offset)
 
     # load the pose graph

@@ -241,6 +241,7 @@ def write_tiles_to_pose_graph_file(
     grid_size_col: int,
     registration_results: dict,
     tiles_config_reader,
+    offset: np.ndarray,
 ):
 
     if grid_size_col <= 0 or grid_size_row <= 0:
@@ -253,11 +254,9 @@ def write_tiles_to_pose_graph_file(
         for i in range(len(coordinates)):
             tile_id = coordinates[i][0]
             filename = get_tile_filename(tile_id)
-            # if not registration_results[filename].success:
-            #     continue
 
             # write the node
-            center = coordinates[i][1]
+            center = coordinates[i][1] - offset
             file.write(
                 f"VERTEX_SE3:QUAT_TIME {tile_id} {center[0]:.2f} {center[1]:.2f} {center[2]:.2f} 0 0 0 1 0 0\n"
             )
@@ -277,13 +276,13 @@ def write_tiles_to_pose_graph_file(
 
             # write the prior edge, between tile and aerial cloud
             if registration_results[filename].success:
-                tile_center = coordinates[i][1]
+                tile_center = coordinates[i][1] - offset
                 tile_pose = np.eye(4)
                 tile_pose[0:3, 3] = tile_center
-                mat = registration_results[filename].transform
+                transform_to_aerial = registration_results[filename].transform
 
                 # transform tile center-to-uav in world frame
-                transformed_tile_pose = mat @ tile_pose
+                transformed_tile_pose = transform_to_aerial @ tile_pose
                 quat = rotation_matrix_to_quat(
                     transformed_tile_pose[0:3, 0:3]
                 )  # x, y, z, w
@@ -316,10 +315,10 @@ def write_tiles_to_pose_graph_file(
 
                     center = coordinates[i][1]  # tail
                     center_neighbour = coordinates[neighbour][1]  # head
-                    offset = center_neighbour - center
+                    offset_between_tiles = center_neighbour - center
 
                     # write the edge
                     file.write(
-                        f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset[0]:.2f} {offset[1]:.2f} {offset[2]:.2f} 0 0 0 1 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                        f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset_between_tiles[0]:.2f} {offset_between_tiles[1]:.2f} {offset_between_tiles[2]:.2f} 0 0 0 1 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
                     )
                     saved_edges.append((tile_id, neighbour_id))
