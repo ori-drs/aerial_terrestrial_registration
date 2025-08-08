@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 from digiforest_registration.optimization.io import load_pose_graph, write_pose_graph
-from digiforest_registration.optimization.optimize_graph import PoseGraphOptimization
+from digiforest_registration.optimization.graph_optimization import (
+    PoseGraphOptimization,
+)
 from digiforest_registration.utils import CloudIO, parse_inputs
 from pathlib import Path
 import numpy as np
