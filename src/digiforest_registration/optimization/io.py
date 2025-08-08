@@ -210,6 +210,7 @@ def write_aerial_transforms_to_pose_graph_file(
     output_pose_graph_file: Path,
     registration_results: dict,
     icp_fitness_threshold: float,
+    noise_matrix: np.ndarray,
 ):
 
     pose_graph = load_pose_graph(str(input_pose_graph_file))
@@ -230,7 +231,7 @@ def write_aerial_transforms_to_pose_graph_file(
                 # transform the node pose
                 quat = rotation_matrix_to_quat(mat[0:3, 0:3])  # x, y, z, w
                 file.write(
-                    f"EDGE_SE3:QUAT {node_id} {node_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                    f"EDGE_SE3:QUAT {node_id} {node_id} {mat[0, 3]:.2f} {mat[1, 3]:.2f} {mat[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {' '.join(map(str, noise_matrix[:21]))} \n"
                 )
 
 
@@ -242,6 +243,7 @@ def write_tiles_to_pose_graph_file(
     registration_results: dict,
     tiles_config_reader,
     offset: np.ndarray,
+    noise_matrix: np.ndarray,
 ):
 
     if grid_size_col <= 0 or grid_size_row <= 0:
@@ -287,7 +289,7 @@ def write_tiles_to_pose_graph_file(
                     transformed_tile_pose[0:3, 0:3]
                 )  # x, y, z, w
                 file.write(
-                    f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
+                    f"EDGE_SE3:QUAT {tile_id} {tile_id} {transformed_tile_pose[0, 3]:.2f} {transformed_tile_pose[1, 3]:.2f} {transformed_tile_pose[2, 3]:.2f} {quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f} {' '.join(map(str, noise_matrix[:21]))} \n"
                 )
 
             # write the edges to neighbours

@@ -1,6 +1,5 @@
 import gtsam
 import numpy as np
-import open3d as o3d
 import copy
 
 
@@ -57,17 +56,6 @@ class PoseGraph:
         except Exception:
             return str()
 
-    # def _transform_node_cloud(self, cloud, node_id: int):
-    #     """
-    #     Transform the cloud to center it with the node"""
-    #     center = get_cloud_center(cloud)
-    #     center_pose = np.eye(4)
-    #     center_pose[0:3, 3] = center
-    #     node_pose = self.get_node_pose(node_id)
-    #     # transform cloud to node pose
-    #     cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
-    #     return cloud
-
     def get_node_cloud_downsampled(self, id):
         """
         Return the downsampled cloud attached to the node
@@ -87,9 +75,6 @@ class PoseGraph:
             # initializing initial node poses
             self._initial_nodes[id] = copy.deepcopy(self._nodes[id])
         self._nodes[id]["pose"] = pose
-
-    # def _is_valid_id(self, id):
-    #     return id >= 0 and id < self.size
 
     def add_node(self, id, stamp, pose):
         assert isinstance(pose, gtsam.Pose3)
@@ -125,7 +110,7 @@ class PoseGraph:
         self._adjacency[parent_id][child_id] = len(self._edges) - 1
 
     def add_clouds(self, id: int, scan, scan_name: str):
-        #assert isinstance(scan, o3d.cuda.pybind.t.geometry.PointCloud)
+        # assert isinstance(scan, o3d.cuda.pybind.t.geometry.PointCloud)
         self._clouds[id] = scan
         self._downsampled_clouds[id] = scan.voxel_down_sample(voxel_size=0.2)
         self._cloud_names[id] = scan_name

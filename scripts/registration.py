@@ -174,6 +174,11 @@ if __name__ == "__main__":
         pickle.dump(registration_results, open(output_file_path, "wb"))
 
     # save pose graph
+    noise_matrix = np.array(args.noise_matrix, dtype=np.float32)
+    if noise_matrix.size != 21:
+        raise ValueError(
+            "Noise matrix must be a list of 21 floats representing the upper triangular matrix of the 6x6 covariance matrix"
+        )
     if args.tiles_conf_file is not None:
 
         # saving the pose graph in case we are processing tiles
@@ -189,6 +194,7 @@ if __name__ == "__main__":
                 registration_results,
                 tile_config_reader,
                 offset,
+                noise_matrix,
             )
 
     elif args.pose_graph_file is not None:
@@ -197,9 +203,11 @@ if __name__ == "__main__":
             output_pose_graph_path = os.path.join(
                 args.mls_registered_cloud_folder, "pose_graph.g2o"
             )
+
             write_aerial_transforms_to_pose_graph_file(
                 Path(args.pose_graph_file),
                 output_pose_graph_path,
                 registration_results,
                 args.icp_fitness_score_threshold,
+                noise_matrix,
             )
