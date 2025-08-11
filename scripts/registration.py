@@ -138,14 +138,18 @@ if __name__ == "__main__":
 
         logger.info(f"File: {mls_cloud_filename.name}, {success}")
         if not success:
-            failures.append((mls_cloud_filename.name, registration.report))
+            failures.append(
+                (mls_cloud_filename.name, (registration.best_icp_fitness_score))
+            )
         else:
-            successes.append((mls_cloud_filename.name, registration.report))
+            successes.append(
+                (mls_cloud_filename.name, (registration.best_icp_fitness_score))
+            )
 
         result = RegistrationResult()
         result.transform = registration.transform
         result.success = success
-        result.icp_fitness = registration.report["icp_fitness"]
+        result.icp_fitness = registration.best_icp_fitness_score
         registration_results[mls_cloud_filename.name] = result
 
         if args.mls_registered_cloud_folder is not None:

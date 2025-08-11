@@ -50,7 +50,7 @@ class Registration:
         )
         self.transform = np.identity(4)
         self.success = False
-        self.report = {"icp_fitness": 0, "clique_size": 0}  # TODO: replace with logger
+        self.best_icp_fitness_score = 0.0
         self.logger = ExperimentLogger(base_dir=logging_dir)
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
@@ -129,8 +129,7 @@ class Registration:
                 # we are happy with the result
                 break
 
-        self.report["icp_fitness"] = best_icp_fitness_score
-        self.report["clique_size"] = horizontal_registration.clique_size
+        self.best_icp_fitness_score = best_icp_fitness_score
         return best_icp_fitness_score
 
     def registration(self) -> bool:
@@ -195,5 +194,5 @@ class Registration:
             return transformed_cloud
 
         transformed_cloud.transform(self.transform)
-        self.colorize_cloud(transformed_cloud, self.report["icp_fitness"])
+        self.colorize_cloud(transformed_cloud, self.best_icp_fitness_score)
         return transformed_cloud

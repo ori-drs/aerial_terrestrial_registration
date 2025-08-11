@@ -35,7 +35,6 @@ class HorizontalRegistration:
         self.logger = logger
         self.transforms = []
         self.max_number_of_clique = max_number_of_clique
-        self.clique_size = 0
         self.distance_threshold = distance_threshold
         self.angle_threshold = angle_threshold
         self.feature_association_method = (
