@@ -6,7 +6,6 @@ class TreeTrunkSegmentation:
     def __init__(self, debug: bool = False):
         self.max_distance_to_plane = 0.5
         self.debug = debug
-        # TODO set debug_level according to debug
         self.tree_seg = TreeSegmentation(debug_level=0, clustering_method="voronoi")
 
     def _point_plane_distance(
@@ -41,10 +40,7 @@ class TreeTrunkSegmentation:
         idx = (dist > 0) & (dist < 0.2)
         idx = idx.flatten()  # make it a row vector
         ground_points = points[idx]
-        # z_ground = ground_points[0][
-        #     2
-        # ]
-        # TODO can improve how the z coordinate of the ground is detected
+
         z_ground = np.mean(ground_points[:, 2])
 
         cloud_translated = cloud.clone()
@@ -57,8 +53,6 @@ class TreeTrunkSegmentation:
             max_cluster_radius=2,
             n_threads=8,
             point_fraction=0.1,
-            # crop_lower_bound=z_ground + 4,
-            # crop_upper_bound=z_ground + 6,
             crop_lower_bound=4,
             crop_upper_bound=6,
         )

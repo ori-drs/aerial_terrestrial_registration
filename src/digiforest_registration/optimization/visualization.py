@@ -52,13 +52,6 @@ def graph_to_geometries(
         if show_clouds:
             try:
                 cloud = pose_graph.get_node_cloud_downsampled(id)
-                # TODO add flag for tiles
-                # Transform the cloud to center it with the node
-                # center = get_cloud_center(cloud)
-                # center_pose = np.eye(4)
-                # center_pose[0:3, 3] = center
-                # node_pose = pose_graph.get_node_pose(id)
-                # cloud.transform(node_pose.matrix() @ np.linalg.inv(center_pose))
 
                 cloud.paint_uniform_color(COLORS[id % len(COLORS)])
                 geometries.append(cloud.to_legacy())
