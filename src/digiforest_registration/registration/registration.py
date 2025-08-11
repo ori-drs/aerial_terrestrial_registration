@@ -31,6 +31,8 @@ class Registration:
         min_distance_between_peaks,
         max_number_of_clique,
         logging_dir: str,
+        correspondence_graph_distance_threshold: float,
+        maximum_rotation_offset: float,
         debug=False,
     ):
         self.uav_cloud = uav_cloud
@@ -42,6 +44,10 @@ class Registration:
         self.icp_fitness_threshold = icp_fitness_threshold
         self.min_distance_between_peaks = min_distance_between_peaks
         self.max_number_of_clique = max_number_of_clique
+        self.maximum_rotation_offset = maximum_rotation_offset
+        self.correspondence_graph_distance_threshold = (
+            correspondence_graph_distance_threshold
+        )
         self.transform = np.identity(4)
         self.success = False
         self.report = {"icp_fitness": 0, "clique_size": 0}  # TODO: replace with logger
@@ -154,6 +160,8 @@ class Registration:
             max_number_of_clique=self.max_number_of_clique,
             correspondence_matching_method=self.correspondence_matching_method,
             mls_feature_extraction_method=self.mls_feature_extraction_method,
+            distance_threshold=self.correspondence_graph_distance_threshold,
+            angle_threshold=self.maximum_rotation_offset,
             logger=self.logger,
             debug=self.debug,
         )

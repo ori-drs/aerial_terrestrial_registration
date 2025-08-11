@@ -19,9 +19,11 @@ class HorizontalRegistration:
         mls_cloud,
         mls_cloud_ground_plane,
         min_distance_between_peaks,
-        max_number_of_clique,
+        max_number_of_clique: int,
         logger,
-        debug=False,
+        distance_threshold: float,
+        angle_threshold: float,
+        debug: bool = False,
         correspondence_matching_method="graph",
         mls_feature_extraction_method="canopy_map",
     ):
@@ -34,6 +36,8 @@ class HorizontalRegistration:
         self.transforms = []
         self.max_number_of_clique = max_number_of_clique
         self.clique_size = 0
+        self.distance_threshold = distance_threshold
+        self.angle_threshold = angle_threshold
         self.feature_association_method = (
             correspondence_matching_method  # graph or feature_extraction
         )
@@ -158,15 +162,6 @@ class HorizontalRegistration:
         elif self.mls_feature_extraction_method != "canopy_map":
             raise ValueError("Unknown method: " + self.mls_feature_extraction_method)
 
-        # save points to disk
-        # self._save_tree_location_to_disk(uav_proc, uav_height_pts, mls_proc, mls_height_pts)
-
-        # import pickle
-        # pickle.dump(mls_height_pts, open("/tmp/mls_height_pts.pkl", "wb"))
-        # pickle.dump(mls_height_img, open("/tmp/mls_height_img.pkl", "wb"))
-        # pickle.dump(uav_height_pts, open("/tmp/uav_height_pts.pkl", "wb"))
-        # pickle.dump(uav_height_img, open("/tmp/uav_height_img.pkl", "wb"))
-
         if self.feature_association_method == "graph":
 
             # create feature graphs
@@ -182,9 +177,9 @@ class HorizontalRegistration:
             )
 
             # find maximum clique in the correspondence graph
-            correspondence_graph = CorrespondenceGraph(G, H, self.logger)
-            if self.mls_feature_extraction_method == "tree_segmentation":
-                correspondence_graph.distance_threshold = 0.25
+            correspondence_graph = CorrespondenceGraph(
+                G, H, self.logger, self.distance_threshold, self.angle_threshold
+            )
 
             self.logger.debug("Computing the maximum clique")
             if correspondence_graph.graph.number_of_edges() > 1800000:
@@ -195,7 +190,6 @@ class HorizontalRegistration:
             if len(correspondences_list) > self.max_number_of_clique:
                 # too many cliques, something is wrong
                 self.logger.debug("Too many cliques, downsampling them")
-                # TODO it's not great
                 correspondences_list = correspondences_list[
                     0 : self.max_number_of_clique
                 ]

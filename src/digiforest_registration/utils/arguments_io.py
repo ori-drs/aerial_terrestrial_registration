@@ -131,6 +131,19 @@ def parse_inputs():
         default=0.85,
         help="Using the ICP fitness score threshold to determine if the registration is successful. If the score is above this threshold, the registration is considered successful.",
     )
+    parser.add_argument(
+        "--correspondence_graph_distance_threshold",
+        type=float,
+        default=0.2,
+        help="Maximum distance threshold to consider two edges as similar in the correspondence graph.",
+    )
+    parser.add_argument(
+        "--maximum_rotation_offset",
+        type=float,
+        default=1.6,
+        help="Maximum rotation offset in radians between the MLS and UAV clouds. Increasing this value will make the search space larger and the registration will take longer.\
+            You can consider lowering this value if you observe that there is no rotation offset between the clouds.",
+    )
     parser.add_argument("--logging_dir", type=str, help="path of the logging directory")
     parser.add_argument(
         "--log_level",

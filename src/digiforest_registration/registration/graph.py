@@ -26,41 +26,12 @@ class Graph:
                 )
 
     def get_angle(self, p1, p2):
-        # angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
-        # if angle < 0:
-        #     angle += np.pi
-        # return angle
-        # angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
-        # if p2[0] - p1[0] < 0:
-        #     angle = np.arctan2(p1[1] - p2[1], p1[0] - p2[0])
-        # if angle < 0:
-        #     angle += np.pi
-        # dx = p2[0] - p1[0]
-        # dy = p2[1] - p1[1]
-        # if dx == 0:
-        #     return 0
-        # angle = np.arctan(dy / dx)
         x = p2[0] - p1[0]
         y = p2[1] - p1[1]
         angle = np.arccos(x / math.sqrt(x * x + y * y))
         inverted_angle = np.arccos(-x / math.sqrt(x * x + y * y))
         angle = max(angle, inverted_angle)
         return angle
-
-    def _test_angle(self):
-        # TODO to be move elsewhere
-        # all comparison should be true
-
-        # reason why arctan(y/x) isn't good
-        print(
-            self.get_angle([108, 50], [100, 96]),
-            print(self.get_angle([339, 175], [340, 217])),
-        )
-
-        # reason why arctan2 isn't good
-        print(
-            self.get_angle([0, 0], [-30, 1]), print(self.get_angle([0, 0], [-30, -1]))
-        )
 
     def display_graph(self, display_weights: bool = False, display_edges: bool = True):
         if display_edges:
@@ -96,13 +67,20 @@ class Graph:
 
 
 class CorrespondenceGraph:
-    def __init__(self, graph1: Graph, graph2: Graph, logger):
+    def __init__(
+        self,
+        graph1: Graph,
+        graph2: Graph,
+        logger,
+        distance_threshold: float = 0.2,
+        angle_threshold: float = 1.6,
+    ):
         self.graph = nx.cartesian_product(graph1.graph, graph2.graph)
         self.g1 = graph1
         self.g2 = graph2
         self.graph.remove_edges_from(list(self.graph.edges()))
-        self.distance_threshold = 0.2
-        self.angle_threshold = 0.25
+        self.distance_threshold = distance_threshold
+        self.angle_threshold = angle_threshold
         self.logger = logger
 
         # Creating the edges

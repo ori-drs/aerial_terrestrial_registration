@@ -130,6 +130,8 @@ if __name__ == "__main__":
             args.min_distance_between_peaks,
             args.max_number_of_clique,
             logging_dir,
+            correspondence_graph_distance_threshold=args.correspondence_graph_distance_threshold,
+            maximum_rotation_offset=args.maximum_rotation_offset,
             debug=args.debug,
         )
         success = registration.registration()
