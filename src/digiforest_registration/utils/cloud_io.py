@@ -85,13 +85,11 @@ class CloudIO:
 class TileConfigReader:
     """Reads tile configuration from a file."""
 
-    def __init__(
-        self, path: Path, offset: np.ndarray, num_grid_cols: int, num_grid_rows: int
-    ):
+    def __init__(self, path: Path, offset: np.ndarray):
         self.path = path
         self.offset = offset
-        self.num_grid_cols = num_grid_cols
-        self.num_grid_rows = num_grid_rows
+        self.num_grid_cols = 0
+        self.num_grid_rows = 0
 
         coordinates = []
         with open(path, "r") as file:
@@ -104,11 +102,13 @@ class TileConfigReader:
                     continue
 
                 # counter,x_min,y_min,size_x,size_y
+                self.num_grid_rows = max(int(tokens[1]) + 1, self.num_grid_rows)
+                self.num_grid_cols = max(int(tokens[2]) + 1, self.num_grid_cols)
                 tile_id = int(tokens[0])
-                x_min = float(tokens[1])
-                y_min = float(tokens[2])
-                size_x = float(tokens[3])
-                size_y = float(tokens[4])
+                x_min = float(tokens[3])
+                y_min = float(tokens[4])
+                size_x = float(tokens[5])
+                size_y = float(tokens[6])
 
                 center = np.array([x_min + size_x / 2, y_min + size_y / 2, 0])
                 # apply offset

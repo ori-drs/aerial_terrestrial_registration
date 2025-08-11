@@ -85,9 +85,7 @@ if __name__ == "__main__":
         args.mls_registered_cloud_folder is not None
         and args.tiles_conf_file is not None
     ):
-        tile_config_reader = TileConfigReader(
-            args.tiles_conf_file, offset, args.grid_size_col, args.grid_size_row
-        )
+        tile_config_reader = TileConfigReader(args.tiles_conf_file, offset)
 
     # Registration
     failures = []
@@ -189,8 +187,6 @@ if __name__ == "__main__":
             write_tiles_to_pose_graph_file(
                 mls_cloud_folder,
                 pose_graph_path,
-                args.grid_size_row,
-                args.grid_size_col,
                 registration_results,
                 tile_config_reader,
                 offset,

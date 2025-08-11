@@ -106,7 +106,9 @@ class TilesGenerator:
         tiles_filename = self.output_folder / "tiles.csv"
         with open(tiles_filename, mode="w", newline="") as tiles_file:
             writer = csv.writer(tiles_file)
-            writer.writerow(["#counter", "x_min", "y_min", "size_x", "size_y"])
+            writer.writerow(
+                ["#counter", "row", "col", "x_min", "y_min", "size_x", "size_y"]
+            )
             for row in range(len(self.tile_clouds)):
                 for col in range(len(self.tile_clouds[row])):
                     tile = self.tile_clouds[row][col]
@@ -118,6 +120,8 @@ class TilesGenerator:
                     writer.writerow(
                         [
                             counter,
+                            row,
+                            col,
                             f"{tile.x_min:.4f}",
                             f"{tile.y_min:.4f}",
                             f"{tile.size_x:.1f}",

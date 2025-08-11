@@ -238,15 +238,12 @@ def write_aerial_transforms_to_pose_graph_file(
 def write_tiles_to_pose_graph_file(
     tiles_folder_path: Path,
     pose_graph_path: str,
-    grid_size_row: int,
-    grid_size_col: int,
     registration_results: dict,
     tiles_config_reader,
     offset: np.ndarray,
     noise_matrix: np.ndarray,
 ):
-
-    if grid_size_col <= 0 or grid_size_row <= 0:
+    if tiles_config_reader.num_grid_cols <= 0 or tiles_config_reader.num_grid_rows <= 0:
         raise ValueError("Grid size must be greater than 0")
 
     coordinates = tiles_config_reader.get_tiles_coordinates(tiles_folder_path)
@@ -270,8 +267,8 @@ def write_tiles_to_pose_graph_file(
 
             # write the edge
             # 4 neighbours
-            col = i // grid_size_row
-            row = i % grid_size_row
+            col = i // tiles_config_reader.num_grid_rows
+            row = i % tiles_config_reader.num_grid_rows
 
             neighbours_row = [-1, 0, 0, 1]
             neighbours_col = [0, -1, 1, 0]
@@ -298,12 +295,15 @@ def write_tiles_to_pose_graph_file(
                 neighbour_col = col + neighbours_col[j]
                 if (
                     neighbour_row >= 0
-                    and neighbour_row < grid_size_row
+                    and neighbour_row < tiles_config_reader.num_grid_rows
                     and neighbour_col >= 0
-                    and neighbour_col < grid_size_col
+                    and neighbour_col < tiles_config_reader.num_grid_cols
                 ):
 
-                    neighbour = neighbour_col * grid_size_row + neighbour_row
+                    neighbour = (
+                        neighbour_col * tiles_config_reader.num_grid_rows
+                        + neighbour_row
+                    )
                     neighbour_id = coordinates[neighbour][0]
                     # neighbour_filename = get_tile_filename(neighbour_id)
                     # if not registration_results[neighbour_filename].success:
