@@ -7,6 +7,7 @@
 This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
 
 ## Setup
+The code has been tested on Ubuntu 20.04 and Python 3.8.10.
 
 Install the dependencies:
 
@@ -19,13 +20,6 @@ Clone the [digiforest_drs](https://github.com/ori-drs/digiforest_drs) repository
 Install digiforest_analysis :
 ```sh
 cd digiforest_analysis
-pip install -e .
-```
-
-Then install `digiforest_registration` :
-
-```sh
-cd digiforest_registration/
 pip install -e .
 ```
 

@@ -16,3 +16,5 @@ pytest
 networkx
 opencv-python
 gtsam
+scikit-image
+trimesh
