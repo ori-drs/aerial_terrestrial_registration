@@ -99,8 +99,14 @@ Inside the `config` folder, there is the file `optimization.yaml` containing all
 Run the optimization with:
 
 ```sh
-python3  optimization.py --config ../config/registration-pipeline.yaml 
+python3  optimization.py --config ../config/registration-pipeline.yaml
 ```
+
+### Example dataset
+We provide a small [dataset](https://drive.google.com/drive/u/0/folders/10QyqijBUvs_bnEGmgmXUroF1pkWEx8JR) that you can download to test the registration. It consists of 6 tiles clouds and a UAV cloud.
+* Open `./config/registration-pipeline-example-dataset.yaml` and modify the absolute path to the inputs and to the output folders.
+* Run the registration. It succeeds for 3 tiles. The registered clouds are saved inside `mls_registered_cloud_folder`.
+* Run the optimization. The optimized clouds are saved inside `optimized_cloud_output_folder`. After optimization, all the tiles are perfectly aligned with the aerial point cloud.
 
 ## Troubleshooting
 
