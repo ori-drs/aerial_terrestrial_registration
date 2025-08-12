@@ -7,7 +7,7 @@ import cv2
 
 
 class HeightImage:
-    def __init__(self, min_distance_between_peaks, logger, debug=False):
+    def __init__(self, min_distance_between_peaks: float, logger, debug: bool = False):
         self.kernel_size = (3, 3)
         self.debug = debug
         self.logger = logger
@@ -18,7 +18,7 @@ class HeightImage:
         self.min_distance_between_peaks = min_distance_between_peaks  # in meters
 
     @staticmethod
-    def cloud_point_to_pixel(point, cloud_bounding_box, image_resolution):
+    def cloud_point_to_pixel(point, cloud_bounding_box, image_resolution: float):
         """
         Convert a point to a pixel coordinate"""
         min_bound = cloud_bounding_box.min_bound.numpy()
@@ -282,7 +282,7 @@ def display_correspondences(
     height_img2: np.ndarray,
     height_pts2: np.ndarray,
     correspondences: list,
-    draw_node_names=False,
+    draw_node_names: bool = False,
     graph1=None,
     graph2=None,
 ):

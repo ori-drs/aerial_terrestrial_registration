@@ -153,15 +153,27 @@ if __name__ == "__main__":
         registration_results[mls_cloud_filename.name] = result
 
         if args.mls_registered_cloud_folder is not None:
+            if args.offset is not None:
+                # an offset is set
+                output_filename_with_offset = os.path.join(
+                    args.mls_registered_cloud_folder,
+                    mls_cloud_filename.stem
+                    + "_with_offset"
+                    + mls_cloud_filename.suffix,
+                )
+                cloud_io.save_cloud(
+                    registration.transform_cloud(original_mls_cloud),
+                    output_filename_with_offset,
+                    local_coordinates=True,
+                )
             output_filename = os.path.join(
                 args.mls_registered_cloud_folder, mls_cloud_filename.name
             )
             cloud_io.save_cloud(
                 registration.transform_cloud(original_mls_cloud),
                 output_filename,
-                local_coordinates=True,
+                local_coordinates=False,
             )
-            # TODO save clouds both in local and global coordinates
 
     logger.info(f"Total number of failures: {len(failures)}")
     logger.info(f"Total number of clouds: {len(mls_cloud_filenames)}")

@@ -54,20 +54,6 @@ if __name__ == "__main__":
         )
     cloud_io = CloudIO(offset)
 
-    # load the pose graph
-    # initial_transform = None
-    # if args.initial_transform is not None and len(args.initial_transform) == 16:
-    #     m = args.initial_transform
-    #     initial_transform = np.array(
-    #         [
-    #             [m[0], m[1], m[2], m[3]],
-    #             [m[4], m[5], m[6], m[7]],
-    #             [m[8], m[9], m[10], m[11]],
-    #             [m[12], m[13], m[14], m[15]],
-    #         ],
-    #         dtype=np.float32,
-    #     )
-
     pose_graph = load_pose_graph(
         pose_graph_file,
         mls_cloud_folder,
@@ -101,6 +87,6 @@ if __name__ == "__main__":
                 cloud_name = pose_graph.get_node_cloud_name(id)
                 cloud_path = Path(args.optimized_cloud_output_folder) / cloud_name
 
-                cloud_io.save_cloud(cloud, str(cloud_path))
+                cloud_io.save_cloud(cloud, str(cloud_path), local_coordinates=False)
             except Exception:
                 pass

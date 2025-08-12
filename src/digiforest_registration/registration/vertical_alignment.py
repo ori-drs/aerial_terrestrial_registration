@@ -5,6 +5,8 @@ import open3d as o3d
 
 
 class VerticalRegistration:
+    """Class to perform vertical registration of UAV and MLS point clouds."""
+
     def __init__(
         self, uav_cloud, mls_cloud, ground_segmentation_method, logger, debug=False
     ):
@@ -42,6 +44,16 @@ class VerticalRegistration:
         return projected_point
 
     def process(self):
+        """Process the UAV and MLS point clouds to find the vertical transformation.
+
+        Returns:
+            A tuple containing the equations of the ground plane of the two clouds
+            and the offset between these two planes
+            tuple:
+                plane (list[float]): [a, b, c, d] coefficients of the aerial ground plane equation
+                plane (list[float]): [a, b, c, d] coefficients of the MLS ground plane equation
+                z offset (float): signed distance between the two planes
+        """
         ground_uav_cloud, _ = self.ground_segmentation.process(cloud=self.uav_cloud)
         ground, _ = self.ground_segmentation.process(cloud=self.mls_cloud)
 
@@ -77,7 +89,8 @@ class VerticalRegistration:
                 window_name="ground point clouds",
             )
 
-        # todo find rotation between the two normal vectors
+        # TODO if the two normal vectors are not collinear
+        # find rotation matrix between the two
 
         self.logger.debug(f"f{[a_r, b_r, c_r, d_r]}, {[a, b, c, d]}")
         self.logger.debug(f"dot product of normals: {np.dot(n_r, n)}")

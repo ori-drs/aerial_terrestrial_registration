@@ -18,7 +18,7 @@ class HorizontalRegistration:
         uav_ground_plane,
         mls_cloud,
         mls_cloud_ground_plane,
-        min_distance_between_peaks,
+        min_distance_between_peaks: float,
         max_number_of_clique: int,
         logger,
         distance_threshold: float,

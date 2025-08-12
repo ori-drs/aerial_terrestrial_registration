@@ -4,6 +4,8 @@ import copy
 
 
 class PoseGraph:
+    """A class to represent a pose graph"""
+
     def __init__(self):
         self._nodes = {}
         self._initial_nodes = {}
@@ -89,13 +91,6 @@ class PoseGraph:
         assert isinstance(relative_pose, gtsam.Pose3)
         assert isinstance(relative_info, np.ndarray)
         assert relative_info.shape == (6, 6)
-
-        # if not self._is_valid_id(parent_id):
-        #     raise KeyError(
-        #         f"Node parent [{parent_id}] not in graph. Cannot add the edge"
-        #     )
-        # if not self._is_valid_id(child_id):
-        #     raise KeyError(f"Node child [{child_id}] not in graph. Cannot add the edge")
 
         self._edges.append(
             {

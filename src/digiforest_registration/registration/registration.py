@@ -24,16 +24,16 @@ class Registration:
         self,
         uav_cloud,
         mls_cloud,
-        ground_segmentation_method,
-        correspondence_matching_method,
-        mls_feature_extraction_method,
-        icp_fitness_threshold,
-        min_distance_between_peaks,
-        max_number_of_clique,
+        ground_segmentation_method: str,
+        correspondence_matching_method: str,
+        mls_feature_extraction_method: str,
+        icp_fitness_threshold: float,
+        min_distance_between_peaks: float,
+        max_number_of_clique: int,
         logging_dir: str,
         correspondence_graph_distance_threshold: float,
         maximum_rotation_offset: float,
-        debug=False,
+        debug: bool = False,
     ):
         self.uav_cloud = uav_cloud
         self.mls_cloud = mls_cloud  # shouldn't modify the input cloud
