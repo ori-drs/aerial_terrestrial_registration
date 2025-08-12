@@ -16,7 +16,7 @@ def parse_inputs():
     parser.add_argument(
         "--mls_cloud_folder",
         default=None,
-        help="the path to the folder containing the MLS clouds. Set either this parameter or mls_cloud",
+        help="Path to the folder containing the MLS clouds. Set either this parameter or mls_cloud",
     )
     parser.add_argument("--optimized_cloud_output_folder", default=None)
     parser.add_argument(
@@ -37,7 +37,12 @@ def parse_inputs():
         default="default",
         help="Method to use for ground segmentation. Options: default, csf",
     )
-    parser.add_argument("--correspondence_matching_method", nargs="?", default="graph")
+    parser.add_argument(
+        "--correspondence_matching_method",
+        nargs="?",
+        default="graph",
+        help="Method to use for correspondence matching. Options: graph.",
+    )
     parser.add_argument(
         "--mls_feature_extraction_method",
         nargs="?",
@@ -79,7 +84,7 @@ def parse_inputs():
             0,
             10000,
         ],
-        help="Upper triangular matrix of the 6*6 noise covariance matrix to apply to the MLS clouds",
+        help="Upper triangular elements of the matrix of the 6*6 noise covariance matrix to apply to the MLS clouds",
     )
     parser.add_argument(
         "--mls_registered_cloud_folder",
@@ -144,11 +149,11 @@ def parse_inputs():
         help="Maximum rotation offset in radians between the MLS and UAV clouds. Increasing this value will make the search space larger and the registration will take longer.\
             You can consider lowering this value if you observe that there is no rotation offset between the clouds.",
     )
-    parser.add_argument("--logging_dir", type=str, help="path of the logging directory")
+    parser.add_argument("--logging_dir", type=str, help="Path of the logging directory")
     parser.add_argument(
         "--log_level",
         default="DEBUG",
-        help="set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
     args = parser.parse_args()
 

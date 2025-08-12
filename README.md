@@ -1,14 +1,12 @@
 # DigiForest Registration
 
+<p align="center">
+  <img src="./media/motivation-big.png" alt="Motivation" width="600"/>
+</p>
+
+This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
 
 ## Setup
-
-Use a virtual environment (`env` in the example), isolated from the system dependencies:
-
-```sh
-python3 -m venv env
-source env/bin/activate
-```
 
 Install the dependencies:
 
@@ -16,108 +14,96 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
-Install the automatic formatting pre-commit hooks (black and flake8), which will check the code before each commit:
+Clone the [digiforest_drs](https://github.com/ori-drs/digiforest_drs) repository and checkout the `voronoi-segmentation` branch.
 
-```sh
-pre-commit install
-```
-
-Clone the `digiforest_drs` repository and checkout the `voronoi-segmentation` branch.
 Install digiforest_analysis :
 ```sh
 cd digiforest_analysis
 pip install -e .
 ```
 
-
-
-## Point cloud preprocessing
-We assume that a mission was recorded on a MLS and that a pose graph and payload clouds in the `map` frame were saved.
-The inputs to the registration pipeline are an uav cloud, one or more mls payload clouds and a pose graph file (in g2o format).
-The first step is to make sure that the uav and mls clouds are in the same frame.
-
-If they are not, you can use a tool to convert them. Checkout the `save-pose-graph-utm` branch of the `vilens` repository, and use `payload_transformer.launch`. See the paragraphs below for a detailed explanation.
-
-The last step is to make sure that the uav cloud has normals. If it doesn't have normals, you can use CloudCompare to compute them. The normals are used by the pipeline to extract the ground and the trees. In CloudCompare go to Edit/Normals/Compute. Settings that seem to work well in most cases are `Local Surface model : Quadric`, `Octree radius : Auto` and `Use preferred orientation: +z`.
-
-#### Point cloud preprocessing for stein am rhein
-- the uav cloud provided by Prefor is in EPSG:2056. We don't use this UTM frame but EPSG:25832, so the first step is to convert it to EPSG:25832.
-- use the pdal tool to do the conversion : 
-```sh
-pdal translate -i prefor_steim_am_rhein.las -o prefor_steim_am_rhein_epsg25832.las  -f filters.reprojection --filters.reprojection.out_srs="EPSG:25832"  --filters.reprojection.in_srs="EPSG:2056"
-```
-- convert `prefor_steim_am_rhein_epsg25832.las` to ply using CloudCompare.
-- use `payload_transformer.launch` to convert the file converted above to map frame. You need to change the output frame argument of this launch file to `map`.
-This conversion requires the g2o file recorded during the frontier mission recording.
-```sh
-roslaunch vilens_slam payload_tranformer.launch
-```
-
-#### Point cloud preprocessing for frontier data
-- the frontier data consists in a `payload_cloud` folder (data in sensor frame) and a g2o file.
-- use `payload_transformer.launch` to convert the data to map or utm frame. Change the output frame to select the desired frame.
-```sh
-roslaunch vilens_slam payload_tranformer.launch
-```
-
-## Parameters of the registration pipeline
-
-Inside the `conf` folder you will find an example configuration file `registration.yaml`.
-
-* **`uav_cloud`** : the path to the uav point cloud.
-* **`mls_cloud`** : the path to the mls cloud.
-* **`mls_cloud_folder`** : the path to the folder containing the mls clouds. Set either this parameter or **`mls_cloud`**.
-* **`ground_segmentation_method`** ( default or csf ): method to use to segment the ground of the clouds. 'Default' should use most of the time. See the documentation of digiforest_analysis for an explanation of this parameter.
-* **`correspondence_matching_method`** ( graph ) : there is a single method implemented so far to match the features from the uav and mls clouds.
-* **`mls_feature_extraction_method`** ( canopy_map or tree_segmentation): the method to extract the features of the mls cloud. 'canopy_map' works well if the canopy is visible in the mls cloud. If the canopy is not visible, the other method must be used.
-* **`offset`** (default [0., 0., 0.]): translation offset to apply to the mls clouds. With the recommended 'map' frame, setting the offset to [0., 0., 0.] ( no offset ) is sufficient.
-* **`output_folder`** : path to the output folder where the transformed mls clouds and the new pose graph will be stored.
-* **`debug`** : set it to True to output debug information about the execution of the pipeline.
-* **`save_pose_graph`** : set it to True to save the pose graph with the additional constraints in the **`output_folder`**.
-* **`crop_mls_cloud`** : the mls cloud can be large. Setting this flag to True will crop the clouds to make them smaller.
-* **`icp_fitness_score_threshold`** (double): a registration is considered successful if the ICP fitness score of the last ICP registration is lower than this parameter.
-* **`min_distance_between_peaks`** (double): it's an important parameter, it's define the minimum distance between two peaks in the canopy map. It represents the minimum distance between two tree trunks in the point clouds. If this parameter is too small, peaks that don't correspond to real tree peaks will be found. 
-
-## Parameters of the optimization pipeline
-
-* **`uav_cloud`** : The path to the uav point cloud.
-* **`mls_cloud_folder`** : the path to the folder containing the mls clouds.
-* * **`offset`** (default [0., 0., 0.]): translation offset to apply to the mls clouds. With the recommended 'map' frame, setting the offset to [0., 0., 0.] ( no offset ) is sufficient.
-* **`pose_graph_file`** : The path to the pose graph file generated by the registration pipeline.
-* **`optimized_cloud_output_folder`** : path to the output folder where the optimized mls clouds and the optimized pose graph will be saved.
-* **`debug`** : set it to True to output debug information about the pose graph and the pose graph optimization.
-* **`load_clouds`** : set it to True to load the point clouds inside the **`mls_cloud_folder`** folder. Depending on the number of clouds, it can take a significant amount of time to load them.
-
-## Installation
-
-Install `digiforest_registration` :
+Then install `digiforest_registration` :
 
 ```sh
-cd ~/git/digiforest_registration/
+cd digiforest_registration/
 pip install -e .
 ```
 
-## Execution of the registration pipeline
 
-Inside the `config` folder, you can find a configuration file `registration.yaml` containing all the parameters that you need to set. Edit the parameters that you need and run the registration with :
- 
+## Point cloud preprocessing
+The inputs of the registration pipeline are a MLS (terrestrial) and a UAV (aerial) point clouds. The pipeline implemented in this repository expects the two clouds to be already roughly aligned. By a *rough alignment*, we mean that the x and y displacement offsets between the two clouds should be less than 10 meters. Usually this initial alignment is provided by GPS measurements.
+The first step is to make sure that the UAV and MLS clouds are in the same coordinate frame.
+If your clouds are in different UTM coordinates frame, you can use the [PDAL](https://pdal.io/en/2.9.0/) python package to convert them to the same frame.
+For instance this command with **PDAL** will convert an input in EPSG:2056 to EPSG:25832 :
 ```sh
-python3  registration.py --config ../config/registration.yaml 
+pdal translate -i input.las -o output.las  -f filters.reprojection --filters.reprojection.out_srs="EPSG:25832"  --filters.reprojection.in_srs="EPSG:2056"
 ```
 
-At the end of execution, it will display the final icp fitness score for each mls clouds and whether the registration is considered as successful or not. A registration is considered successful solely on this fitness score and the **`icp_fitness_score_threshold`** set in your yaml file.
+You also need to make sure that the two point clouds have normals. If they don't, you can use [CloudCompare](https://www.cloudcompare.org/) to compute them. The normals are used by the pipeline to extract the ground and the trees. In *CloudCompare* go to *Edit/Normals/Compute*. Settings that seem to work well in most cases are `Local Surface model : Quadric`, `Octree radius : Auto` and `Use preferred orientation: +z`.
 
-## Execution of the optimization pipeline
+Our pipeline only accepts clouds in `ply` format. If your inputs are in a different format, you can use *CloudCompare* to convert them.
+
+
+## Parameters of the registration pipeline
+
+Inside the `conf` folder you will find an example configuration file `pipeline-registration.yaml`.
+
+* **`uav_cloud`** : Path to the UAV point cloud.
+* **`mls_cloud_folder`** : Path to the folder containing the MLS clouds.
+* **`ground_segmentation_method`** ( default or [csf](https://github.com/jianboqi/CSF) ): Method to use to segment the ground of the clouds. 'Default' should use most of the time.
+* **`correspondence_matching_method`** ( graph ) : There is a single method implemented so far to match the features from the UAV and MLS clouds.
+* **`mls_feature_extraction_method`** ( canopy_map or tree_segmentation): Method to extract the features of the MLS cloud. 'canopy_map' works well if the canopy is visible in the MLS cloud. If the canopy is not visible, the other method must be used.
+* **`offset`** (default [0., 0., 0.]): Translation offset to apply to the MLS clouds. The code won't work well if the coordinates of the point clouds are too large. This parameter allows to translate the cloud to reduce the dimentionality of the coordinates. It's similar to the [global shift](https://www.cloudcompare.org/doc/wiki/index.php/Global_Shift_and_Scale) in Cloud Compare.
+* **`mls_registered_cloud_folder`** : Path to the output folder where the registered MLS clouds and the new pose graph will be stored.
+* **`debug`** : Set it to True to output debug information about the execution of the pipeline.
+* **`save_pose_graph`** : Set it to True to save the pose graph with the additional constraints in the **`output_folder`**.
+* **`icp_fitness_score_threshold`** (double): A registration is considered successful if the ICP fitness score of the last ICP registration is lower than this parameter.
+* **`min_distance_between_peaks`** (double): Minimum distance between tree's peaks in the point clouds. It's an important parameter. If this parameter is too small, peaks that don't correspond to real tree peaks could be found.
+* **`maximum_rotation_offset`** (double): Maximum rotation offset in radians between the MLS and UAV clouds. Increasing this value will make the search space larger and the registration will take longer. You can consider lowering this value if you observe that there is no rotation offset between the clouds.
+* **`correspondence_graph_distance_threshold`** (double): Maximum distance threshold to consider two edges as similar in the correspondence graph. 
+
+## Parameters of the optimization pipeline
+The registration and optimization steps share the same configuration file. Below are the parameters specifics to the optimization
+
+* **`pose_graph_file`** : Path to the pose graph file generated by the registration pipeline. It should be stored inside `mls_registered_cloud_folder`.
+* **`optimized_cloud_output_folder`** : Path to the output folder where the optimized mls clouds and the optimized pose graph will be saved.
+* **`debug`** : Set it to True to output debug information about the pose graph and the pose graph optimization.
+* **`load_clouds`** : Set it to True to load the point clouds stored inside the **`mls_cloud_folder`** folder. Depending on the number of clouds, it can take a significant amount of time to load them.
+* **`noise_matrix`** : Upper triangular elements of the matrix of the 6*6 noise covariance matrix to apply to the MLS clouds.
+
+
+## Execution of the registration pipeline
+
+### Tile creation
+Your input MLS cloud is a single point cloud. For our method to work, we cut this cloud in *tiles* and create a simple pose graph where the nodes of the pose graph are the center of the tiles. Please refer to the paper for more information.
+Use the following command to create the tiles :
+
+```sh
+python3 ./scripts/tiling.py --cloud input_mls_cloud.ply --output_folder output --tile_size 20 --offset -399200 -6785900 0
+```
+This command takes one input cloud, translates it using the `offset` provided (see the description of the parameters of the registration pipeline above), and saves the tiles in the `output_folder`.
+
+### Registration execution
+
+Inside the `config` folder, you can find a configuration file `registration-pipeline.yaml` containing all the parameters that you need to set. Edit the parameters that you need and run the registration with :
+ 
+```sh
+python3  registration.py --config ../config/registration-pipeline.yaml 
+```
+
+At the end of execution, it will display the final icp fitness score for each MLS clouds and whether the registration is considered as successful or not for these individual clouds. A registration is considered successful solely on this fitness score and the **`icp_fitness_score_threshold`** set in your yaml file.
+
+### Execution of the optimization pipeline
 
 Inside the `config` folder, there is the file `optimization.yaml` containing all the parameters that you need to set.
 Run the optimization with:
 
 ```sh
-python3  optimization.py --config ../config/optimization.yaml 
+python3  optimization.py --config ../config/registration-pipeline.yaml 
 ```
 
 ## Troubleshooting
 
-* If a registration isn't successful, and you would like to understand why, set **`debug`** to `True` in your yaml file. The program will display additional information about each step of the algorithm (refer to the paper for a detailed explanation of each step).
+* If a registration isn't successful, and you would like to understand why, set **`debug`** to `True` in your configuration file. The program will display additional information about each step of the algorithm (refer to the paper for a detailed explanation of each step).
 
 
