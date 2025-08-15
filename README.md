@@ -4,25 +4,38 @@
   <img src="./media/motivation-big.png" alt="Motivation" width="600"/>
 </p>
 
-This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
+The goal of this project is to merge above-canopy aerial and ground point clouds of forests. The aerial point clouds (typically coming from an UAV) are assumed to be of higher accuracy than the ground point clouds. Typically, ground Mobile Laser Scanning (MLS) systems may suffer from drift over the length of its trajectory. This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
 
 ## Setup
-The code has been tested on Ubuntu 20.04 and Python 3.8.10.
+The code has been tested on Ubuntu 20.04, 22.04 and Python > 3.8.
 
-Install the dependencies:
+We encourage using a virtual environment for the project. Here, we use python3-venv. Create and activate your virtual environment.
 
+```sh
+cd digiforest_registration
+python3 -m venv .venv
+source .venv/bin/activate 
+```
+
+Install the project dependencies using:
 ```sh
 pip install -r requirements.txt
 ```
 
-Clone the [digiforest_drs](https://github.com/ori-drs/digiforest_drs) repository and checkout the `voronoi-segmentation` branch.
+Install digiforest_registration: 
+```sh
+cd digiforest_registration
+pip install -e .
+```
+
+
+The project depends on tree segmentation from [digiforest_drs](https://github.com/ori-drs/digiforest_drs) project. Clone the [digiforest_drs](https://github.com/ori-drs/digiforest_drs) repository and checkout the `voronoi-segmentation` branch.
 
 Install digiforest_analysis :
 ```sh
 cd digiforest_analysis
 pip install -e .
 ```
-
 
 ## Point cloud preprocessing
 The inputs of the registration pipeline are a MLS (terrestrial) and a UAV (aerial) point clouds. The pipeline implemented in this repository expects the two clouds to be already roughly aligned. By a *rough alignment*, we mean that the x and y displacement offsets between the two clouds should be less than 10 meters. Usually this initial alignment is provided by GPS measurements.
@@ -39,11 +52,10 @@ Our pipeline only accepts clouds in `ply` format. If your inputs are in a differ
 
 
 ## Parameters of the registration pipeline
-
 Inside the `conf` folder you will find an example configuration file `pipeline-registration.yaml`.
 
-* **`uav_cloud`** : Path to the UAV point cloud.
-* **`mls_cloud_folder`** : Path to the folder containing the MLS clouds.
+* **`uav_cloud`** : Path to the UAV point cloud. [Mandatory]
+* **`mls_cloud_folder`** : Path to the folder containing the MLS clouds. [Mandatory]
 * **`ground_segmentation_method`** ( default or [csf](https://github.com/jianboqi/CSF) ): Method to use to segment the ground of the clouds. 'Default' should use most of the time.
 * **`correspondence_matching_method`** ( graph ) : There is a single method implemented so far to match the features from the UAV and MLS clouds.
 * **`mls_feature_extraction_method`** ( canopy_map or tree_segmentation): Method to extract the features of the MLS cloud. 'canopy_map' works well if the canopy is visible in the MLS cloud. If the canopy is not visible, the other method must be used.
@@ -65,17 +77,29 @@ The registration and optimization steps share the same configuration file. Below
 * **`load_clouds`** : Set it to True to load the point clouds stored inside the **`mls_cloud_folder`** folder. Depending on the number of clouds, it can take a significant amount of time to load them.
 * **`noise_matrix`** : Upper triangular elements of the matrix of the 6*6 noise covariance matrix to apply to the MLS clouds.
 
+## Pipeline
+
+Our pipeline has **two** stages: 1) (Initial) Registration and 2) (Pose-Graph) Optimization. 
+
+The registration stage computes a rigid transformation between each MLS point cloud to the aerial point cloud using tree locations. This step should closely align the MLS point clouds to the aerial point cloud. The optimization step further refines the registration process by integrating additional constraints in-between MLS point clouds, yielding a better registration estimate as the drift in MLS estimates are minimized.     
 
 ## Execution of the registration pipeline
 
+Our pipeline can accept MLS point cloud, either provided as one single pointcloud, or as a collection of point clouds (payloads) created by a SLAM system.
+
 ### Tile creation
-Your input MLS cloud is a single point cloud. For our method to work, we cut this cloud in *tiles* and create a simple pose graph where the nodes of the pose graph are the center of the tiles. Please refer to the paper for more information.
+If your input MLS cloud is a single point cloud. For our method to work, we cut this cloud in *tiles* and create a simple pose graph where the nodes of the pose graph are the center of the tiles. Please refer to the paper for more information.
 Use the following command to create the tiles :
 
+**TODO: The offset is hardcoded here.**
 ```sh
 python3 ./scripts/tiling.py --cloud input_mls_cloud.ply --output_folder output --tile_size 20 --offset -399200 -6785900 0
 ```
 This command takes one input cloud, translates it using the `offset` provided (see the description of the parameters of the registration pipeline above), and saves the tiles in the `output_folder`.
+
+### MLS SLAM output 
+
+**TODO** 
 
 ### Registration execution
 
@@ -96,11 +120,17 @@ Run the optimization with:
 python3  optimization.py --config ../config/registration-pipeline.yaml
 ```
 
-### Example dataset
+## Example dataset
+
+### Using single MLS point cloud 
 We provide a small [dataset](https://drive.google.com/drive/u/0/folders/10QyqijBUvs_bnEGmgmXUroF1pkWEx8JR) that you can download to test the registration. It consists of 6 tiles clouds and a UAV cloud.
 * Open `./config/registration-pipeline-example-dataset.yaml` and modify the absolute path to the inputs and to the output folders.
 * Run the registration. It succeeds for 3 tiles. The registered clouds are saved inside `mls_registered_cloud_folder`.
 * Run the optimization. The optimized clouds are saved inside `optimized_cloud_output_folder`. After optimization, all the tiles are perfectly aligned with the aerial point cloud.
+
+### Using MLS SLAM pointcloud
+
+TODO
 
 ## Troubleshooting
 
