@@ -2,11 +2,13 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 from digiforest_registration.gui.main_window import MainWindow
+from digiforest_registration.utils import parse_inputs
 
 
 def main():
     app = QApplication(sys.argv)
-    win = MainWindow()
+    args = parse_inputs()
+    win = MainWindow(args)
     win.show()
     sys.exit(app.exec_())
 

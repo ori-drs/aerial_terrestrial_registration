@@ -7,45 +7,18 @@ from digiforest_registration.optimization.io import (
     write_tiles_to_pose_graph_file,
     write_aerial_transforms_to_pose_graph_file,
 )
-from digiforest_registration.utils import CloudIO, is_cloud_name, TileConfigReader
-from digiforest_registration.utils import crop_cloud, crop_cloud_to_size, parse_inputs
+from digiforest_registration.utils import CloudIO, TileConfigReader
+from digiforest_registration.utils import (
+    crop_cloud,
+    crop_cloud_to_size,
+    parse_inputs,
+    check_registration_inputs_validity,
+)
 from pathlib import Path
-from typing import Tuple
 import numpy as np
 import os
 import open3d as o3d
 import logging
-
-
-def check_inputs_validity(args) -> Tuple[str, str, str]:
-
-    mls_cloud_filenames = []
-    mls_cloud_folder = None
-    uav_cloud_filename = Path(args.uav_cloud)
-    if not uav_cloud_filename.exists():
-        raise ValueError(f"Input file [{uav_cloud_filename}] does not exist")
-
-    if args.mls_cloud_folder is None and args.mls_cloud is None:
-        raise ValueError("Either --mls_cloud or --mls_cloud_folder must be specified")
-
-    if args.mls_cloud is not None:
-        mls_cloud_filename = Path(args.mls_cloud)
-        mls_cloud_filenames.append(mls_cloud_filename)
-        if not mls_cloud_filename.exists():
-            raise ValueError(f"Input file [{mls_cloud_filename}] does not exist")
-
-    if args.mls_cloud_folder is not None:
-        mls_cloud_folder = Path(args.mls_cloud_folder)
-        if not mls_cloud_folder.is_dir():
-            raise ValueError(f"Input folder [{mls_cloud_folder}] does not exist")
-        else:
-            # Get all the ply files in the folder
-            for entry in mls_cloud_folder.iterdir():
-                if entry.is_file():
-                    if is_cloud_name(entry):
-                        mls_cloud_filenames.append(entry)
-
-    return mls_cloud_filenames, mls_cloud_folder, uav_cloud_filename
 
 
 if __name__ == "__main__":
@@ -60,7 +33,7 @@ if __name__ == "__main__":
         mls_cloud_filenames,
         mls_cloud_folder,
         uav_cloud_filename,
-    ) = check_inputs_validity(args)
+    ) = check_registration_inputs_validity(args)
 
     # Logger
     numeric_level = getattr(logging, args.log_level.upper(), None)

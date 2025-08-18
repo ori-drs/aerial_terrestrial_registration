@@ -1,127 +1,23 @@
-import random
+import os
+import numpy as np
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtGui import QPainter, QPen, QColor
-from PyQt5.QtCore import Qt, QRectF, QPointF
+from PyQt5.QtCore import QThread
 
-try:
-    from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-    import vtkmodules.all as vtk
-except Exception:
-    from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-    import vtk as vtk
-
-
-# -------------------------
-# Programmatic 2D Shape Canvas
-# -------------------------
-class ShapeCanvas(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.shapes = []  # list of (type, params, color, pen_width)
-        self.setMinimumHeight(200)
-
-    def add_rectangle(self, x, y, w, h, color=Qt.black, pen_width=2):
-        self.shapes.append(("rect", (x, y, w, h), QColor(color), pen_width))
-        self.update()
-
-    def add_ellipse(self, x, y, w, h, color=Qt.black, pen_width=2):
-        self.shapes.append(("ellipse", (x, y, w, h), QColor(color), pen_width))
-        self.update()
-
-    def add_line(self, x1, y1, x2, y2, color=Qt.black, pen_width=2):
-        self.shapes.append(("line", (x1, y1, x2, y2), QColor(color), pen_width))
-        self.update()
-
-    def clear_shapes(self):
-        self.shapes.clear()
-        self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        for shape_type, params, color, pen_width in self.shapes:
-            pen = QPen(color)
-            pen.setWidth(pen_width)
-            painter.setPen(pen)
-
-            if shape_type == "rect":
-                x, y, w, h = params
-                painter.drawRect(QRectF(x, y, w, h))
-            elif shape_type == "ellipse":
-                x, y, w, h = params
-                painter.drawEllipse(QRectF(x, y, w, h))
-            elif shape_type == "line":
-                x1, y1, x2, y2 = params
-                painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
+from digiforest_registration.gui.pointcloud_viewer import VTKPointCloud
+from digiforest_registration.gui.tile_viewer import ShapeCanvas
+from digiforest_registration.gui.pipeline_worker import PipelineWorker
+from digiforest_registration.utils import (
+    check_registration_inputs_validity,
+    CloudIO,
+)
+from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
+from digiforest_registration.registration.registration import Registration
 
 
-# -------------------------
-# VTK 3D point cloud widget
-# -------------------------
-class VTKPointCloud(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.vtk_widget = QVTKRenderWindowInteractor(self)
-        layout.addWidget(self.vtk_widget)
-
-        self.renderer = vtk.vtkRenderer()
-        self.vtk_widget.GetRenderWindow().AddRenderer(self.renderer)
-        self.interactor = self.vtk_widget.GetRenderWindow().GetInteractor()
-        self.interactor.Initialize()
-
-        self._actor = None
-        self._setup_scene()
-
-    def _setup_scene(self):
-        self.renderer.SetBackground(0.1, 0.1, 0.12)
-        self.add_demo_points()
-        self.renderer.ResetCamera()
-
-    def add_demo_points(self, n=2000):
-        # Generate some random XYZ points as a demo
-        points = vtk.vtkPoints()
-        for _ in range(n):
-            x = random.uniform(-10, 10)
-            y = random.uniform(-10, 10)
-            z = random.uniform(-2, 2)
-            points.InsertNextPoint(x, y, z)
-
-        poly = vtk.vtkPolyData()
-        poly.SetPoints(points)
-
-        glyph = vtk.vtkVertexGlyphFilter()
-        glyph.SetInputData(poly)
-        glyph.Update()
-
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(glyph.GetOutputPort())
-
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetPointSize(3)
-
-        if self._actor:
-            self.renderer.RemoveActor(self._actor)
-        self._actor = actor
-        self.renderer.AddActor(actor)
-        self.vtk_widget.GetRenderWindow().Render()
-
-    def reset_camera(self):
-        self.renderer.ResetCamera()
-        self.vtk_widget.GetRenderWindow().Render()
-
-
-# -------------------------
-# Main window
-# -------------------------
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, registration_args):
         super().__init__()
+        self.registration_args = registration_args
         # Load the UI file
         # TODO improve path
         uic.loadUi("../src/digiforest_registration/gui/main_window.ui", self)
@@ -141,6 +37,79 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.close)
 
         self.statusBar().showMessage("Ready")
+
+    def start_registration(self, registration_args):
+
+        # Check validity of inputs
+        (
+            mls_cloud_filenames,
+            mls_cloud_folder,
+            uav_cloud_filename,
+        ) = check_registration_inputs_validity(registration_args)
+
+        # Loading the data
+        if registration_args.offset is not None and len(registration_args.offset) == 3:
+            offset = np.array(
+                [
+                    registration_args.offset[0],
+                    registration_args.offset[1],
+                    registration_args.offset[2],
+                ],
+                dtype=np.float32,
+            )
+        else:
+            # default offset
+            offset = np.array([0, 0, 0], dtype=np.float32)
+
+        cloud_io = CloudIO(
+            offset, logger=None, downsample_cloud=registration_args.downsample_cloud
+        )
+        uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
+
+        # if (
+        #     registration_args.mls_registered_cloud_folder is not None
+        #     and registration_args.tiles_conf_file is not None
+        # ):
+        #     tile_config_reader = TileConfigReader(
+        #         registration_args.tiles_conf_file, offset
+        #     )
+
+        for mls_cloud_filename in mls_cloud_filenames:
+
+            original_mls_cloud = cloud_io.load_cloud(str(mls_cloud_filename))
+
+            # cropping input clouds
+            if registration_args.crop_mls_cloud:
+                mls_cloud = crop_cloud_to_size(original_mls_cloud, size=30)
+            else:
+                mls_cloud = original_mls_cloud
+            cropped_uav_cloud = crop_cloud(uav_cloud, mls_cloud, padding=20)
+
+            logging_dir = registration_args.logging_dir
+            if registration_args.logging_dir is None:
+                logging_dir = "./logs"
+            logging_dir = os.path.join(logging_dir, mls_cloud_filename.stem)
+
+            registration = Registration(
+                cropped_uav_cloud,
+                mls_cloud,
+                registration_args.ground_segmentation_method,
+                registration_args.correspondence_matching_method,
+                registration_args.mls_feature_extraction_method,
+                registration_args.icp_fitness_score_threshold,
+                registration_args.min_distance_between_peaks,
+                registration_args.max_number_of_clique,
+                logging_dir,
+                correspondence_graph_distance_threshold=registration_args.correspondence_graph_distance_threshold,
+                maximum_rotation_offset=registration_args.maximum_rotation_offset,
+                debug=registration_args.debug,
+            )
+
+            self._thread = QThread(self)
+            self._worker = PipelineWorker(registration)
+            self._worker.moveToThread(self._thread)
+
+            self._thread.started.connect(self._worker.run)
 
     # -------- Actions --------
     def on_open(self):
