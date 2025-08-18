@@ -1,7 +1,7 @@
 import random
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPen
+from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtCore import Qt, QRectF, QPointF
 
 try:
     from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
@@ -12,52 +12,48 @@ except Exception:
 
 
 # -------------------------
-# Simple 2D drawing canvas
+# Programmatic 2D Shape Canvas
 # -------------------------
-class DrawingCanvas(QtWidgets.QWidget):
+class ShapeCanvas(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMouseTracking(True)
-        self.paths = []  # list[list[QPoint]]
-        self.current_path = []  # list[QPoint]
-        self.pen_width = 2
+        self.shapes = []  # list of (type, params, color, pen_width)
+        self.setMinimumHeight(200)
 
-    def clear(self):
-        self.paths.clear()
-        self.current_path.clear()
+    def add_rectangle(self, x, y, w, h, color=Qt.black, pen_width=2):
+        self.shapes.append(("rect", (x, y, w, h), QColor(color), pen_width))
         self.update()
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.current_path = [event.pos()]
-            self.update()
+    def add_ellipse(self, x, y, w, h, color=Qt.black, pen_width=2):
+        self.shapes.append(("ellipse", (x, y, w, h), QColor(color), pen_width))
+        self.update()
 
-    def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton and self.current_path:
-            self.current_path.append(event.pos())
-            self.update()
+    def add_line(self, x1, y1, x2, y2, color=Qt.black, pen_width=2):
+        self.shapes.append(("line", (x1, y1, x2, y2), QColor(color), pen_width))
+        self.update()
 
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.current_path:
-            self.paths.append(self.current_path[:])
-            self.current_path = []
-            self.update()
+    def clear_shapes(self):
+        self.shapes.clear()
+        self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        pen = QPen()
-        pen.setWidth(self.pen_width)
-        painter.setPen(pen)
+        painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw finished paths
-        for path in self.paths:
-            for i in range(1, len(path)):
-                painter.drawLine(path[i - 1], path[i])
+        for shape_type, params, color, pen_width in self.shapes:
+            pen = QPen(color)
+            pen.setWidth(pen_width)
+            painter.setPen(pen)
 
-        # Draw current path
-        for i in range(1, len(self.current_path)):
-            painter.drawLine(self.current_path[i - 1], self.current_path[i])
+            if shape_type == "rect":
+                x, y, w, h = params
+                painter.drawRect(QRectF(x, y, w, h))
+            elif shape_type == "ellipse":
+                x, y, w, h = params
+                painter.drawEllipse(QRectF(x, y, w, h))
+            elif shape_type == "line":
+                x1, y1, x2, y2 = params
+                painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
 
 
 # -------------------------
@@ -131,14 +127,13 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi("../src/digiforest_registration/gui/main_window.ui", self)
 
         # Replace placeholders with custom widgets
-        self.canvas = DrawingCanvas()
+        self.canvas = ShapeCanvas()
         self.canvasPlaceholder.layout().addWidget(self.canvas)
 
         self.vtk_viewer = VTKPointCloud()
         self.vtkLayout.addWidget(self.vtk_viewer)
 
         # Connect menu/toolbar actions
-        self.actionClear2D.triggered.connect(self.canvas.clear)
         self.actionReset3D.triggered.connect(self.vtk_viewer.reset_camera)
         self.actionOpen.triggered.connect(self.on_open)
         self.actionSave.triggered.connect(self.on_save)
