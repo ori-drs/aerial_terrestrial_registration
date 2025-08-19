@@ -86,7 +86,7 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <addaction name="actionClear2D"/>
+    <addaction name="actionRunRegistration"/>
     <addaction name="actionReset3D"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -106,7 +106,7 @@
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
    <addaction name="separator"/>
-   <addaction name="actionClear2D"/>
+   <addaction name="actionRunRegistration"/>
    <addaction name="actionReset3D"/>
   </widget>
   <action name="actionOpen">
@@ -127,9 +127,9 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionClear2D">
+  <action name="actionRunRegistration">
    <property name="text">
-    <string>Clear 2D</string>
+    <string>Run Registration</string>
    </property>
   </action>
   <action name="actionReset3D">
