@@ -44,6 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _shutdown_worker(self):
         """Cooperatively stop the worker thread if it's running."""
         if self._thread and self._thread.isRunning():
+            self._worker.stop()
             self._thread.requestInterruption()
             self._thread.quit()
             self._thread.wait()
