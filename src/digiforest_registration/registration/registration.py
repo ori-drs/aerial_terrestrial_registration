@@ -30,7 +30,7 @@ class Registration:
         icp_fitness_threshold: float,
         min_distance_between_peaks: float,
         max_number_of_clique: int,
-        logging_dir: str,
+        logger: ExperimentLogger,
         correspondence_graph_distance_threshold: float,
         maximum_rotation_offset: float,
         debug: bool = False,
@@ -51,7 +51,7 @@ class Registration:
         self.transform = np.identity(4)
         self.success = False
         self.best_icp_fitness_score = 0.0
-        self.logger = ExperimentLogger(base_dir=logging_dir)
+        self.logger = logger
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
         best_icp_fitness_score = 0

@@ -14,6 +14,7 @@ from digiforest_registration.utils import (
     parse_inputs,
     check_registration_inputs_validity,
 )
+from digiforest_registration.utils import ExperimentLogger
 from pathlib import Path
 import numpy as np
 import os
@@ -64,6 +65,10 @@ if __name__ == "__main__":
     failures = []
     successes = []
     registration_results = {}
+    logging_dir = args.logging_dir
+    if args.logging_dir is None:
+        logging_dir = "./logs"
+    registration_logger = ExperimentLogger(base_dir=logging_dir)
     for mls_cloud_filename in mls_cloud_filenames:
 
         logger.info(f"Processing file: {mls_cloud_filename.name}")
@@ -88,11 +93,7 @@ if __name__ == "__main__":
                 window_name="Initial uav",
             )
 
-        logging_dir = args.logging_dir
-        if args.logging_dir is None:
-            logging_dir = "./logs"
-        logging_dir = os.path.join(logging_dir, mls_cloud_filename.stem)
-
+        registration_logger.set_leaf_logging_folder(mls_cloud_filename.stem)
         registration = Registration(
             cropped_uav_cloud,
             mls_cloud,
@@ -102,7 +103,7 @@ if __name__ == "__main__":
             args.icp_fitness_score_threshold,
             args.min_distance_between_peaks,
             args.max_number_of_clique,
-            logging_dir,
+            registration_logger,
             correspondence_graph_distance_threshold=args.correspondence_graph_distance_threshold,
             maximum_rotation_offset=args.maximum_rotation_offset,
             debug=args.debug,

@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import cv2
 import logging
 
@@ -6,14 +7,16 @@ import logging
 class ExperimentLogger:
     def __init__(self, base_dir: str, version: str = None):
         self._root = Path(base_dir)
-        self._root.mkdir(parents=True, exist_ok=True)
         self._version = version if version is not None else self._get_next_version()
-        self._log_dir = self._root / f"version_{self._version}"
-        self._log_dir.mkdir(parents=True, exist_ok=True)
+        self._root = Path(base_dir) / f"version_{self._version}"
+        self._root.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger("digiforest_registration")
-        # self.logger.setLevel(logging.DEBUG)
 
-    def log_image(self, img, name):
+    def set_leaf_logging_folder(self, name: str):
+        self._log_dir = self._root / name
+        self._log_dir.mkdir(parents=True, exist_ok=True)
+
+    def log_image(self, img, name: str):
         """Save image in log folder
         If an image with the same name already exists, it will create
         a new unique name for the image
@@ -27,6 +30,10 @@ class ExperimentLogger:
                 img_path = self._log_dir / f"{name}_{version}.png"
                 version += 1
         cv2.imwrite(str(img_path), img)
+
+    def delete_all_logs(self):
+        if hasattr(self, "_root"):
+            shutil.rmtree(self._root)
 
     def _get_next_version(self) -> int:
         if not self._root.is_dir():
