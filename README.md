@@ -4,6 +4,7 @@
   <img src="./media/motivation-big.png" alt="Motivation" width="600"/>
 </p>
 
+The goal of this project is to merge above-canopy aerial and ground point clouds of forests. The aerial point clouds (typically coming from an UAV) are assumed to be of higher accuracy than the ground point clouds. Typically, ground Mobile Laser Scanning (MLS) systems may suffer from drift over the length of its trajectory.
 This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
 
 ## Setup
@@ -42,8 +43,8 @@ Our pipeline only accepts clouds in `ply` format. If your inputs are in a differ
 
 Inside the `conf` folder you will find an example configuration file `pipeline-registration.yaml`.
 
-* **`uav_cloud`** : Path to the UAV point cloud.
-* **`mls_cloud_folder`** : Path to the folder containing the MLS clouds.
+* **`uav_cloud`** : Path to the UAV point cloud. [Mandatory]
+* **`mls_cloud_folder`** : Path to the folder containing the MLS clouds. [Mandatory]
 * **`ground_segmentation_method`** ( default or [csf](https://github.com/jianboqi/CSF) ): Method to use to segment the ground of the clouds. 'Default' should use most of the time.
 * **`correspondence_matching_method`** ( graph ) : There is a single method implemented so far to match the features from the UAV and MLS clouds.
 * **`mls_feature_extraction_method`** ( canopy_map or tree_segmentation): Method to extract the features of the MLS cloud. 'canopy_map' works well if the canopy is visible in the MLS cloud. If the canopy is not visible, the other method must be used.
@@ -68,14 +69,20 @@ The registration and optimization steps share the same configuration file. Below
 
 ## Execution of the registration pipeline
 
+Our pipeline has **two** stages: 1) (Initial) Registration and 2) (Pose-Graph) Optimization. 
+
+The registration stage computes a rigid transformation between each MLS point cloud to the aerial point cloud using tree locations. This step should closely align the MLS point clouds to the aerial point cloud. The optimization step further refines the registration process by integrating additional constraints in-between MLS point clouds, yielding a better registration estimate as the drift in MLS estimates are minimized.  
+
+Our pipeline can accept MLS point cloud, either provided as one single pointcloud, or as a collection of point clouds (payloads) created by a SLAM system.
+
 ### Tile creation
-Your input MLS cloud is a single point cloud. For our method to work, we cut this cloud in *tiles* and create a simple pose graph where the nodes of the pose graph are the center of the tiles. Please refer to the paper for more information.
+If your input MLS cloud is a single point cloud. For our method to work, we cut this cloud in *tiles* and create a simple pose graph where the nodes of the pose graph are the center of the tiles. Please refer to the paper for more information.
 Use the following command to create the tiles :
 
 ```sh
 python3 ./scripts/tiling.py --cloud input_mls_cloud.ply --output_folder output --tile_size 20 --offset -399200 -6785900 0
 ```
-This command takes one input cloud, translates it using the `offset` provided (see the description of the parameters of the registration pipeline above), and saves the tiles in the `output_folder`.
+This command takes one input cloud, translates it using the `offset` provided (see the description of the parameters of the registration pipeline above), and saves the tiles in the `output_folder`. With your data you will have to choose an appropriate offset.
 
 ### Registration execution
 
