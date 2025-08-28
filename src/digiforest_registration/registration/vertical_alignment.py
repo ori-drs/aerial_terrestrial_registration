@@ -1,6 +1,5 @@
 import numpy as np
 from digiforest_analysis.tasks import GroundSegmentation
-
 import open3d as o3d
 
 
@@ -20,7 +19,7 @@ class VerticalRegistration:
         )
         self.uav_cloud = uav_cloud
         self.mls_cloud = mls_cloud
-        self.logger = logger
+        self.logger = logger  # TODO is it possible to make a no-op logger ?
         self.debug = debug
 
     def project_point_onto_plane(self, point, plane_normal, plane_constant):
@@ -76,14 +75,14 @@ class VerticalRegistration:
         n = np.array([a, b, c])
         n = n / np.linalg.norm(n)
 
+        # visualize the two ground planes
+        inlier_cloud = ground.select_by_index(inliers)
+        inlier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+
+        inlier_cloud_uav = ground_uav_cloud.select_by_index(inliers_uav)
+        inlier_cloud_uav.paint_uniform_color([0, 0.0, 1.0])
+
         if self.debug:
-            # visualize the two ground planes
-            inlier_cloud = ground.select_by_index(inliers)
-            inlier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
-
-            inlier_cloud_uav = ground_uav_cloud.select_by_index(inliers_uav)
-            inlier_cloud_uav.paint_uniform_color([0, 0.0, 1.0])
-
             o3d.visualization.draw_geometries(
                 [inlier_cloud.to_legacy(), inlier_cloud_uav.to_legacy()],
                 window_name="ground point clouds",
@@ -91,9 +90,6 @@ class VerticalRegistration:
 
         # TODO if the two normal vectors are not collinear
         # find rotation matrix between the two
-
-        self.logger.debug(f"f{[a_r, b_r, c_r, d_r]}, {[a, b, c, d]}")
-        self.logger.debug(f"dot product of normals: {np.dot(n_r, n)}")
 
         uav_point = (
             ground_uav_cloud.select_by_index(inliers_uav)
@@ -104,6 +100,12 @@ class VerticalRegistration:
         z_offset = np.sign(uav_point[2] - p_proj[2]) * np.linalg.norm(
             p_proj - uav_point
         )
-        self.logger.debug(f"Signed Distance between planes {z_offset}")
+
+        if self.logger:
+            self.logger.log_pointcloud(inlier_cloud, "mls_ground_cloud")
+            self.logger.log_pointcloud(inlier_cloud_uav, "uav_ground_cloud")
+            self.logger.debug(f"f{[a_r, b_r, c_r, d_r]}, {[a, b, c, d]}")
+            self.logger.debug(f"dot product of normals: {np.dot(n_r, n)}")
+            self.logger.debug(f"Signed Distance between planes {z_offset}")
 
         return [a_r, b_r, c_r, d_r], [a, b, c, d], z_offset
