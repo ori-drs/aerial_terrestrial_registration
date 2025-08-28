@@ -77,10 +77,8 @@ class VerticalRegistration:
 
         # visualize the two ground planes
         inlier_cloud = ground.select_by_index(inliers)
-        inlier_cloud.paint_uniform_color([0.8, 0.8, 0.8])
 
         inlier_cloud_uav = ground_uav_cloud.select_by_index(inliers_uav)
-        inlier_cloud_uav.paint_uniform_color([0, 0.0, 1.0])
 
         if self.debug:
             o3d.visualization.draw_geometries(

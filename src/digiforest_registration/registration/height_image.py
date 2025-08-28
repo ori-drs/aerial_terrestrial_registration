@@ -140,12 +140,12 @@ class HeightImage:
         filtered_img = np.multiply(img, opening)
 
         self.logger.log_image(grayscale_image, "grayscale_canopy_image")
-        if self.debug:
-            cv2.imshow("img", img)
-            cv2.imshow("grayscale_image", grayscale_image)
-            cv2.imshow("filtered_img", filtered_img)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+        # if self.debug:
+        #     cv2.imshow("img", img)
+        #     cv2.imshow("grayscale_image", grayscale_image)
+        #     cv2.imshow("filtered_img", filtered_img)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
 
         return filtered_img
 
@@ -196,7 +196,7 @@ class HeightImage:
                 valid_points.append([point[0], point[1], 0])
 
         if self.debug:
-            cv2.imshow("Image", maxima_img)
+            cv2.imshow("Tree locations", maxima_img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -297,6 +297,6 @@ def display_correspondences(
         graph2,
     )
 
-    cv2.imshow("Image", img)
+    cv2.imshow("Correspondences", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

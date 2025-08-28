@@ -52,6 +52,8 @@ class Registration:
         self.success = False
         self.best_icp_fitness_score = 0.0
         self.logger = logger
+        self.uav_color = [0.45, 0.62, 0.81]
+        self.mls_color = [0.98, 0.68, 0.20]
 
     def find_transform(self, horizontal_registration, transform: np.ndarray) -> float:
         best_icp_fitness_score = 0
@@ -76,8 +78,8 @@ class Registration:
             mls_cloud.transform(transform)
             if self.debug:
                 # Visualize the results
-                mls_cloud.paint_uniform_color([0.8, 0.8, 0.8])
-                self.uav_cloud.paint_uniform_color([0.0, 1.0, 0])
+                mls_cloud.paint_uniform_color(self.mls_color)
+                self.uav_cloud.paint_uniform_color(self.uav_color)
                 o3d.visualization.draw_geometries(
                     [mls_cloud.to_legacy(), self.uav_cloud.to_legacy()],
                     window_name="Result after horizontal alignment",
@@ -90,7 +92,7 @@ class Registration:
                 cropped_uav_cloud,
                 mls_cloud,
                 ground_segmentation_method=self.ground_segmentation_method,
-                logger=self.logger,
+                logger=None,
                 debug=self.debug,
             )
             (_, _, tz) = vertical_registration.process()
@@ -125,6 +127,21 @@ class Registration:
                 best_icp_fitness_score = icp_fitness
                 self.transform = icp_transform @ transform
 
+                # downsample and log clouds
+                # voxel_size = 0.1
+                # downsample_mls_cloud = mls_cloud.voxel_down_sample(voxel_size=voxel_size)
+                # downsample_uav_cloud = cropped_uav_cloud.voxel_down_sample(voxel_size=voxel_size)
+                # downsample_mls_cloud.paint_uniform_color([0.8, 0.8, 0.8])
+                # downsample_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
+                # combined_cloud = o3d.t.geometry.PointCloud()
+                # combined_cloud.point["positions"] = o3d.core.concatenate([downsample_mls_cloud.point["positions"],
+                #                                                           downsample_uav_cloud.point["positions"]], 0)
+                # combined_cloud.point["colors"]    = o3d.core.concatenate([downsample_mls_cloud.point["colors"],
+                #                                                           downsample_uav_cloud.point["colors"]],    0)
+                # combined_cloud.point["normals"]    = o3d.core.concatenate([downsample_mls_cloud.point["normals"],
+                #                                                           downsample_uav_cloud.point["normals"]],    0)
+                # self.logger.log_pointcloud(combined_cloud, "final_registration")
+
             if best_icp_fitness_score > 0.95:
                 # we are happy with the result
                 break
@@ -133,6 +150,19 @@ class Registration:
         return best_icp_fitness_score
 
     def registration(self) -> bool:
+
+        if self.debug:
+            self.mls_cloud.paint_uniform_color(self.mls_color)
+            self.uav_cloud.paint_uniform_color(self.uav_color)
+            o3d.visualization.draw_geometries(
+                [self.mls_cloud.to_legacy()],
+                window_name="Initial MLS cloud",
+            )
+            o3d.visualization.draw_geometries(
+                [self.uav_cloud.to_legacy()],
+                window_name="Initial UAV cloud",
+            )
+
         # we are estimating the transformation matrix from mls cloud to uav cloud
         transform = np.identity(4)
         vertical_registration = VerticalRegistration(

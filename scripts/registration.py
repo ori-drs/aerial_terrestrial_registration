@@ -81,18 +81,6 @@ if __name__ == "__main__":
             mls_cloud = original_mls_cloud
         cropped_uav_cloud = crop_cloud(uav_cloud, mls_cloud, padding=20)
 
-        if args.debug:
-            mls_cloud.paint_uniform_color([0.8, 0.8, 0.8])
-            cropped_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
-            o3d.visualization.draw_geometries(
-                [mls_cloud.to_legacy()],
-                window_name="Initial MLS cloud",
-            )
-            o3d.visualization.draw_geometries(
-                [cropped_uav_cloud.to_legacy()],
-                window_name="Initial uav",
-            )
-
         registration_logger.set_leaf_logging_folder(mls_cloud_filename.stem)
         registration = Registration(
             cropped_uav_cloud,
