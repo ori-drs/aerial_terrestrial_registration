@@ -8,7 +8,7 @@ from digiforest_registration.utils import (
 )
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 
-# from digiforest_registration.registration.registration import Registration
+from digiforest_registration.registration.registration import Registration
 from multiprocessing import Queue, Process
 import threading
 
@@ -61,28 +61,28 @@ def run_registration_process(
 
     cropped_uav_cloud = cropped_uav_cloud
     mls_cloud_folder = mls_cloud_folder
-    queue = queue
-    # registration = Registration(
-    #     cropped_uav_cloud,
-    #     mls_cloud,
-    #     args.ground_segmentation_method,
-    #     args.correspondence_matching_method,
-    #     args.mls_feature_extraction_method,
-    #     args.icp_fitness_score_threshold,
-    #     args.min_distance_between_peaks,
-    #     args.max_number_of_clique,
-    #     logging_dir,
-    #     correspondence_graph_distance_threshold=args.correspondence_graph_distance_threshold,
-    #     maximum_rotation_offset=args.maximum_rotation_offset,
-    #     debug=args.debug,
-    # )
-
-    # registration = registration
+    registration = Registration(
+        cropped_uav_cloud,
+        mls_cloud,
+        args.ground_segmentation_method,
+        args.correspondence_matching_method,
+        args.mls_feature_extraction_method,
+        args.icp_fitness_score_threshold,
+        args.min_distance_between_peaks,
+        args.max_number_of_clique,
+        logging_dir,
+        correspondence_graph_distance_threshold=args.correspondence_graph_distance_threshold,
+        maximum_rotation_offset=args.maximum_rotation_offset,
+        debug=args.debug,
+    )
+    registration = registration
+    # registration.registration()
     print("End of process")
 
 
 class PipelineWorker(QObject):
-    new_data = pyqtSignal()
+    new_cloud = pyqtSignal()
+    registration_finished = pyqtSignal()
 
     def __init__(self, args):
         super().__init__()
@@ -91,6 +91,8 @@ class PipelineWorker(QObject):
         self.registration_process = None
         self.queue = Queue()
         self.last_cloud = None
+        self.num_clouds = 0
+        self.num_cloud_processed = 0
 
     def stop(self):
         # Signal the thread to stop
@@ -102,6 +104,8 @@ class PipelineWorker(QObject):
 
     def run(self):
         args = self.args
+        self.num_clouds = 0
+        self.num_cloud_processed = 0
         try:
             print("Initialization...")
             # Check validity of inputs
@@ -111,6 +115,7 @@ class PipelineWorker(QObject):
                 uav_cloud_filename,
             ) = check_registration_inputs_validity(args)
 
+            self.num_clouds = len(mls_cloud_filenames)
             for mls_cloud_filename in mls_cloud_filenames:
                 self.registration_process = Process(
                     target=run_registration_process,
@@ -131,11 +136,14 @@ class PipelineWorker(QObject):
                     try:
                         _ = self.queue.get(timeout=0.5)
                         self.new_data.emit()
-                    except Exception:  # queue.Empty
+                    except Exception:
                         continue
 
                 if self.stop_event.is_set():
                     break
+                self.registration_process.join()
+                self.num_cloud_processed += 1
+                self.registration_finished.emit()
 
         except Exception as e:
             print(f"Registration failed: {e}")
