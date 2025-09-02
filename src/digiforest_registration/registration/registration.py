@@ -131,15 +131,11 @@ class Registration:
                 # voxel_size = 0.1
                 # downsample_mls_cloud = mls_cloud.voxel_down_sample(voxel_size=voxel_size)
                 # downsample_uav_cloud = cropped_uav_cloud.voxel_down_sample(voxel_size=voxel_size)
-                # downsample_mls_cloud.paint_uniform_color([0.8, 0.8, 0.8])
-                # downsample_uav_cloud.paint_uniform_color([0.0, 1.0, 0])
                 # combined_cloud = o3d.t.geometry.PointCloud()
                 # combined_cloud.point["positions"] = o3d.core.concatenate([downsample_mls_cloud.point["positions"],
                 #                                                           downsample_uav_cloud.point["positions"]], 0)
                 # combined_cloud.point["colors"]    = o3d.core.concatenate([downsample_mls_cloud.point["colors"],
                 #                                                           downsample_uav_cloud.point["colors"]],    0)
-                # combined_cloud.point["normals"]    = o3d.core.concatenate([downsample_mls_cloud.point["normals"],
-                #                                                           downsample_uav_cloud.point["normals"]],    0)
                 # self.logger.log_pointcloud(combined_cloud, "final_registration")
 
             if best_icp_fitness_score > 0.95:

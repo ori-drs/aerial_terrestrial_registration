@@ -2,10 +2,14 @@ from pathlib import Path
 import shutil
 import cv2
 import logging
+import open3d as o3d
 
 
 class ExperimentLogger:
-    def __init__(self, base_dir: str, version: str = None):
+    def __init__(
+        self, base_dir: str, version: str = None, log_pointclouds: bool = False
+    ):
+        self.log_pointclouds = log_pointclouds
         self._root = Path(base_dir)
         self._version = version if version is not None else self._get_next_version()
         self._root = Path(base_dir) / f"version_{self._version}"
@@ -30,6 +34,13 @@ class ExperimentLogger:
                 img_path = self._log_dir / f"{name}_{version}.png"
                 version += 1
         cv2.imwrite(str(img_path), img)
+
+    def log_pointcloud(self, cloud, name: str):
+        """Save pointcloud in log folder"""
+        if not self.log_pointclouds:
+            return
+        path = self._log_dir / f"{name}.ply"
+        o3d.t.io.write_point_cloud(str(path), cloud)
 
     def delete_all_logs(self):
         if hasattr(self, "_root"):

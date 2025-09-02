@@ -22,6 +22,7 @@ class VTKPointCloud(QtWidgets.QWidget):
         self.vtk_widget = QVTKRenderWindowInteractor(self)
         layout.addWidget(self.vtk_widget)
 
+        self.edl = None
         self.renderer = vtk.vtkRenderer()
         self.renderer.AutomaticLightCreationOn()
         self.vtk_widget.GetRenderWindow().AddRenderer(self.renderer)
@@ -34,17 +35,18 @@ class VTKPointCloud(QtWidgets.QWidget):
     def _setup_scene(self):
         self.renderer.SetBackground(1.0, 1.0, 1.0)
         # self.add_demo_points()
-        self.load_point_cloud(None)
-        self.renderer.ResetCamera()
-
-    def load_point_cloud(self, filename):
-        cloud = o3d.t.io.read_point_cloud(
+        self.load_pointcloud(
             "/home/benoit/code/digiforest_drs/digiforest_registration/final_registration.ply"
         )
-        xyz = cloud.point["positions"].numpy()
-        rgb = 255 * cloud.point["colors"].numpy()
+        self.renderer.ResetCamera()
 
-        rgb = rgb.astype(np.uint8)
+    def load_pointcloud(self, filename):
+        if self.edl is not None:
+            self.edl.ReleaseGraphicsResources(self.vtk_widget.GetRenderWindow())
+
+        cloud = o3d.t.io.read_point_cloud(filename)
+        xyz = cloud.point["positions"].numpy()
+
         points = vtk.vtkPoints()
         # points.SetData(numpy_support.numpy_to_vtk(xyz.astype(np.float32)))
         for i in range(xyz.shape[0]):
@@ -53,16 +55,14 @@ class VTKPointCloud(QtWidgets.QWidget):
         polydata = vtk.vtkPolyData()
         polydata.SetPoints(points)
 
-        vtk_colors = numpy_support.numpy_to_vtk(
-            rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
-        )
-        vtk_colors.SetName("Colors")
-        polydata.GetPointData().SetScalars(vtk_colors)
-
-        # vtk_normals = numpy_support.numpy_to_vtk(normals.astype(np.float32))
-        # vtk_normals.SetNumberOfComponents(3)
-        # vtk_normals.SetName("Normals")
-        # polydata.GetPointData().SetNormals(vtk_normals)
+        if "colors" in cloud.point:
+            rgb = 255 * cloud.point["colors"].numpy()
+            rgb = rgb.astype(np.uint8)
+            vtk_colors = numpy_support.numpy_to_vtk(
+                rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
+            )
+            vtk_colors.SetName("Colors")
+            polydata.GetPointData().SetScalars(vtk_colors)
 
         glyph = vtk.vtkVertexGlyphFilter()
         glyph.SetInputData(polydata)
@@ -77,7 +77,6 @@ class VTKPointCloud(QtWidgets.QWidget):
 
         prop = actor.GetProperty()
         prop.SetRepresentationToPoints()
-        # prop.LightingOff() # otherwise point cloud is black when normals are defined
 
         if self._actor:
             self.renderer.RemoveActor(self._actor)
@@ -86,10 +85,10 @@ class VTKPointCloud(QtWidgets.QWidget):
 
         # edl
         basicPasses = vtk.vtkRenderStepsPass()
-        edl = vtk.vtkEDLShading()
-        edl.SetDelegatePass(basicPasses)
+        self.edl = vtk.vtkEDLShading()
+        self.edl.SetDelegatePass(basicPasses)
         glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self.renderer)
-        glrenderer.SetPass(edl)
+        glrenderer.SetPass(self.edl)
 
         self.vtk_widget.GetRenderWindow().Render()
 
