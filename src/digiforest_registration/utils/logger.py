@@ -16,6 +16,9 @@ class ExperimentLogger:
         self._root.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger("digiforest_registration")
 
+    def current_logging_directory(self) -> str:
+        return str(self._root)
+
     def set_leaf_logging_folder(self, name: str):
         self._log_dir = self._root / name
         self._log_dir.mkdir(parents=True, exist_ok=True)

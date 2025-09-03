@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import open3d as o3d
 from vtk.util import numpy_support
@@ -34,7 +33,6 @@ class VTKPointCloud(QtWidgets.QWidget):
 
     def _setup_scene(self):
         self.renderer.SetBackground(1.0, 1.0, 1.0)
-        # self.add_demo_points()
         self.load_pointcloud(
             "/home/benoit/code/digiforest_drs/digiforest_registration/final_registration.ply"
         )
@@ -90,42 +88,6 @@ class VTKPointCloud(QtWidgets.QWidget):
         glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self.renderer)
         glrenderer.SetPass(self.edl)
 
-        self.vtk_widget.GetRenderWindow().Render()
-
-    def add_demo_points(self, n=2000):
-        # Generate some random XYZ points as a demo
-        points = vtk.vtkPoints()
-        for _ in range(n):
-            x = random.uniform(-10, 10)
-            y = random.uniform(-10, 10)
-            z = random.uniform(-2, 2)
-            points.InsertNextPoint(x, y, z)
-
-        poly = vtk.vtkPolyData()
-        poly.SetPoints(points)
-
-        rgb = (np.random.rand(n, 3) * 255).astype(np.uint8)
-        vtk_colors = numpy_support.numpy_to_vtk(
-            rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
-        )
-        vtk_colors.SetName("Colors")
-        poly.GetPointData().SetScalars(vtk_colors)
-
-        glyph = vtk.vtkVertexGlyphFilter()
-        glyph.SetInputData(poly)
-        glyph.Update()
-
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(glyph.GetOutputPort())
-
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetPointSize(3)
-
-        if self._actor:
-            self.renderer.RemoveActor(self._actor)
-        self._actor = actor
-        self.renderer.AddActor(actor)
         self.vtk_widget.GetRenderWindow().Render()
 
     def reset_camera(self):

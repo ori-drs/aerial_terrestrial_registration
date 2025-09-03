@@ -19,7 +19,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.args.logging_dir is None:
             logging_dir = "./logs"
         logging_dir = os.path.join(logging_dir)
-        self.registration_logger = ExperimentLogger(base_dir=logging_dir)
+        self.logger = ExperimentLogger(base_dir=logging_dir, log_pointclouds=True)
 
         # Load the UI file
         # TODO improve path
@@ -32,7 +32,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.vtk_viewer = VTKPointCloud()
         self.vtkLayout.addWidget(self.vtk_viewer)
 
-        self.logTreeWidget = FileTreeWidget(root_path=logging_dir)
+        self.logTreeWidget = FileTreeWidget(
+            root_path=self.logger.current_logging_directory()
+        )
         self.tabOutputs.layout().addWidget(self.logTreeWidget)
         self.logTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
 
@@ -53,7 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_registration(self):
         self._thread = QThread(self)
-        self._worker = PipelineWorker(self.args, self.registration_logger)
+        self._worker = PipelineWorker(self.args, self.logger)
         self._worker.moveToThread(self._thread)
 
         self._thread.started.connect(self._worker.run)
@@ -66,6 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressBar.setValue(
             100 * self._worker.num_cloud_processed / self._worker.num_clouds
         )
+        self.logTreeWidget.update_view()
 
     def _shutdown_worker(self):
         """Cooperatively stop the worker thread if it's running."""
@@ -77,7 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, e):
         self._shutdown_worker()
-        self.registration_logger.delete_all_logs()
+        self.logger.delete_all_logs()
         super().closeEvent(e)
 
     def on_open(self):

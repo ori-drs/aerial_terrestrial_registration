@@ -10,7 +10,9 @@ from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 from digiforest_registration.registration.registration import Registration
 from digiforest_registration.utils import ExperimentLogger
 from multiprocessing import Queue, Process
+from logging.handlers import QueueHandler, QueueListener
 import threading
+import logging
 
 
 def run_registration_process(
@@ -18,9 +20,17 @@ def run_registration_process(
     uav_cloud_filename: str,
     mls_cloud_filename: str,
     mls_cloud_folder: str,
-    queue: Queue,
+    log_queue: Queue,
     logger: ExperimentLogger,
 ):
+
+    # Set up logging queue
+    qh = QueueHandler(log_queue)
+    root = logger.logger
+    root.setLevel(logging.DEBUG)
+    for h in list(root.handlers):
+        root.removeHandler(h)
+    root.addHandler(qh)
 
     # Loading the data
     if args.offset is not None and len(args.offset) == 3:
@@ -79,16 +89,18 @@ class PipelineWorker(QObject):
     new_cloud = pyqtSignal()
     registration_finished = pyqtSignal()
 
-    def __init__(self, args, registration_logger: ExperimentLogger):
+    def __init__(self, args, logger: ExperimentLogger):
         super().__init__()
         self.args = args
         self.stop_event = threading.Event()
         self.registration_process = None
         self.queue = Queue()
-        self.registration_logger = registration_logger
+        self.logger = logger
         self.last_cloud = None
         self.num_clouds = 0
         self.num_cloud_processed = 0
+        self.handler = logging.StreamHandler()
+        self.handler.setLevel(logging.DEBUG)
 
     def stop(self):
         # Signal the thread to stop
@@ -102,6 +114,9 @@ class PipelineWorker(QObject):
         args = self.args
         self.num_clouds = 0
         self.num_cloud_processed = 0
+        log_queue = Queue()
+        listener = QueueListener(log_queue, self.handler)
+        listener.start()
         try:
             print("Initialization...")
             # Check validity of inputs
@@ -113,6 +128,7 @@ class PipelineWorker(QObject):
 
             self.num_clouds = len(mls_cloud_filenames)
             for mls_cloud_filename in mls_cloud_filenames:
+                self.logger.set_leaf_logging_folder(mls_cloud_filename.stem)
                 self.registration_process = Process(
                     target=run_registration_process,
                     args=(
@@ -120,8 +136,8 @@ class PipelineWorker(QObject):
                         uav_cloud_filename,
                         mls_cloud_filename,
                         mls_cloud_folder,
-                        self.queue,
-                        self.registration_logger,
+                        log_queue,
+                        self.logger,
                     ),
                 )
 
@@ -137,6 +153,8 @@ class PipelineWorker(QObject):
                         continue
 
                 if self.stop_event.is_set():
+                    # Stopping the thread
+                    listener.stop()
                     break
                 self.registration_process.join()
                 self.num_cloud_processed += 1
