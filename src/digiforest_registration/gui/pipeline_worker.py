@@ -7,7 +7,15 @@ from digiforest_registration.utils import (
 )
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
 
-from digiforest_registration.registration.registration import Registration
+from digiforest_registration.registration.registration import (
+    Registration,
+    RegistrationResult,
+)
+from digiforest_registration.registration.registration_io import (
+    save_registered_clouds,
+    save_posegraph,
+)
+from digiforest_registration.utils import TileConfigReader
 from digiforest_registration.utils import ExperimentLogger
 from multiprocessing import Queue, Process
 from logging.handlers import QueueHandler, QueueListener
@@ -21,6 +29,7 @@ def run_registration_process(
     mls_cloud_filename: str,
     mls_cloud_folder: str,
     log_queue: Queue,
+    output_queue: Queue,
     logger: ExperimentLogger,
 ):
 
@@ -57,14 +66,6 @@ def run_registration_process(
         mls_cloud = original_mls_cloud
     cropped_uav_cloud = crop_cloud(uav_cloud, mls_cloud, padding=20)
 
-    # if (
-    #     args.mls_registered_cloud_folder is not None
-    #     and args.tiles_conf_file is not None
-    # ):
-    #     tile_config_reader = TileConfigReader(
-    #         args.tiles_conf_file, offset
-    #     )
-
     cropped_uav_cloud = cropped_uav_cloud
     mls_cloud_folder = mls_cloud_folder
     registration = Registration(
@@ -81,7 +82,18 @@ def run_registration_process(
         maximum_rotation_offset=args.maximum_rotation_offset,
         debug=args.debug,
     )
-    registration.registration()
+    success = registration.registration()
+    save_registered_clouds(
+        cloud_io,
+        registration,
+        mls_cloud_filename,
+        original_mls_cloud,
+        args.mls_registered_cloud_folder,
+        offset,
+    )
+    output_queue.put(success)
+    output_queue.put(registration.transform)
+    output_queue.put(registration.best_icp_fitness_score)
     print("End of process")
 
 
@@ -94,7 +106,7 @@ class PipelineWorker(QObject):
         self.args = args
         self.stop_event = threading.Event()
         self.registration_process = None
-        self.queue = Queue()
+        self.output_queue = Queue()
         self.logger = logger
         self.last_cloud = None
         self.num_clouds = 0
@@ -127,6 +139,9 @@ class PipelineWorker(QObject):
             ) = check_registration_inputs_validity(args)
 
             self.num_clouds = len(mls_cloud_filenames)
+            registration_results = {}
+            failures = []
+            successes = []
             for mls_cloud_filename in mls_cloud_filenames:
                 self.logger.set_leaf_logging_folder(mls_cloud_filename.stem)
                 self.registration_process = Process(
@@ -137,6 +152,7 @@ class PipelineWorker(QObject):
                         mls_cloud_filename,
                         mls_cloud_folder,
                         log_queue,
+                        self.output_queue,
                         self.logger,
                     ),
                 )
@@ -147,7 +163,6 @@ class PipelineWorker(QObject):
                     and self.registration_process.is_alive()
                 ):
                     try:
-                        _ = self.queue.get(timeout=0.5)
                         self.new_data.emit()
                     except Exception:
                         continue
@@ -160,5 +175,56 @@ class PipelineWorker(QObject):
                 self.num_cloud_processed += 1
                 self.registration_finished.emit()
 
+                # save results
+                success = self.output_queue.get()
+                transform = self.output_queue.get()
+                best_icp_fitness_score = self.output_queue.get()
+
+                result = RegistrationResult()
+                result.transform = transform
+                result.success = success
+                result.icp_fitness = best_icp_fitness_score
+                registration_results[mls_cloud_filename.name] = result
+
+                if not success:
+                    failures.append((mls_cloud_filename.name, (best_icp_fitness_score)))
+                else:
+                    successes.append(
+                        (mls_cloud_filename.name, (best_icp_fitness_score))
+                    )
+
+            # end of the processing
+            if args.offset is not None and len(args.offset) == 3:
+                offset = np.array(
+                    [
+                        args.offset[0],
+                        args.offset[1],
+                        args.offset[2],
+                    ],
+                    dtype=np.float32,
+                )
+            else:
+                # default offset
+                offset = np.array([0, 0, 0], dtype=np.float32)
+
+            if (
+                args.mls_registered_cloud_folder is not None
+                and args.tiles_conf_file is not None
+            ):
+                tile_config_reader = TileConfigReader(args.tiles_conf_file, offset)
+
+            noise_matrix = np.array(args.noise_matrix, dtype=np.float32)
+            save_posegraph(
+                noise_matrix,
+                args.tiles_conf_file,
+                args.save_pose_graph,
+                args.mls_registered_cloud_folder,
+                tile_config_reader,
+                args.pose_graph_file,
+                registration_results,
+                mls_cloud_folder,
+                offset,
+                args.icp_fitness_score_threshold,
+            )
         except Exception as e:
             print(f"Registration failed: {e}")

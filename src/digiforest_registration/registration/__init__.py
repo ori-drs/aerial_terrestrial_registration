@@ -9,3 +9,4 @@ from .graph import Graph, CorrespondenceGraph
 from .icp import icp
 from .registration import Registration, RegistrationResult
 from .tree_trunk_segmentation import TreeTrunkSegmentation
+from .registration_io import save_registered_clouds, save_posegraph

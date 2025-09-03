@@ -3,10 +3,6 @@ from digiforest_registration.registration.registration import (
     Registration,
     RegistrationResult,
 )
-from digiforest_registration.optimization.io import (
-    write_tiles_to_pose_graph_file,
-    write_aerial_transforms_to_pose_graph_file,
-)
 from digiforest_registration.utils import CloudIO, TileConfigReader
 from digiforest_registration.utils import (
     crop_cloud,
@@ -15,7 +11,10 @@ from digiforest_registration.utils import (
     check_registration_inputs_validity,
 )
 from digiforest_registration.utils import ExperimentLogger
-from pathlib import Path
+from digiforest_registration.registration.registration_io import (
+    save_registered_clouds,
+    save_posegraph,
+)
 import numpy as np
 import os
 import open3d as o3d
@@ -114,28 +113,14 @@ if __name__ == "__main__":
         result.icp_fitness = registration.best_icp_fitness_score
         registration_results[mls_cloud_filename.name] = result
 
-        if args.mls_registered_cloud_folder is not None:
-            if args.offset is not None:
-                # an offset is set
-                output_filename_with_offset = os.path.join(
-                    args.mls_registered_cloud_folder,
-                    mls_cloud_filename.stem
-                    + "_with_offset"
-                    + mls_cloud_filename.suffix,
-                )
-                cloud_io.save_cloud(
-                    registration.transform_cloud(original_mls_cloud),
-                    output_filename_with_offset,
-                    local_coordinates=True,
-                )
-            output_filename = os.path.join(
-                args.mls_registered_cloud_folder, mls_cloud_filename.name
-            )
-            cloud_io.save_cloud(
-                registration.transform_cloud(original_mls_cloud),
-                output_filename,
-                local_coordinates=False,
-            )
+        save_registered_clouds(
+            cloud_io,
+            registration,
+            mls_cloud_filename,
+            original_mls_cloud,
+            args.mls_registered_cloud_folder,
+            offset,
+        )
 
     logger.info(f"Total number of failures: {len(failures)}")
     logger.info(f"Total number of clouds: {len(mls_cloud_filenames)}")
@@ -153,37 +138,15 @@ if __name__ == "__main__":
 
     # save pose graph
     noise_matrix = np.array(args.noise_matrix, dtype=np.float32)
-    if noise_matrix.size != 21:
-        raise ValueError(
-            "Noise matrix must be a list of 21 floats representing the upper triangular matrix of the 6x6 covariance matrix"
-        )
-    if args.tiles_conf_file is not None:
-
-        # saving the pose graph in case we are processing tiles
-        if args.save_pose_graph and args.mls_registered_cloud_folder is not None:
-            pose_graph_path = os.path.join(
-                args.mls_registered_cloud_folder, "pose_graph.g2o"
-            )
-            write_tiles_to_pose_graph_file(
-                mls_cloud_folder,
-                pose_graph_path,
-                registration_results,
-                tile_config_reader,
-                offset,
-                noise_matrix,
-            )
-
-    elif args.pose_graph_file is not None:
-        # processing mls clouds
-        if args.save_pose_graph and args.mls_registered_cloud_folder is not None:
-            output_pose_graph_path = os.path.join(
-                args.mls_registered_cloud_folder, "pose_graph.g2o"
-            )
-
-            write_aerial_transforms_to_pose_graph_file(
-                Path(args.pose_graph_file),
-                output_pose_graph_path,
-                registration_results,
-                args.icp_fitness_score_threshold,
-                noise_matrix,
-            )
+    save_posegraph(
+        noise_matrix,
+        args.tiles_conf_file,
+        args.save_pose_graph,
+        args.mls_registered_cloud_folder,
+        tile_config_reader,
+        args.pose_graph_file,
+        registration_results,
+        mls_cloud_folder,
+        offset,
+        args.icp_fitness_score_threshold,
+    )
