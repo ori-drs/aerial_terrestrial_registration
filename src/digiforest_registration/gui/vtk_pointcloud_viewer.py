@@ -1,7 +1,8 @@
 import numpy as np
-import open3d as o3d
 from vtk.util import numpy_support
 from PyQt5 import QtWidgets
+
+from digiforest_registration.utils import CloudIO
 
 try:
     from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
@@ -35,11 +36,11 @@ class VTKPointCloud(QtWidgets.QWidget):
         self.renderer.SetBackground(1.0, 1.0, 1.0)
         self.renderer.ResetCamera()
 
-    def load_pointcloud(self, filename):
+    def load_pointcloud(self, filename, cloud_io: CloudIO):
         if self.edl is not None:
             self.edl.ReleaseGraphicsResources(self.vtk_widget.GetRenderWindow())
 
-        cloud = o3d.t.io.read_point_cloud(filename)
+        cloud = cloud_io.load_cloud(filename)
         xyz = cloud.point["positions"].numpy()
 
         points = vtk.vtkPoints()

@@ -2,7 +2,8 @@ from pathlib import Path
 import shutil
 import cv2
 import logging
-import open3d as o3d
+
+from digiforest_registration.utils import CloudIO
 
 
 class ExperimentLogger:
@@ -38,12 +39,12 @@ class ExperimentLogger:
                 version += 1
         cv2.imwrite(str(img_path), img)
 
-    def log_pointcloud(self, cloud, name: str):
+    def log_pointcloud(self, cloud, cloud_io: CloudIO, name: str):
         """Save pointcloud in log folder"""
         if not self.log_pointclouds:
             return
         path = self._log_dir / f"{name}.ply"
-        o3d.t.io.write_point_cloud(str(path), cloud)
+        cloud_io.save_cloud(cloud, str(path), local_coordinates=False)
 
     def delete_all_logs(self):
         if hasattr(self, "_root"):

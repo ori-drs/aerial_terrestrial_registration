@@ -84,6 +84,7 @@ if __name__ == "__main__":
         registration = Registration(
             cropped_uav_cloud,
             mls_cloud,
+            cloud_io,
             args.ground_segmentation_method,
             args.correspondence_matching_method,
             args.mls_feature_extraction_method,

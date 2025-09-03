@@ -28,6 +28,7 @@ def run_registration_process(
     uav_cloud_filename: str,
     mls_cloud_filename: str,
     mls_cloud_folder: str,
+    cloud_io: CloudIO,
     log_queue: Queue,
     output_queue: Queue,
     logger: ExperimentLogger,
@@ -42,20 +43,6 @@ def run_registration_process(
     root.addHandler(qh)
 
     # Loading the data
-    if args.offset is not None and len(args.offset) == 3:
-        offset = np.array(
-            [
-                args.offset[0],
-                args.offset[1],
-                args.offset[2],
-            ],
-            dtype=np.float32,
-        )
-    else:
-        # default offset
-        offset = np.array([0, 0, 0], dtype=np.float32)
-
-    cloud_io = CloudIO(offset, logger=None, downsample_cloud=args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
     original_mls_cloud = cloud_io.load_cloud(str(mls_cloud_filename))
 
@@ -71,6 +58,7 @@ def run_registration_process(
     registration = Registration(
         cropped_uav_cloud,
         mls_cloud,
+        cloud_io,
         args.ground_segmentation_method,
         args.correspondence_matching_method,
         args.mls_feature_extraction_method,
@@ -89,7 +77,7 @@ def run_registration_process(
         mls_cloud_filename,
         original_mls_cloud,
         args.mls_registered_cloud_folder,
-        offset,
+        cloud_io.offset,
     )
     output_queue.put(success)
     output_queue.put(registration.transform)
@@ -101,13 +89,14 @@ class PipelineWorker(QObject):
     new_cloud = pyqtSignal()
     registration_finished = pyqtSignal()
 
-    def __init__(self, args, logger: ExperimentLogger):
+    def __init__(self, args, logger: ExperimentLogger, cloud_io: CloudIO):
         super().__init__()
         self.args = args
         self.stop_event = threading.Event()
         self.registration_process = None
         self.output_queue = Queue()
         self.logger = logger
+        self.cloud_io = cloud_io
         self.last_cloud = None
         self.num_clouds = 0
         self.num_cloud_processed = 0
@@ -130,7 +119,6 @@ class PipelineWorker(QObject):
         listener = QueueListener(log_queue, self.handler)
         listener.start()
         try:
-            print("Initialization...")
             # Check validity of inputs
             (
                 mls_cloud_filenames,
@@ -151,6 +139,7 @@ class PipelineWorker(QObject):
                         uav_cloud_filename,
                         mls_cloud_filename,
                         mls_cloud_folder,
+                        self.cloud_io,
                         log_queue,
                         self.output_queue,
                         self.logger,

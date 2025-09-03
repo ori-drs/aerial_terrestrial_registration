@@ -8,6 +8,9 @@ from digiforest_registration.gui.log_tree_widget import FileTreeWidget
 from digiforest_registration.utils import ExperimentLogger
 
 import os
+import numpy as np
+
+from digiforest_registration.utils.cloud_io import CloudIO
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -20,6 +23,23 @@ class MainWindow(QtWidgets.QMainWindow):
             logging_dir = "./logs"
         logging_dir = os.path.join(logging_dir)
         self.logger = ExperimentLogger(base_dir=logging_dir, log_pointclouds=True)
+
+        if self.args.offset is not None and len(self.args.offset) == 3:
+            offset = np.array(
+                [
+                    self.args.offset[0],
+                    self.args.offset[1],
+                    self.args.offset[2],
+                ],
+                dtype=np.float32,
+            )
+        else:
+            # default offset
+            offset = np.array([0, 0, 0], dtype=np.float32)
+
+        self.cloud_io = CloudIO(
+            offset, logger=None, downsample_cloud=self.args.downsample_cloud
+        )
 
         # Load the UI file
         # TODO improve path
@@ -36,17 +56,23 @@ class MainWindow(QtWidgets.QMainWindow):
             root_path=self.logger.current_logging_directory()
         )
         self.tabLogs.layout().addWidget(self.logTreeWidget)
-        self.logTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
+        self.logTreeWidget.fileChecked.connect(
+            lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+        )
 
         self.outputTreeWidget = FileTreeWidget(
             root_path=self.args.mls_registered_cloud_folder
         )
         self.tabOutputs.layout().addWidget(self.outputTreeWidget)
-        self.outputTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
+        self.outputTreeWidget.fileChecked.connect(
+            lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+        )
 
         self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
         self.tabInputs.layout().addWidget(self.inputTreeWidget)
-        self.inputTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
+        self.inputTreeWidget.fileChecked.connect(
+            lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+        )
 
         # Connect menu/toolbar actions
         self.actionRunRegistration.triggered.connect(self.start_registration)
@@ -66,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def start_registration(self):
         self.progressBar.setValue(0)
         self._thread = QThread(self)
-        self._worker = PipelineWorker(self.args, self.logger)
+        self._worker = PipelineWorker(self.args, self.logger, self.cloud_io)
         self._worker.moveToThread(self._thread)
 
         self._thread.started.connect(self._worker.run)
@@ -92,7 +118,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, e):
         self._shutdown_worker()
-        self.logger.delete_all_logs()
+        # self.logger.delete_all_logs()
         super().closeEvent(e)
 
     def on_open(self):

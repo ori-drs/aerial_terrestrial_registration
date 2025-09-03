@@ -7,6 +7,7 @@ from digiforest_registration.registration.icp import icp
 from digiforest_registration.utils import euler_to_rotation_matrix
 from digiforest_registration.utils import crop_cloud
 from digiforest_registration.utils import ExperimentLogger
+from digiforest_registration.utils import CloudIO
 
 import numpy as np
 import open3d as o3d
@@ -24,6 +25,7 @@ class Registration:
         self,
         uav_cloud,
         mls_cloud,
+        cloud_io: CloudIO,
         ground_segmentation_method: str,
         correspondence_matching_method: str,
         mls_feature_extraction_method: str,
@@ -37,6 +39,7 @@ class Registration:
     ):
         self.uav_cloud = uav_cloud
         self.mls_cloud = mls_cloud  # shouldn't modify the input cloud
+        self.cloud_io = cloud_io
         self.ground_segmentation_method = ground_segmentation_method
         self.correspondence_matching_method = correspondence_matching_method
         self.mls_feature_extraction_method = mls_feature_extraction_method
@@ -91,6 +94,7 @@ class Registration:
             vertical_registration = VerticalRegistration(
                 cropped_uav_cloud,
                 mls_cloud,
+                self.cloud_io,
                 ground_segmentation_method=self.ground_segmentation_method,
                 logger=None,
                 debug=self.debug,
@@ -152,7 +156,9 @@ class Registration:
                     ],
                     0,
                 )
-                self.logger.log_pointcloud(combined_cloud, "final_registration")
+                self.logger.log_pointcloud(
+                    combined_cloud, self.cloud_io, "final_registration"
+                )
 
             if best_icp_fitness_score > 0.95:
                 # we are happy with the result
@@ -180,6 +186,7 @@ class Registration:
         vertical_registration = VerticalRegistration(
             self.uav_cloud,
             self.mls_cloud,
+            self.cloud_io,
             ground_segmentation_method=self.ground_segmentation_method,
             logger=self.logger,
             debug=self.debug,
