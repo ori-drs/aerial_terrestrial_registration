@@ -132,9 +132,11 @@ class Registration:
                 downsample_mls_cloud = mls_cloud.voxel_down_sample(
                     voxel_size=voxel_size
                 )
+                downsample_mls_cloud.paint_uniform_color(self.mls_color)
                 downsample_uav_cloud = cropped_uav_cloud.voxel_down_sample(
                     voxel_size=voxel_size
                 )
+                downsample_uav_cloud.paint_uniform_color(self.uav_color)
                 combined_cloud = o3d.t.geometry.PointCloud()
                 combined_cloud.point["positions"] = o3d.core.concatenate(
                     [
@@ -230,9 +232,8 @@ class Registration:
 
         transformed_cloud = cloud.clone()
         if not self.success:
-            self.colorize_cloud(transformed_cloud, 0.0)
             return transformed_cloud
 
         transformed_cloud.transform(self.transform)
-        self.colorize_cloud(transformed_cloud, self.best_icp_fitness_score)
+        # self.colorize_cloud(transformed_cloud, self.best_icp_fitness_score)
         return transformed_cloud

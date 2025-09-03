@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>PyQt + VTK Point Cloud App</string>
+   <string></string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
@@ -48,6 +48,12 @@
           <string>Parameters</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_parameters"/>
+        </widget>
+        <widget class="QWidget" name="tabLogs">
+         <attribute name="title">
+          <string>Logs</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_logs"/>
         </widget>
         <widget class="QWidget" name="tabOutputs">
          <attribute name="title">

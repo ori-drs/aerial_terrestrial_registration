@@ -29,7 +29,9 @@ class FileTreeWidget(QWidget):
         self.model.itemChanged.connect(self.on_item_changed)
 
     def update_view(self):
-        self.populate_tree(self.root_path, self.model.invisibleRootItem())
+        self.clear_tree()
+        if os.path.isdir(self.root_path):
+            self.populate_tree(self.root_path, self.model.invisibleRootItem())
 
     def clear_tree(self):
         self.model.removeRows(0, self.model.rowCount())

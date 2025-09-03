@@ -33,9 +33,6 @@ class VTKPointCloud(QtWidgets.QWidget):
 
     def _setup_scene(self):
         self.renderer.SetBackground(1.0, 1.0, 1.0)
-        self.load_pointcloud(
-            "/home/benoit/code/digiforest_drs/digiforest_registration/final_registration.ply"
-        )
         self.renderer.ResetCamera()
 
     def load_pointcloud(self, filename):

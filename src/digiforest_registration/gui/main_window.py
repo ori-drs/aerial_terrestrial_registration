@@ -35,8 +35,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.logTreeWidget = FileTreeWidget(
             root_path=self.logger.current_logging_directory()
         )
-        self.tabOutputs.layout().addWidget(self.logTreeWidget)
+        self.tabLogs.layout().addWidget(self.logTreeWidget)
         self.logTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
+
+        self.outputTreeWidget = FileTreeWidget(
+            root_path=self.args.mls_registered_cloud_folder
+        )
+        self.tabOutputs.layout().addWidget(self.outputTreeWidget)
+        self.outputTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
+
+        self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
+        self.tabInputs.layout().addWidget(self.inputTreeWidget)
+        self.inputTreeWidget.fileChecked.connect(self.vtk_viewer.load_pointcloud)
 
         # Connect menu/toolbar actions
         self.actionRunRegistration.triggered.connect(self.start_registration)
@@ -54,6 +64,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressBar.setValue(0)
 
     def start_registration(self):
+        self.progressBar.setValue(0)
         self._thread = QThread(self)
         self._worker = PipelineWorker(self.args, self.logger)
         self._worker.moveToThread(self._thread)
@@ -69,6 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
             100 * self._worker.num_cloud_processed / self._worker.num_clouds
         )
         self.logTreeWidget.update_view()
+        self.outputTreeWidget.update_view()
 
     def _shutdown_worker(self):
         """Cooperatively stop the worker thread if it's running."""
@@ -90,8 +102,5 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def on_about(self):
         QtWidgets.QMessageBox.information(
-            self,
-            "About",
-            "Demo app: PyQt main window with menu/toolbar, a 2D drawing canvas,\n"
-            "a bottom-left tab widget, and a VTK 3D point cloud viewer.",
+            self, "About", "Point Cloud Registration Tool\n"
         )
