@@ -126,14 +126,13 @@ class Registration:
 
             self.logger.debug("Final transformation matrix:")
             self.logger.debug(icp_transform @ transform)
+            self._log_downsampled_clouds(
+                mls_cloud, cropped_uav_cloud, "final_registration"
+            )
 
             if icp_fitness >= best_icp_fitness_score:
                 best_icp_fitness_score = icp_fitness
                 self.transform = icp_transform @ transform
-
-                self._log_downsampled_clouds(
-                    self, mls_cloud, cropped_uav_cloud, "final_registration"
-                )
 
             if best_icp_fitness_score > 0.95:
                 # we are happy with the result
@@ -145,7 +144,7 @@ class Registration:
     def registration(self) -> bool:
 
         # logging of the initial point clouds
-        self._log_downsampled_clouds(self.mls_cloud, self.uav_color, "initial_clouds")
+        self._log_downsampled_clouds(self.mls_cloud, self.uav_cloud, "initial_clouds")
 
         if self.debug:
             self.mls_cloud.paint_uniform_color(self.mls_color)

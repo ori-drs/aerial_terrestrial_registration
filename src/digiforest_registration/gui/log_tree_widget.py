@@ -41,8 +41,12 @@ class FileTreeWidget(QWidget):
         for entry in sorted(os.listdir(path)):
             full_path = os.path.join(path, entry)
 
-            # ignore items that are not ply or folder
-            if not (entry.endswith(".ply") or os.path.isdir(full_path)):
+            # ignore items that are not ply/png or folder
+            if not (
+                entry.endswith(".ply")
+                or entry.endswith(".png")
+                or os.path.isdir(full_path)
+            ):
                 continue
 
             item = QStandardItem(entry)

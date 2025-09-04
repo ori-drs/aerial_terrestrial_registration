@@ -3,3 +3,4 @@ from .vtk_pointcloud_viewer import VTKPointCloud
 from .o3d_pointcloud_viewer import Open3DViewer
 from .tile_viewer import ShapeCanvas
 from .log_tree_widget import FileTreeWidget
+from .image_viewer import ImageWidget

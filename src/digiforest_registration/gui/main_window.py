@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import QThread
 
 from digiforest_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
-from digiforest_registration.gui.tile_viewer import ShapeCanvas
+from digiforest_registration.gui.image_viewer import ImageWidget
 from digiforest_registration.gui.pipeline_worker import PipelineWorker
 from digiforest_registration.gui.log_tree_widget import FileTreeWidget
 from digiforest_registration.utils import ExperimentLogger
@@ -17,6 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, registration_args):
         super().__init__()
         self.args = registration_args
+        self.args.debug = False  # disable debug mode in GUI
 
         logging_dir = self.args.logging_dir
         if self.args.logging_dir is None:
@@ -46,8 +47,8 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi("../src/digiforest_registration/gui/main_window.ui", self)
 
         # Replace placeholders with custom widgets
-        self.canvas = ShapeCanvas()
-        self.canvasPlaceholder.layout().addWidget(self.canvas)
+        self.image_viewer = ImageWidget()
+        self.canvasPlaceholder.layout().addWidget(self.image_viewer)
 
         self.vtk_viewer = VTKPointCloud()
         self.vtkLayout.addWidget(self.vtk_viewer)
@@ -58,20 +59,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabLogs.layout().addWidget(self.logTreeWidget)
         self.logTreeWidget.fileChecked.connect(
             lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+            if filename.endswith(".ply")
+            else self.image_viewer.load_image(filename)
         )
 
-        self.outputTreeWidget = FileTreeWidget(
-            root_path=self.args.mls_registered_cloud_folder
-        )
-        self.tabOutputs.layout().addWidget(self.outputTreeWidget)
-        self.outputTreeWidget.fileChecked.connect(
-            lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
-        )
+        # self.outputTreeWidget = FileTreeWidget(
+        #     root_path=self.args.mls_registered_cloud_folder
+        # )
+        # self.tabOutputs.layout().addWidget(self.outputTreeWidget)
+        # self.outputTreeWidget.fileChecked.connect(
+        #     lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+        # )
 
         self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
         self.tabInputs.layout().addWidget(self.inputTreeWidget)
         self.inputTreeWidget.fileChecked.connect(
             lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+            if filename.endswith(".ply")
+            else self.image_viewer.load_image(filename)
         )
 
         # Connect menu/toolbar actions
