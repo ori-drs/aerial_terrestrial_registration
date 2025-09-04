@@ -1,6 +1,5 @@
-from PyQt5.QtGui import QPixmap
-
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtGui import QPixmap, QPainter, QTransform
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -13,14 +12,19 @@ from PyQt5.QtWidgets import (
 
 
 class ImageView(QGraphicsView):
-    def __init__(self, pixmap: QPixmap, parent=None):
+    """Zoomable/pannable image view. Starts empty; call set_pixmap() later."""
+
+    def __init__(self, parent=None):
         super().__init__(parent)
         self._scene = QGraphicsScene(self)
-        self._pixitem = QGraphicsPixmapItem(pixmap)
+        self._pixitem = QGraphicsPixmapItem()  # empty initially
         self._scene.addItem(self._pixitem)
         self.setScene(self._scene)
 
-        # Better zoom/pan UX
+        # Nice rendering + interactions
+        self.setRenderHints(
+            self.renderHints() | QPainter.Antialiasing | QPainter.SmoothPixmapTransform
+        )
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
@@ -29,31 +33,32 @@ class ImageView(QGraphicsView):
         self._max_scale = 50.0
         self._current_scale = 1.0
 
-        self.fitInView(self._pixitem, Qt.KeepAspectRatio)
-        self._current_scale = self._extract_scale()
+    def has_image(self) -> bool:
+        return not self._pixitem.pixmap().isNull()
 
-    def wheelEvent(self, event):
-        # Ctrl+wheel to zoom; plain wheel scrolls
-        if not (event.modifiers() & Qt.ControlModifier):
-            return super().wheelEvent(event)
+    def clear_pixmap(self, reset: bool = True):
+        """Remove the image but keep the view and scene intact."""
+        if not self.has_image():
+            return
+        self._pixitem.setPixmap(QPixmap())  # empty pixmap
+        self._scene.setSceneRect(QRectF())  # no content bounds
+        if reset:
+            self.setTransform(QTransform())  # identity
+            self._current_scale = 1.0
 
-        angle = event.angleDelta().y()
-        step = 1.0015**angle  # smooth zoom
-        self._apply_scale(step)
-
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Plus, Qt.Key_Equal):  # '+' or '='
-            self._apply_scale(1.1)
-        elif event.key() == Qt.Key_Minus:
-            self._apply_scale(1 / 1.1)
-        elif event.key() in (Qt.Key_0,):  # reset zoom (Ctrl+0 common)
-            self.reset_zoom()
-        elif event.key() == Qt.Key_F:
+    def set_pixmap(self, pm: QPixmap, reset: bool = True):
+        """Replace the displayed image. If reset=True, fit and reset zoom."""
+        if pm.isNull():
+            return
+        self._pixitem.setPixmap(pm)
+        self._scene.setSceneRect(self._pixitem.boundingRect())
+        if reset:
             self.fit_to_window()
-        else:
-            super().keyPressEvent(event)
+            self._current_scale = self._extract_scale()
 
     def reset_zoom(self):
+        if self._pixitem.pixmap().isNull():
+            return
         self.setTransform(self.transform().fromScale(1.0, 1.0).identity())
         self._current_scale = 1.0
         self.centerOn(self._pixitem)
@@ -64,7 +69,33 @@ class ImageView(QGraphicsView):
         self.fitInView(self._pixitem, Qt.KeepAspectRatio)
         self._current_scale = self._extract_scale()
 
-    def _apply_scale(self, factor):
+    # --- interactions ---
+    def wheelEvent(self, event):
+        # Ctrl+wheel to zoom; otherwise let the view scroll normally
+        if self._pixitem.pixmap().isNull():
+            return
+        if not (event.modifiers() & Qt.ControlModifier):
+            return super().wheelEvent(event)
+        angle = event.angleDelta().y()
+        step = 1.0015**angle  # smooth zoom
+        self._apply_scale(step)
+
+    def keyPressEvent(self, event):
+        if self._pixitem.pixmap().isNull():
+            return super().keyPressEvent(event)
+        if event.key() in (Qt.Key_Plus, Qt.Key_Equal):
+            self._apply_scale(1.1)
+        elif event.key() == Qt.Key_Minus:
+            self._apply_scale(1 / 1.1)
+        elif event.key() == Qt.Key_0:
+            self.reset_zoom()
+        elif event.key() == Qt.Key_F:
+            self.fit_to_window()
+        else:
+            super().keyPressEvent(event)
+
+    # --- internals ---
+    def _apply_scale(self, factor: float):
         new_scale = self._current_scale * factor
         if new_scale < self._min_scale:
             factor = self._min_scale / self._current_scale
@@ -72,42 +103,54 @@ class ImageView(QGraphicsView):
         elif new_scale > self._max_scale:
             factor = self._max_scale / self._current_scale
             new_scale = self._max_scale
-
         self.scale(factor, factor)
         self._current_scale = new_scale
 
-    def _extract_scale(self):
-        # Get uniform scale from the view transform
+    def _extract_scale(self) -> float:
         m = self.transform()
-        # sqrt of (m11*m22 - m12*m21) would be exact; for uniform scaling m11 is enough.
-        return m.m11()
+        return m.m11()  # uniform scale
 
 
 class ImageWidget(QWidget):
     def __init__(self):
         super().__init__()
-
-    def load_image(self, image_path: str):
-        pm = QPixmap(image_path)
-        self.view = ImageView(pm)
+        self.view = ImageView()
 
         # Controls
-        zoom_in_btn = QPushButton("+")
-        zoom_out_btn = QPushButton("–")
-        fit_btn = QPushButton("Fit")
+        self.btn_zoom_in = QPushButton("+")
+        self.btn_zoom_out = QPushButton("–")
+        self.btn_fit = QPushButton("Fit")
 
-        zoom_in_btn.clicked.connect(lambda: self.view._apply_scale(1.1))
-        zoom_out_btn.clicked.connect(lambda: self.view._apply_scale(1 / 1.1))
-        fit_btn.clicked.connect(self.view.fit_to_window)
+        self.btn_zoom_in.clicked.connect(lambda: self.view._apply_scale(1.1))
+        self.btn_zoom_out.clicked.connect(lambda: self.view._apply_scale(1 / 1.1))
+        self.btn_fit.clicked.connect(self.view.fit_to_window)
+
+        # Start disabled until an image is loaded
+        self._set_controls_enabled(False)
 
         controls = QHBoxLayout()
-        controls.addWidget(zoom_out_btn)
-        controls.addWidget(zoom_in_btn)
-        controls.addWidget(fit_btn)
+        for w in (self.btn_zoom_out, self.btn_zoom_in, self.btn_fit):
+            controls.addWidget(w)
         controls.addStretch()
 
         layout = QVBoxLayout(self)
         layout.addLayout(controls)
         layout.addWidget(self.view)
 
-        self.view.fit_to_window()
+    def _set_controls_enabled(self, enabled: bool):
+        for b in (self.btn_zoom_in, self.btn_zoom_out, self.btn_fit):
+            b.setEnabled(enabled)
+
+    def delete_image(self):
+        """Remove the displayed image and disable zoom/fit controls."""
+        self.view.clear_pixmap(reset=True)
+        self._set_controls_enabled(False)
+
+    def load_image(self, image_path: str, reset: bool = True):
+        pm = QPixmap(image_path)
+        if pm.isNull():
+            return
+        self.view.set_pixmap(pm, reset=reset)
+        # enable controls now that we have an image
+        for b in (self.btn_zoom_in, self.btn_zoom_out, self.btn_fit):
+            b.setEnabled(True)

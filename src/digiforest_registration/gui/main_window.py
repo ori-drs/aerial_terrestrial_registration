@@ -66,7 +66,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.logTreeWidget.fileUnChecked.connect(
             lambda filename: self.vtk_viewer.delete_pointcloud(filename)
             if filename.endswith(".ply")
-            else self.image_viewer.delete_image(filename)
+            else self.image_viewer.delete_image()
         )
 
         # self.outputTreeWidget = FileTreeWidget(
@@ -88,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.inputTreeWidget.fileUnChecked.connect(
             lambda filename: self.vtk_viewer.delete_pointcloud(filename)
             if filename.endswith(".ply")
-            else self.image_viewer.delete_image(filename)
+            else self.image_viewer.delete_image()
         )
 
         # Connect menu/toolbar actions
