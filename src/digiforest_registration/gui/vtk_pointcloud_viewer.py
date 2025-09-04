@@ -1,6 +1,7 @@
 import numpy as np
 from vtk.util import numpy_support
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QApplication
 
 from digiforest_registration.utils import CloudIO
 
@@ -10,6 +11,14 @@ try:
 except Exception:
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     import vtk as vtk
+
+
+class WaitingDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Loading...")
+        self.layout = QVBoxLayout(self)
+        self.layout.addWidget(QLabel("Please wait, processing..."))
 
 
 class VTKPointCloud(QtWidgets.QWidget):
@@ -37,6 +46,14 @@ class VTKPointCloud(QtWidgets.QWidget):
         self.renderer.ResetCamera()
 
     def load_pointcloud(self, filename, cloud_io: CloudIO):
+        self.dialog = WaitingDialog()
+        self.dialog.show()
+        QApplication.processEvents()
+        self.insert_pointcloud(filename, cloud_io)
+        self.dialog.close()
+        self.reset_camera()
+
+    def insert_pointcloud(self, filename, cloud_io: CloudIO):
         if self.edl is not None:
             self.edl.ReleaseGraphicsResources(self.vtk_widget.GetRenderWindow())
 

@@ -118,7 +118,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, e):
         self._shutdown_worker()
-        # self.logger.delete_all_logs()
+        self.logger.delete_all_logs()
         super().closeEvent(e)
 
     def on_open(self):

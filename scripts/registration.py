@@ -68,6 +68,7 @@ if __name__ == "__main__":
     if args.logging_dir is None:
         logging_dir = "./logs"
     registration_logger = ExperimentLogger(base_dir=logging_dir)
+
     for mls_cloud_filename in mls_cloud_filenames:
 
         logger.info(f"Processing file: {mls_cloud_filename.name}")
