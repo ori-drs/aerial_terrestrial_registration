@@ -63,6 +63,12 @@ class MainWindow(QtWidgets.QMainWindow):
             else self.image_viewer.load_image(filename)
         )
 
+        self.logTreeWidget.fileUnChecked.connect(
+            lambda filename: self.vtk_viewer.delete_pointcloud(filename)
+            if filename.endswith(".ply")
+            else self.image_viewer.delete_image(filename)
+        )
+
         # self.outputTreeWidget = FileTreeWidget(
         #     root_path=self.args.mls_registered_cloud_folder
         # )
@@ -77,6 +83,12 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
             if filename.endswith(".ply")
             else self.image_viewer.load_image(filename)
+        )
+
+        self.inputTreeWidget.fileUnChecked.connect(
+            lambda filename: self.vtk_viewer.delete_pointcloud(filename)
+            if filename.endswith(".ply")
+            else self.image_viewer.delete_image(filename)
         )
 
         # Connect menu/toolbar actions

@@ -38,14 +38,19 @@ class VTKPointCloud(QtWidgets.QWidget):
         self.interactor = self.vtk_widget.GetRenderWindow().GetInteractor()
         self.interactor.Initialize()
 
-        self._actor = None
+        self._actors = {}
         self._setup_scene()
 
     def _setup_scene(self):
         self.renderer.SetBackground(1.0, 1.0, 1.0)
         self.renderer.ResetCamera()
 
-    def load_pointcloud(self, filename, cloud_io: CloudIO):
+    def delete_pointcloud(self, filename: str):
+        if filename in self._actors:
+            self.renderer.RemoveActor(self._actors[filename])
+            self.vtk_widget.GetRenderWindow().Render()
+
+    def load_pointcloud(self, filename: str, cloud_io: CloudIO):
         self.dialog = WaitingDialog()
         self.dialog.show()
         QApplication.processEvents()
@@ -53,7 +58,7 @@ class VTKPointCloud(QtWidgets.QWidget):
         self.dialog.close()
         self.reset_camera()
 
-    def insert_pointcloud(self, filename, cloud_io: CloudIO):
+    def insert_pointcloud(self, filename: str, cloud_io: CloudIO):
         if self.edl is not None:
             self.edl.ReleaseGraphicsResources(self.vtk_widget.GetRenderWindow())
 
@@ -91,10 +96,8 @@ class VTKPointCloud(QtWidgets.QWidget):
         prop = actor.GetProperty()
         prop.SetRepresentationToPoints()
 
-        if self._actor:
-            self.renderer.RemoveActor(self._actor)
-        self._actor = actor
-        self.renderer.AddActor(actor)
+        self._actors[filename] = actor
+        self.renderer.AddActor(self._actors[filename])
 
         # edl
         basicPasses = vtk.vtkRenderStepsPass()

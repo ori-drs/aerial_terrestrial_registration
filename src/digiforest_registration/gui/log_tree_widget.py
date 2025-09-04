@@ -6,6 +6,7 @@ import os
 
 class FileTreeWidget(QWidget):
     fileChecked = pyqtSignal(str)  # signal that emits the filename when checked
+    fileUnChecked = pyqtSignal(str)
 
     def __init__(self, root_path, parent=None):
         super().__init__(parent)
@@ -65,13 +66,11 @@ class FileTreeWidget(QWidget):
 
     def on_item_changed(self, item):
         """Emit signal if a file item is checked."""
-        if item.checkState() == Qt.Checked:
-            full_path = item.data(Qt.UserRole)
-            if os.path.isfile(full_path):
-                self.fileChecked.emit(full_path)
-
-                # Uncheck all other items
-                self.uncheck_all_except(item)
+        full_path = item.data(Qt.UserRole)
+        if os.path.isfile(full_path) and item.checkState() == Qt.Checked:
+            self.fileChecked.emit(full_path)
+        elif os.path.isfile(full_path) and item.checkState() == Qt.Unchecked:
+            self.fileUnChecked.emit(full_path)
 
     def uncheck_all_except(self, item):
         """Uncheck all items in the tree except the given item."""
