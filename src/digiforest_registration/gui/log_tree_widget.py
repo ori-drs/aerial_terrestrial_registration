@@ -24,15 +24,30 @@ class FileTreeWidget(QWidget):
 
         # populate tree
         self.root_path = root_path
+        self.additional_filepaths = []
         self.update_view()
 
         # connect
         self.model.itemChanged.connect(self.on_item_changed)
 
+    def add_file(self, filepath: str):
+        self.additional_filepaths.append(filepath)
+        self.update_view()
+
     def update_view(self):
         self.clear_tree()
         if os.path.isdir(self.root_path):
             self.populate_tree(self.root_path, self.model.invisibleRootItem())
+
+        for filepath in self.additional_filepaths:
+            item = QStandardItem(os.path.basename(filepath))
+            item.setData(filepath, Qt.UserRole)
+
+            item.setFlags(
+                Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable
+            )
+            item.setCheckState(Qt.Unchecked)
+            self.model.invisibleRootItem().appendRow(item)
 
     def clear_tree(self):
         self.model.removeRows(0, self.model.rowCount())

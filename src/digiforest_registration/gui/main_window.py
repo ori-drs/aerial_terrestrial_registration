@@ -83,6 +83,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # )
 
         self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
+        self.inputTreeWidget.add_file(self.args.uav_cloud)
         self.tabInputs.layout().addWidget(self.inputTreeWidget)
         self.inputTreeWidget.fileChecked.connect(
             lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
