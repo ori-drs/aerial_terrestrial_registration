@@ -106,7 +106,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressBar.setValue(0)
 
     def start_registration(self):
+        self.actionRunRegistration.setEnabled(False)
+        self.statusBar().showMessage("Running registration...")
         self.progressBar.setValue(0)
+
+        # Starting registration in a separate thread and process
         self._thread = QThread(self)
         self._worker = PipelineWorker(self.args, self.logger, self.cloud_io)
         self._worker.moveToThread(self._thread)
@@ -118,6 +122,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._worker.registration_finished.connect(self._handle_registration_finished)
 
     def _handle_registration_finished(self):
+        self.actionRunRegistration.setEnabled(True)
+        self.statusBar().showMessage("Ready")
         self.progressBar.setValue(
             100 * self._worker.num_cloud_processed / self._worker.num_clouds
         )
