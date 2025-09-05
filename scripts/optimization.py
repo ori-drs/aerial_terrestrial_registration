@@ -8,7 +8,11 @@ from digiforest_registration.optimization.io import (
 from digiforest_registration.optimization.graph_optimization import (
     PoseGraphOptimization,
 )
-from digiforest_registration.utils import CloudIO, parse_inputs
+from digiforest_registration.utils import (
+    CloudIO,
+    parse_inputs,
+    check_optimization_inputs_validity,
+)
 from pathlib import Path
 import numpy as np
 import open3d as o3d
@@ -23,25 +27,8 @@ if __name__ == "__main__":
     args = parse_inputs()
 
     # Check validity of inputs
-    mls_cloud_filenames = []
-
-    if args.mls_registered_cloud_folder is None:
-        raise ValueError("--mls_registered_cloud_folder must be specified")
-
-    if args.optimized_cloud_output_folder is None:
-        raise ValueError("--optimized_cloud_output_folder must be specified")
-
+    mls_cloud_folder = check_optimization_inputs_validity(args)
     pose_graph_file = str(Path(args.mls_registered_cloud_folder) / "pose_graph.g2o")
-
-    mls_cloud_folder = Path(args.mls_cloud_folder)
-    if not mls_cloud_folder.is_dir():
-        raise ValueError(f"Input folder [{mls_cloud_folder}] does not exist")
-    else:
-        # Get all the ply files in the folder
-        for entry in mls_cloud_folder.iterdir():
-            if entry.is_file():
-                if entry.suffix == ".ply":
-                    mls_cloud_filenames.append(entry)
 
     # Logger
     numeric_level = getattr(logging, args.log_level.upper(), None)

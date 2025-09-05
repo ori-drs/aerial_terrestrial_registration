@@ -16,4 +16,8 @@ from .cloud_processing import crop_cloud, crop_cloud_to_size, get_cloud_center
 
 from .logger import ExperimentLogger
 
-from .arguments_io import parse_inputs, check_registration_inputs_validity
+from .arguments_io import (
+    parse_inputs,
+    check_registration_inputs_validity,
+    check_optimization_inputs_validity,
+)

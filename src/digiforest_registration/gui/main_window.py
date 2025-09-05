@@ -6,6 +6,9 @@ from digiforest_registration.gui.image_viewer import ImageWidget
 from digiforest_registration.gui.registration_pipeline_worker import (
     RegistrationPipelineWorker,
 )
+from digiforest_registration.gui.optimization_pipeline_worker import (
+    OptimizationPipelineWorker,
+)
 from digiforest_registration.gui.log_tree_widget import FileTreeWidget
 from digiforest_registration.utils import ExperimentLogger
 
@@ -95,6 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Connect menu/toolbar actions
         self.actionRunRegistration.triggered.connect(self.start_registration)
+        self.actionRunOptimization.triggered.connect(self.start_optimization)
         self.actionReset3D.triggered.connect(self.vtk_viewer.reset_camera)
         self.actionAbout.triggered.connect(self.on_about)
         self.actionQuit.triggered.connect(self.close)
@@ -122,6 +126,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Connect signals and slots
         self._worker.registration_finished.connect(self._handle_registration_finished)
+
+    def start_optimization(self):
+        self.actionRunOptimization.setEnabled(False)
+        self.statusBar().showMessage("Running optimization...")
+        self._thread = QThread(self)
+        self._worker = OptimizationPipelineWorker(self.args, self.logger, self.cloud_io)
+        self._worker.moveToThread(self._thread)
+
+        self._thread.started.connect(self._worker.run)
+        self._thread.start()
+
+        # Connect signals and slots
+        self._worker.optimization_finished.connect(self._handle_optimization_finished)
+
+    def _handle_optimization_finished(self):
+        self.actionRunOptimization.setEnabled(True)
+        self.progressBar.setValue(100)
+        self.statusBar().showMessage("Ready")
 
     def _handle_registration_finished(self):
         self.actionRunRegistration.setEnabled(True)

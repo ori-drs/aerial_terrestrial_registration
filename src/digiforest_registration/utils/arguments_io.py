@@ -36,6 +36,21 @@ def check_registration_inputs_validity(args) -> Tuple[str, str, str]:
     return mls_cloud_filenames, mls_cloud_folder, uav_cloud_filename
 
 
+def check_optimization_inputs_validity(args) -> str:
+
+    if args.mls_registered_cloud_folder is None:
+        raise ValueError("--mls_registered_cloud_folder must be specified")
+
+    if args.optimized_cloud_output_folder is None:
+        raise ValueError("--optimized_cloud_output_folder must be specified")
+
+    mls_cloud_folder = Path(args.mls_cloud_folder)
+    if not mls_cloud_folder.is_dir():
+        raise ValueError(f"Input folder [{mls_cloud_folder}] does not exist")
+
+    return mls_cloud_folder
+
+
 def parse_inputs():
     parser = argparse.ArgumentParser(
         prog="registration_pipeline",
