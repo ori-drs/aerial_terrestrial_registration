@@ -91,6 +91,7 @@
      <string>&amp;View</string>
     </property>
     <addaction name="actionRunRegistration"/>
+    <addaction name="actionRunOptimization"/>
     <addaction name="actionReset3D"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -108,6 +109,7 @@
     <string>Main Toolbar</string>
    </property>
    <addaction name="actionRunRegistration"/>
+   <addaction name="actionRunOptimization"/>
    <addaction name="actionReset3D"/>
   </widget>
   <action name="actionQuit">
@@ -116,6 +118,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionRunOptimization">
+   <property name="text">
+    <string>Run Optimization</string>
    </property>
   </action>
   <action name="actionRunRegistration">

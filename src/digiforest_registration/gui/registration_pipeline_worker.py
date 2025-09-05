@@ -82,10 +82,9 @@ def run_registration_process(
     output_queue.put(success)
     output_queue.put(registration.transform)
     output_queue.put(registration.best_icp_fitness_score)
-    print("End of process")
 
 
-class PipelineWorker(QObject):
+class RegistrationPipelineWorker(QObject):
     new_cloud = pyqtSignal()
     registration_finished = pyqtSignal()
 

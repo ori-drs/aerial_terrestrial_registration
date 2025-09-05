@@ -3,6 +3,7 @@ import gtsam
 from pathlib import Path
 import shutil
 from digiforest_registration.optimization.pose_graph import PoseGraph
+from digiforest_registration.utils import CloudIO
 from digiforest_registration.utils import (
     rotation_matrix_to_quat,
     get_tile_filename,
@@ -324,3 +325,30 @@ def write_tiles_to_pose_graph_file(
                         f"EDGE_SE3:QUAT {tile_id} {neighbour_id} {offset_between_tiles[0]:.2f} {offset_between_tiles[1]:.2f} {offset_between_tiles[2]:.2f} 0 0 0 1 1e+06 0 0 0 0 0 1e+06 0 0 0 0 1e+06 0 0 0 10000 0 0 10000 0 10000\n"
                     )
                     saved_edges.append((tile_id, neighbour_id))
+
+
+def save_optimized_pointclouds(
+    optimized_cloud_output_folder: str,
+    save_clouds: bool,
+    pose_graph: PoseGraph,
+    cloud_io: CloudIO,
+):
+
+    if optimized_cloud_output_folder is not None and save_clouds:
+        for id, _ in pose_graph.nodes.items():
+            try:
+                cloud = pose_graph.get_node_cloud(id).clone()
+
+                # Transform the cloud to take into account the factor graph optimization
+                initial_node_pose = pose_graph.get_initial_node_pose(id)
+                node_pose = pose_graph.get_node_pose(id)
+                cloud.transform(
+                    node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
+                )
+
+                cloud_name = pose_graph.get_node_cloud_name(id)
+                cloud_path = Path(optimized_cloud_output_folder) / cloud_name
+
+                cloud_io.save_cloud(cloud, str(cloud_path), local_coordinates=False)
+            except Exception:
+                pass

@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-from digiforest_registration.optimization.io import load_pose_graph, write_pose_graph
+from digiforest_registration.optimization.io import (
+    load_pose_graph,
+    write_pose_graph,
+    save_optimized_pointclouds,
+)
 from digiforest_registration.optimization.graph_optimization import (
     PoseGraphOptimization,
 )
@@ -72,21 +76,7 @@ if __name__ == "__main__":
         )
         write_pose_graph(pose_graph, str(pose_graph_output_file))
 
-    if args.optimized_cloud_output_folder is not None and args.load_clouds:
-        for id, _ in pose_graph.nodes.items():
-            try:
-                cloud = pose_graph.get_node_cloud(id).clone()
-
-                # Transform the cloud to take into account the factor graph optimization
-                initial_node_pose = pose_graph.get_initial_node_pose(id)
-                node_pose = pose_graph.get_node_pose(id)
-                cloud.transform(
-                    node_pose.matrix() @ np.linalg.inv(initial_node_pose.matrix())
-                )
-
-                cloud_name = pose_graph.get_node_cloud_name(id)
-                cloud_path = Path(args.optimized_cloud_output_folder) / cloud_name
-
-                cloud_io.save_cloud(cloud, str(cloud_path), local_coordinates=False)
-            except Exception:
-                pass
+    # save the optmized clouds
+    save_optimized_pointclouds(
+        args.optimized_cloud_output_folder, args.load_clouds, pose_graph, cloud_io
+    )

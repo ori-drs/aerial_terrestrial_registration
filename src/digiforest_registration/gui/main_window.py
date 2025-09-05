@@ -3,7 +3,9 @@ from PyQt5.QtCore import QThread
 
 from digiforest_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
 from digiforest_registration.gui.image_viewer import ImageWidget
-from digiforest_registration.gui.pipeline_worker import PipelineWorker
+from digiforest_registration.gui.registration_pipeline_worker import (
+    RegistrationPipelineWorker,
+)
 from digiforest_registration.gui.log_tree_widget import FileTreeWidget
 from digiforest_registration.utils import ExperimentLogger
 
@@ -112,7 +114,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Starting registration in a separate thread and process
         self._thread = QThread(self)
-        self._worker = PipelineWorker(self.args, self.logger, self.cloud_io)
+        self._worker = RegistrationPipelineWorker(self.args, self.logger, self.cloud_io)
         self._worker.moveToThread(self._thread)
 
         self._thread.started.connect(self._worker.run)
