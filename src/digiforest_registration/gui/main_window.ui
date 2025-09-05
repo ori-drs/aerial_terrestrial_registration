@@ -83,8 +83,6 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
-    <addaction name="actionOpen"/>
-    <addaction name="actionSave"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -109,22 +107,9 @@
    <property name="windowTitle">
     <string>Main Toolbar</string>
    </property>
-   <addaction name="actionOpen"/>
-   <addaction name="actionSave"/>
-   <addaction name="separator"/>
    <addaction name="actionRunRegistration"/>
    <addaction name="actionReset3D"/>
   </widget>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open...</string>
-   </property>
-  </action>
-  <action name="actionSave">
-   <property name="text">
-    <string>Save...</string>
-   </property>
-  </action>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>

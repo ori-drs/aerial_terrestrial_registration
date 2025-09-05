@@ -94,7 +94,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # Connect menu/toolbar actions
         self.actionRunRegistration.triggered.connect(self.start_registration)
         self.actionReset3D.triggered.connect(self.vtk_viewer.reset_camera)
-        self.actionOpen.triggered.connect(self.on_open)
         self.actionAbout.triggered.connect(self.on_about)
         self.actionQuit.triggered.connect(self.close)
 
@@ -137,11 +136,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._shutdown_worker()
         self.logger.delete_all_logs()
         super().closeEvent(e)
-
-    def on_open(self):
-        _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Open file", "", "All Files (*.*)"
-        )
 
     def on_about(self):
         QtWidgets.QMessageBox.information(
