@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QThread
 
 from digiforest_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
@@ -10,6 +11,9 @@ from digiforest_registration.gui.optimization_pipeline_worker import (
     OptimizationPipelineWorker,
 )
 from digiforest_registration.gui.log_tree_widget import FileTreeWidget
+from digiforest_registration.gui.registration_dialog import (
+    FileFolderDialog,
+)
 from digiforest_registration.utils import ExperimentLogger
 
 import os
@@ -113,6 +117,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressBar.setValue(0)
 
     def start_registration(self):
+        dlg = FileFolderDialog(self.args)
+        return_value = dlg.exec_()
+
+        if return_value == QDialog.Rejected:
+            return
+
         self.actionRunRegistration.setEnabled(False)
         self.statusBar().showMessage("Running registration...")
         self.progressBar.setValue(0)

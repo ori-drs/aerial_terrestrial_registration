@@ -43,12 +43,12 @@
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_inputs"/>
         </widget>
-        <widget class="QWidget" name="tabParameters">
+        <!-- <widget class="QWidget" name="tabParameters">
          <attribute name="title">
           <string>Parameters</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_parameters"/>
-        </widget>
+        </widget> -->
         <widget class="QWidget" name="tabLogs">
          <attribute name="title">
           <string>Logs</string>
