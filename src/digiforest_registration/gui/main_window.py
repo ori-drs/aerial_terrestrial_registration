@@ -27,6 +27,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.args = registration_args
         self.args.debug = False  # disable debug mode in GUI
+        self.cloud_io = None
 
         logging_dir = self.args.logging_dir
         if self.args.logging_dir is None:
@@ -34,18 +35,7 @@ class MainWindow(QtWidgets.QMainWindow):
         logging_dir = os.path.join(logging_dir)
         self.logger = ExperimentLogger(base_dir=logging_dir, log_pointclouds=True)
 
-        if self.args.offset is not None and len(self.args.offset) == 3:
-            offset = np.array(
-                [
-                    self.args.offset[0],
-                    self.args.offset[1],
-                    self.args.offset[2],
-                ],
-                dtype=np.float32,
-            )
-        else:
-            # default offset
-            offset = np.array([0, 0, 0], dtype=np.float32)
+        offset = self._set_offset()
 
         self.cloud_io = CloudIO(
             offset, logger=None, downsample_cloud=self.args.downsample_cloud
@@ -116,12 +106,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressBar.setGeometry(30, 40, 200, 25)
         self.progressBar.setValue(0)
 
+    def _set_offset(self) -> np.ndarray:
+        if self.args.offset is not None and len(self.args.offset) == 3:
+            offset = np.array(
+                [
+                    self.args.offset[0],
+                    self.args.offset[1],
+                    self.args.offset[2],
+                ],
+                dtype=np.float32,
+            )
+        else:
+            # default offset
+            offset = np.array([0, 0, 0], dtype=np.float32)
+
+        if self.cloud_io:
+            self.cloud_io.offset = offset
+
+        return offset
+
     def start_registration(self):
         dlg = FileFolderDialog(self.args)
         return_value = dlg.exec_()
 
         if return_value == QDialog.Rejected:
             return
+
+        # update offset
+        self._set_offset()
 
         self.actionRunRegistration.setEnabled(False)
         self.statusBar().showMessage("Running registration...")
