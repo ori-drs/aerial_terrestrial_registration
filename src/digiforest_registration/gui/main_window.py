@@ -68,13 +68,13 @@ class MainWindow(QtWidgets.QMainWindow):
             else self.image_viewer.delete_image()
         )
 
-        # self.outputTreeWidget = FileTreeWidget(
-        #     root_path=self.args.mls_registered_cloud_folder
-        # )
-        # self.tabOutputs.layout().addWidget(self.outputTreeWidget)
-        # self.outputTreeWidget.fileChecked.connect(
-        #     lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
-        # )
+        self.outputTreeWidget = FileTreeWidget(
+            root_path=self.args.mls_registered_cloud_folder
+        )
+        self.tabOutputs.layout().addWidget(self.outputTreeWidget)
+        self.outputTreeWidget.fileChecked.connect(
+            lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+        )
 
         self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
         self.inputTreeWidget.add_file(self.args.uav_cloud)
@@ -125,6 +125,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return offset
 
+    def _update_file_widgets(self):
+        self.inputTreeWidget.update_root_path(self.args.mls_cloud_folder)
+        self.inputTreeWidget.add_file(self.args.uav_cloud)
+
     def start_registration(self):
         dlg = FileFolderDialog(self.args)
         return_value = dlg.exec_()
@@ -132,7 +136,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if return_value == QDialog.Rejected:
             return
 
-        # update offset
+        # update viewers and loaders
+        self._update_file_widgets()
         self._set_offset()
 
         self.actionRunRegistration.setEnabled(False)

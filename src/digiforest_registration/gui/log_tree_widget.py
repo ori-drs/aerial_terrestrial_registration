@@ -8,7 +8,7 @@ class FileTreeWidget(QWidget):
     fileChecked = pyqtSignal(str)  # signal that emits the filename when checked
     fileUnChecked = pyqtSignal(str)
 
-    def __init__(self, root_path, parent=None):
+    def __init__(self, root_path: str, parent=None):
         super().__init__(parent)
 
         layout = QVBoxLayout(self)
@@ -31,7 +31,12 @@ class FileTreeWidget(QWidget):
         self.model.itemChanged.connect(self.on_item_changed)
 
     def add_file(self, filepath: str):
-        self.additional_filepaths.append(filepath)
+        if filepath not in self.additional_filepaths:
+            self.additional_filepaths.append(filepath)
+            self.update_view()
+
+    def update_root_path(self, path: str):
+        self.root_path = path
         self.update_view()
 
     def update_view(self):

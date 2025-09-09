@@ -129,6 +129,16 @@ class FileFolderDialog(QDialog):
 
         if return_value == QDialog.Rejected:
             return self.reject()
+
+        # read uav and mls paths and check that they exist
+        if not os.path.isdir(self.mls_folder_edit.text()):
+            QMessageBox.critical(
+                self, "Error", "Please select a valid MLS point cloud folder."
+            )
+            return self.reject()
+
+        self.args.uav_cloud = uav_file
+        self.args.mls_cloud_folder = self.mls_folder_edit.text()
         return super().accept()
 
     def _is_new_offset_needed(self, point, offset):
@@ -146,12 +156,12 @@ class FileFolderDialog(QDialog):
     def browse_file(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if path:
-            self.file_edit.setText(path)
+            self.uav_file_edit.setText(path)
 
     def browse_folder(self):
         path = QFileDialog.getExistingDirectory(self, "Select Folder")
         if path:
-            self.folder_edit.setText(path)
+            self.mls_folder_edit.setText(path)
 
 
 class GlobalShiftScaleDialog(QDialog):
