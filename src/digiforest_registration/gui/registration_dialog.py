@@ -16,7 +16,7 @@ import struct
 import os
 
 
-def read_first_point_from_ply(filename):
+def read_first_point_from_ply(filename: str):
     with open(filename, "rb") as f:
         # --- Step 1: read the header until we know 3 properties ---
         header = []
@@ -61,7 +61,7 @@ def read_first_point_from_ply(filename):
         return x, y, z
 
 
-class FileFolderDialog(QDialog):
+class RegistrationFileFolderDialog(QDialog):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -96,11 +96,24 @@ class FileFolderDialog(QDialog):
         grid.addWidget(self.mls_folder_edit, 1, 1)
         grid.addWidget(folder_browse, 1, 2)
 
-        # --- Row 3: Two text labels ---
+        # --- Row 3: Offset label ---
         grid.addWidget(QLabel("Offset"), 2, 0)
         grid.addWidget(QLabel(str(self.args.offset)), 2, 1)
-
         layout.addLayout(grid)
+
+        # --- Row 4: Output folder ---
+        output_folder_label = QLabel("Select Output folder:")
+        self.output_folder_edit = QLineEdit(
+            self.args.mls_registered_cloud_folder
+            if self.args.mls_registered_cloud_folder
+            else ""
+        )
+        output_folder_browse = QPushButton("Browse...")
+        output_folder_browse.clicked.connect(self.browse_output_folder)
+
+        grid.addWidget(output_folder_label, 3, 0)
+        grid.addWidget(self.output_folder_edit, 3, 1)
+        grid.addWidget(output_folder_browse, 3, 2)
 
         # --- OK / Cancel Buttons ---
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -139,6 +152,14 @@ class FileFolderDialog(QDialog):
 
         self.args.uav_cloud = uav_file
         self.args.mls_cloud_folder = self.mls_folder_edit.text()
+
+        # check output path
+        if not os.path.isdir(self.output_folder_edit.text()):
+            QMessageBox.critical(self, "Error", "Please select a valid output folder.")
+            return self.reject()
+
+        self.args.mls_registered_cloud_folder = self.output_folder_edit.text()
+
         return super().accept()
 
     def _is_new_offset_needed(self, point, offset):
@@ -162,6 +183,11 @@ class FileFolderDialog(QDialog):
         path = QFileDialog.getExistingDirectory(self, "Select Folder")
         if path:
             self.mls_folder_edit.setText(path)
+
+    def browse_output_folder(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        if path:
+            self.output_folder_edit.setText(path)
 
 
 class GlobalShiftScaleDialog(QDialog):

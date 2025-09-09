@@ -12,7 +12,10 @@ from digiforest_registration.gui.optimization_pipeline_worker import (
 )
 from digiforest_registration.gui.log_tree_widget import FileTreeWidget
 from digiforest_registration.gui.registration_dialog import (
-    FileFolderDialog,
+    RegistrationFileFolderDialog,
+)
+from digiforest_registration.gui.optimization_dialog import (
+    OptimizationFileFolderDialog,
 )
 from digiforest_registration.utils import ExperimentLogger
 
@@ -129,8 +132,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.inputTreeWidget.update_root_path(self.args.mls_cloud_folder)
         self.inputTreeWidget.add_file(self.args.uav_cloud)
 
+        self.outputTreeWidget.update_root_path(self.args.mls_registered_cloud_folder)
+
     def start_registration(self):
-        dlg = FileFolderDialog(self.args)
+        dlg = RegistrationFileFolderDialog(self.args)
         return_value = dlg.exec_()
 
         if return_value == QDialog.Rejected:
@@ -156,6 +161,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._worker.registration_finished.connect(self._handle_registration_finished)
 
     def start_optimization(self):
+
+        dlg = OptimizationFileFolderDialog(self.args)
+        return_value = dlg.exec_()
+
+        if return_value == QDialog.Rejected:
+            return
+
         self.actionRunOptimization.setEnabled(False)
         self.statusBar().showMessage("Running optimization...")
         self._thread = QThread(self)
