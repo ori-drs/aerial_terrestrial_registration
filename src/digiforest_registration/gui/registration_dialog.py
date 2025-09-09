@@ -73,26 +73,24 @@ class RegistrationFileFolderDialog(QDialog):
         grid = QGridLayout()
 
         # --- Row 1: File selector ---
-        file_label = QLabel("Select UAV Point Cloud:")
         self.uav_file_edit = QLineEdit(
             self.args.uav_cloud if self.args.uav_cloud else ""
         )
         file_browse = QPushButton("Browse...")
         file_browse.clicked.connect(self.browse_file)
 
-        grid.addWidget(file_label, 0, 0)
+        grid.addWidget(QLabel("Select UAV Point Cloud:"), 0, 0)
         grid.addWidget(self.uav_file_edit, 0, 1)
         grid.addWidget(file_browse, 0, 2)
 
         # --- Row 2: Folder selector ---
-        folder_label = QLabel("Select MLS Point Cloud folder:")
         self.mls_folder_edit = QLineEdit(
             self.args.mls_cloud_folder if self.args.mls_cloud_folder else ""
         )
         folder_browse = QPushButton("Browse...")
         folder_browse.clicked.connect(self.browse_folder)
 
-        grid.addWidget(folder_label, 1, 0)
+        grid.addWidget(QLabel("Select MLS Point Cloud folder:"), 1, 0)
         grid.addWidget(self.mls_folder_edit, 1, 1)
         grid.addWidget(folder_browse, 1, 2)
 
@@ -102,7 +100,6 @@ class RegistrationFileFolderDialog(QDialog):
         layout.addLayout(grid)
 
         # --- Row 4: Output folder ---
-        output_folder_label = QLabel("Select Output folder:")
         self.output_folder_edit = QLineEdit(
             self.args.mls_registered_cloud_folder
             if self.args.mls_registered_cloud_folder
@@ -111,7 +108,7 @@ class RegistrationFileFolderDialog(QDialog):
         output_folder_browse = QPushButton("Browse...")
         output_folder_browse.clicked.connect(self.browse_output_folder)
 
-        grid.addWidget(output_folder_label, 3, 0)
+        grid.addWidget(QLabel("Select Output folder:"), 3, 0)
         grid.addWidget(self.output_folder_edit, 3, 1)
         grid.addWidget(output_folder_browse, 3, 2)
 
@@ -175,17 +172,23 @@ class RegistrationFileFolderDialog(QDialog):
         return True
 
     def browse_file(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select File")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select File", self.uav_file_edit.text(), "Point Cloud Files (*.ply)"
+        )
         if path:
             self.uav_file_edit.setText(path)
 
     def browse_folder(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        path = QFileDialog.getExistingDirectory(
+            self, "Select Folder", self.mls_folder_edit.text()
+        )
         if path:
             self.mls_folder_edit.setText(path)
 
     def browse_output_folder(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        path = QFileDialog.getExistingDirectory(
+            self, "Select Folder", self.output_folder_edit.text()
+        )
         if path:
             self.output_folder_edit.setText(path)
 
@@ -195,7 +198,7 @@ class GlobalShiftScaleDialog(QDialog):
         super().__init__()
         self.args = args
         self.pt = pt
-        self.setWindowTitle("Global shift/scale")
+        self.setWindowTitle("Global shift")
         self.setMinimumWidth(600)
 
         main_layout = QVBoxLayout()
@@ -248,8 +251,8 @@ class GlobalShiftScaleDialog(QDialog):
         right_box = QGroupBox("Point in local coordinate system")
         right_layout = QVBoxLayout()
         self.label_updated_x = QLabel("x = " + f"{pt[0]+self.args.offset[0]:.1f}")
-        self.label_updated_y = QLabel("x = " + f"{pt[1]+self.args.offset[1]:.1f}")
-        self.label_updated_z = QLabel("x = " + f"{pt[2]+self.args.offset[2]:.1f}")
+        self.label_updated_y = QLabel("y = " + f"{pt[1]+self.args.offset[1]:.1f}")
+        self.label_updated_z = QLabel("z = " + f"{pt[2]+self.args.offset[2]:.1f}")
         right_layout.addWidget(self.label_updated_x)
         right_layout.addWidget(self.label_updated_y)
         right_layout.addWidget(self.label_updated_z)
@@ -275,6 +278,6 @@ class GlobalShiftScaleDialog(QDialog):
         self.args.offset[1] = float(self.line_edit_offset_y.text())
         self.args.offset[2] = float(self.line_edit_offset_z.text())
 
-        self.label_updated_x.setText(f"{self.pt[0]+self.args.offset[0]:.1f}")
-        self.label_updated_y.setText(f"{self.pt[1]+self.args.offset[1]:.1f}")
-        self.label_updated_z.setText(f"{self.pt[2]+self.args.offset[2]:.1f}")
+        self.label_updated_x.setText("x = " + f"{self.pt[0]+self.args.offset[0]:.1f}")
+        self.label_updated_y.setText("y = " + f"{self.pt[1]+self.args.offset[1]:.1f}")
+        self.label_updated_z.setText("z = " + f"{self.pt[2]+self.args.offset[2]:.1f}")

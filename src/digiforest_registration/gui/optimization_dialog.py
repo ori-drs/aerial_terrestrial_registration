@@ -151,21 +151,29 @@ class OptimizationFileFolderDialog(QDialog):
         return True
 
     def browse_file(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select File")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select File", self.uav_file_edit.text(), "Point Cloud Files (*.ply)"
+        )
         if path:
             self.uav_file_edit.setText(path)
 
     def browse_folder(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        path = QFileDialog.getExistingDirectory(
+            self, "Select Folder", self.mls_folder_edit.text()
+        )
         if path:
             self.mls_folder_edit.setText(path)
 
     def browse_output_folder(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        path = QFileDialog.getExistingDirectory(
+            self, "Select Folder", self.output_folder_edit.text()
+        )
         if path:
             self.output_folder_edit.setText(path)
 
     def browse_registered_mls_folder(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        path = QFileDialog.getExistingDirectory(
+            self, "Select Folder", self.mls_registered_folder_edit.text()
+        )
         if path:
             self.mls_registered_folder_edit.setText(path)

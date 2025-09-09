@@ -168,6 +168,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if return_value == QDialog.Rejected:
             return
 
+        # update viewers and loaders
+        self._update_file_widgets()
+        self._set_offset()
+
         self.actionRunOptimization.setEnabled(False)
         self.statusBar().showMessage("Running optimization...")
         self._thread = QThread(self)
