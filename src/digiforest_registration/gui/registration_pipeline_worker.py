@@ -1,8 +1,8 @@
 import numpy as np
-
 from PyQt5.QtCore import QObject, pyqtSignal
 from digiforest_registration.utils import (
     check_registration_inputs_validity,
+    get_tiles_conf_file,
     CloudIO,
 )
 from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
@@ -15,7 +15,6 @@ from digiforest_registration.registration.registration_io import (
     save_registered_clouds,
     save_posegraph,
 )
-from digiforest_registration.utils import TileConfigReader
 from digiforest_registration.utils import ExperimentLogger
 from multiprocessing import Queue, Process
 from logging.handlers import QueueHandler, QueueListener
@@ -182,36 +181,20 @@ class RegistrationPipelineWorker(QObject):
                     )
 
             # end of the processing
-            if args.offset is not None and len(args.offset) == 3:
-                offset = np.array(
-                    [
-                        args.offset[0],
-                        args.offset[1],
-                        args.offset[2],
-                    ],
-                    dtype=np.float32,
-                )
-            else:
-                # default offset
-                offset = np.array([0, 0, 0], dtype=np.float32)
+            if not args.tiles and not args.save_pose_graph:
+                return
 
-            if (
-                args.mls_registered_cloud_folder is not None
-                and args.tiles_conf_file is not None
-            ):
-                tile_config_reader = TileConfigReader(args.tiles_conf_file, offset)
-
+            tiles_conf_file = get_tiles_conf_file(self.args)
             noise_matrix = np.array(args.noise_matrix, dtype=np.float32)
             save_posegraph(
                 noise_matrix,
-                args.tiles_conf_file,
+                tiles_conf_file,
                 args.save_pose_graph,
                 args.mls_registered_cloud_folder,
-                tile_config_reader,
                 args.pose_graph_file,
                 registration_results,
                 mls_cloud_folder,
-                offset,
+                self.cloud_io.offset,
                 args.icp_fitness_score_threshold,
             )
         except Exception as e:

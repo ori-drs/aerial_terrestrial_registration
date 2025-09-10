@@ -60,7 +60,6 @@ def save_posegraph(
     tiles_conf_file: str,
     save_pose_graph: bool,
     mls_registered_cloud_folder: str,
-    tile_config_reader: TileConfigReader,
     pose_graph_file: str,
     registration_results: dict,
     mls_cloud_folder: Path,
@@ -73,7 +72,7 @@ def save_posegraph(
             "Noise matrix must be a list of 21 floats representing the upper triangular matrix of the 6x6 covariance matrix"
         )
     if tiles_conf_file is not None:
-
+        tile_config_reader = TileConfigReader(tiles_conf_file, offset)
         # saving the pose graph in case we are processing tiles
         if save_pose_graph and mls_registered_cloud_folder is not None:
             pose_graph_path = os.path.join(

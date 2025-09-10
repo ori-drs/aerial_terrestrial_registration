@@ -3,12 +3,13 @@ from digiforest_registration.registration.registration import (
     Registration,
     RegistrationResult,
 )
-from digiforest_registration.utils import CloudIO, TileConfigReader
+from digiforest_registration.utils import CloudIO
 from digiforest_registration.utils import (
     crop_cloud,
     crop_cloud_to_size,
     parse_inputs,
     check_registration_inputs_validity,
+    get_tiles_conf_file,
 )
 from digiforest_registration.utils import ExperimentLogger
 from digiforest_registration.registration.registration_io import (
@@ -53,12 +54,6 @@ if __name__ == "__main__":
 
     cloud_io = CloudIO(offset, logger, args.downsample_cloud)
     uav_cloud = cloud_io.load_cloud(str(uav_cloud_filename))
-
-    if (
-        args.mls_registered_cloud_folder is not None
-        and args.tiles_conf_file is not None
-    ):
-        tile_config_reader = TileConfigReader(args.tiles_conf_file, offset)
 
     # Registration
     failures = []
@@ -139,13 +134,13 @@ if __name__ == "__main__":
         pickle.dump(registration_results, open(output_file_path, "wb"))
 
     # save pose graph
+    tiles_conf_file = get_tiles_conf_file(args)
     noise_matrix = np.array(args.noise_matrix, dtype=np.float32)
     save_posegraph(
         noise_matrix,
-        args.tiles_conf_file,
+        tiles_conf_file,
         args.save_pose_graph,
         args.mls_registered_cloud_folder,
-        tile_config_reader,
         args.pose_graph_file,
         registration_results,
         mls_cloud_folder,

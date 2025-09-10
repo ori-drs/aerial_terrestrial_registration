@@ -4,7 +4,6 @@ offset: [-399000.00,-6786000.00,0.0]
 mls_registered_cloud_folder: tiles_transformed
 optimized_cloud_output_folder: tiles_optimized
 debug: False
-tiles_conf_file: tiles/tiles.csv
 save_pose_graph: True
 log_level: DEBUG
 load_clouds: True

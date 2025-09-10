@@ -20,4 +20,5 @@ from .arguments_io import (
     parse_inputs,
     check_registration_inputs_validity,
     check_optimization_inputs_validity,
+    get_tiles_conf_file,
 )

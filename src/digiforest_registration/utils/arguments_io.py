@@ -1,4 +1,5 @@
 import yaml
+import os
 import argparse
 from pathlib import Path
 from typing import Tuple
@@ -51,6 +52,17 @@ def check_optimization_inputs_validity(args) -> str:
     return mls_cloud_folder
 
 
+def get_tiles_conf_file(args) -> str:
+    if args.mls_cloud_folder is None:
+        return None
+
+    tiles_conf_file = os.path.join(args.mls_cloud_folder, "tiles.csv")
+    if os.path.exists(tiles_conf_file):
+        return tiles_conf_file
+    else:
+        return None
+
+
 def parse_inputs():
     parser = argparse.ArgumentParser(
         prog="registration_pipeline",
@@ -76,9 +88,6 @@ def parse_inputs():
     )
     parser.add_argument(
         "--tiles", default=True, action="store_true", help="Processing tiles"
-    )
-    parser.add_argument(
-        "--tiles_conf_file", default=None, help="Path to the tiles configuration file"
     )
     parser.add_argument(
         "--ground_segmentation_method",

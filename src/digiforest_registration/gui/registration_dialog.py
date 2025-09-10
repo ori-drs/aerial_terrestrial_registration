@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
+from digiforest_registration.utils import get_tiles_conf_file
 from PyQt5.QtCore import Qt
 import struct
 import os
@@ -131,14 +132,12 @@ class RegistrationFileFolderDialog(QDialog):
 
         first_point = read_first_point_from_ply(uav_file)
 
-        if not self._is_new_offset_needed(first_point, self.args.offset):
-            return super().accept()
+        if self._is_new_offset_needed(first_point, self.args.offset):
+            dlg = GlobalShiftScaleDialog(self.args, first_point)
+            return_value = dlg.exec_()
 
-        dlg = GlobalShiftScaleDialog(self.args, first_point)
-        return_value = dlg.exec_()
-
-        if return_value == QDialog.Rejected:
-            return self.reject()
+            if return_value == QDialog.Rejected:
+                return self.reject()
 
         # read uav and mls paths and check that they exist
         if not os.path.isdir(self.mls_folder_edit.text()):
@@ -150,9 +149,18 @@ class RegistrationFileFolderDialog(QDialog):
         self.args.uav_cloud = uav_file
         self.args.mls_cloud_folder = self.mls_folder_edit.text()
 
+        tiles_conf_file = get_tiles_conf_file(self.args)
+        if tiles_conf_file is None and self.args.tiles:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Tiles configuration file 'tiles.csv' not found in the MLS folder.",
+            )
+            return self.reject()
+
         # check output path
         if not os.path.isdir(self.output_folder_edit.text()):
-            QMessageBox.critical(self, "Error", "Please select a valid output folder.")
+            QMessageBox.critical(self, "Error", "Output folder doesn't exist.")
             return self.reject()
 
         self.args.mls_registered_cloud_folder = self.output_folder_edit.text()

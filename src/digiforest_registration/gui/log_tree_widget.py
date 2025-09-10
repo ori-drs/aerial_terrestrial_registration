@@ -41,10 +41,12 @@ class FileTreeWidget(QWidget):
 
     def update_view(self):
         self.clear_tree()
-        if os.path.isdir(self.root_path):
+        if self.root_path and os.path.isdir(self.root_path):
             self.populate_tree(self.root_path, self.model.invisibleRootItem())
 
         for filepath in self.additional_filepaths:
+            if not filepath:
+                continue
             item = QStandardItem(os.path.basename(filepath))
             item.setData(filepath, Qt.UserRole)
 
