@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,3 +11,29 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.7"
+dependencies = [
+  "wheel",
+  "pre-commit",
+  "gdown",
+  "numpy",
+  "scipy",
+  "scikit-learn",
+  "Cython",
+  "matplotlib",
+  "pandas",
+  "seaborn",
+  "shapely",
+  "pyyaml",
+  "ipympl",
+  "open3d>=0.17.0",
+  "pytest",
+  "networkx",
+  "opencv-python",
+  "gtsam",
+  "scikit-image",
+  "trimesh",
+  "digiforest_analysis @ git+https://github.com/ori-drs/digiforest_drs.git@voronoi-segmentation-fix-install#subdirectory=digiforest_analysis",
+]
+
+[tool.setuptools]
+script-files = ["scripts/gui.py", "scripts/optimization.py", "scripts/registration.py", "scripts/tiling.py"]
