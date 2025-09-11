@@ -15,7 +15,6 @@ def save_registered_clouds(
     cloud_filename: Path,
     original_cloud,
     output_folder,
-    offset,
 ):
     """
     Save registered clouds.
@@ -36,17 +35,6 @@ def save_registered_clouds(
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    if offset is not None:
-        # an offset is set
-        output_filename_with_offset = os.path.join(
-            output_folder,
-            cloud_filename.stem + "_with_offset" + cloud_filename.suffix,
-        )
-        cloud_io.save_cloud(
-            registration_module.transform_cloud(original_cloud),
-            output_filename_with_offset,
-            local_coordinates=True,
-        )
     output_filename = os.path.join(output_folder, cloud_filename.name)
     cloud_io.save_cloud(
         registration_module.transform_cloud(original_cloud),

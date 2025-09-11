@@ -116,7 +116,6 @@ def main():
             mls_cloud_filename,
             original_mls_cloud,
             args.mls_registered_cloud_folder,
-            offset,
         )
 
     logger.info(f"Total number of failures: {len(failures)}")

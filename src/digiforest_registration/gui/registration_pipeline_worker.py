@@ -76,7 +76,6 @@ def run_registration_process(
         mls_cloud_filename,
         original_mls_cloud,
         args.mls_registered_cloud_folder,
-        cloud_io.offset,
     )
     output_queue.put(success)
     output_queue.put(registration.transform)
