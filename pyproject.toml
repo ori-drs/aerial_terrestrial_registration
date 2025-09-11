@@ -35,5 +35,8 @@ dependencies = [
   "digiforest_analysis @ git+https://github.com/ori-drs/digiforest_drs.git@voronoi-segmentation-fix-install#subdirectory=digiforest_analysis",
 ]
 
-[tool.setuptools]
-script-files = ["scripts/gui.py", "scripts/optimization.py", "scripts/registration.py", "scripts/tiling.py"]
+[project.scripts]
+registration_script = "digiforest_registration.registration_script:main"
+optimization = "digiforest_registration.optimization:main"
+registration_gui = "digiforest_registration.registration_gui:main"
+tiling = "digiforest_registration.tiling:main"

@@ -160,9 +160,8 @@ def parse_inputs():
     return args
 
 
-if __name__ == "__main__":
+def main():
     args = parse_inputs()
-    cloud = o3d.t.io.read_point_cloud(args.cloud)
     offset = None
     if args.offset is not None and len(args.offset) == 3:
         offset = np.array(
@@ -174,3 +173,7 @@ if __name__ == "__main__":
     generator.create_tiles(args.cloud)
     generator.save_tiling_file()
     print(f"Tiling completed. Tiles saved in {args.output_folder}.")
+
+
+if __name__ == "__main__":
+    main()

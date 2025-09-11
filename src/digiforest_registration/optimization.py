@@ -19,7 +19,7 @@ import open3d as o3d
 import logging
 
 
-if __name__ == "__main__":
+def main():
     np.set_printoptions(suppress=True)
     # set seed for deterministic results
     o3d.utility.random.seed(12345)
@@ -67,3 +67,7 @@ if __name__ == "__main__":
     save_optimized_pointclouds(
         args.optimized_cloud_output_folder, args.load_clouds, pose_graph, cloud_io
     )
+
+
+if __name__ == "__main__":
+    main()

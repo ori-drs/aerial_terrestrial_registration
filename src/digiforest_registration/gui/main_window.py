@@ -46,7 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Load the UI file
         # TODO improve path
-        uic.loadUi("../src/digiforest_registration/gui/main_window.ui", self)
+        uic.loadUi("./gui/main_window.ui", self)
 
         # Replace placeholders with custom widgets
         self.image_viewer = ImageWidget()
