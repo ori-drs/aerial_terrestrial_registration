@@ -45,8 +45,8 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         # Load the UI file
-        # TODO improve path
-        uic.loadUi("./gui/main_window.ui", self)
+        ui_path = os.path.join(os.path.dirname(__file__), "main_window.ui")
+        uic.loadUi(ui_path, self)
 
         # Replace placeholders with custom widgets
         self.image_viewer = ImageWidget()
