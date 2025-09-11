@@ -8,20 +8,22 @@ The goal of this project is to merge above-canopy aerial and ground point clouds
 This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
 
 ## Setup
-The code has been tested on Ubuntu 20.04 and Python 3.8.10.
+The code has been tested on Ubuntu 20.04 and Python 3.8.
+There are two ways to install the repository : either manually by cloning it or by installing a wheel file from github's Releases.
 
-Install the dependencies:
+### Manual installation
 
+Clone the repository and install it :
 ```sh
-pip install -r requirements.txt
+cd digiforest_registration
+pip install -e .
 ```
 
-Clone the [digiforest_drs](https://github.com/ori-drs/digiforest_drs) repository and checkout the `voronoi-segmentation` branch.
+### Install a wheel file
 
-Install digiforest_analysis :
+Download the wheel file and install it:
 ```sh
-cd digiforest_analysis
-pip install -e .
+pip install ./digiforest_registration-0.1.0-py3-none-any.whl
 ```
 
 
@@ -80,7 +82,7 @@ If your input MLS cloud is a single point cloud. For our method to work, we cut 
 Use the following command to create the tiles :
 
 ```sh
-python3 ./scripts/tiling.py --cloud input_mls_cloud.ply --output_folder output --tile_size 20 --offset -399200 -6785900 0
+tiling --cloud input_mls_cloud.ply --output_folder output --tile_size 20 --offset -399200 -6785900 0
 ```
 This command takes one input cloud, translates it using the `offset` provided (see the description of the parameters of the registration pipeline above), and saves the tiles in the `output_folder`. With your data you will have to choose an appropriate offset.
 
@@ -89,7 +91,7 @@ This command takes one input cloud, translates it using the `offset` provided (s
 Inside the `config` folder, you can find a configuration file `registration-pipeline.yaml` containing all the parameters that you need to set. Edit the parameters that you need and run the registration with :
  
 ```sh
-python3  registration.py --config ../config/registration-pipeline.yaml 
+registration_script --config ../config/registration-pipeline.yaml 
 ```
 
 At the end of execution, it will display the final icp fitness score for each MLS clouds and whether the registration is considered as successful or not for these individual clouds. A registration is considered successful solely on this fitness score and the **`icp_fitness_score_threshold`** set in your yaml file.
@@ -100,7 +102,7 @@ Inside the `config` folder, there is the file `optimization.yaml` containing all
 Run the optimization with:
 
 ```sh
-python3  optimization.py --config ../config/registration-pipeline.yaml
+optimization --config ../config/registration-pipeline.yaml
 ```
 
 ### Example dataset
