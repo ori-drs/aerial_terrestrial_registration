@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QApplication
 from PyQt5.QtCore import QThread
 
 from digiforest_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
@@ -151,6 +151,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actionRunRegistration.setEnabled(False)
         self.statusBar().showMessage("Running registration...")
         self.progressBar.setValue(0)
+        QApplication.processEvents()
 
         # Starting registration in a separate thread and process
         self._thread = QThread(self)
