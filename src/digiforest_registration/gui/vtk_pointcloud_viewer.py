@@ -50,15 +50,15 @@ class VTKPointCloud(QtWidgets.QWidget):
             self.renderer.RemoveActor(self._actors[filename])
             self.vtk_widget.GetRenderWindow().Render()
 
-    def load_pointcloud(self, filename: str, cloud_io: CloudIO):
+    def load_pointcloud(self, filename: str, cloud_io: CloudIO, color=None):
         self.dialog = WaitingDialog()
         self.dialog.show()
         QApplication.processEvents()
-        self.insert_pointcloud(filename, cloud_io)
+        self.insert_pointcloud(filename, cloud_io, color)
         self.dialog.close()
         self.reset_camera()
 
-    def insert_pointcloud(self, filename: str, cloud_io: CloudIO):
+    def insert_pointcloud(self, filename: str, cloud_io: CloudIO, color=None):
         if self.edl is not None:
             self.edl.ReleaseGraphicsResources(self.vtk_widget.GetRenderWindow())
 
@@ -73,9 +73,19 @@ class VTKPointCloud(QtWidgets.QWidget):
         polydata = vtk.vtkPolyData()
         polydata.SetPoints(points)
 
-        if "colors" in cloud.point:
+        if "colors" in cloud.point and color is None:
             rgb = 255 * cloud.point["colors"].numpy()
             rgb = rgb.astype(np.uint8)
+            vtk_colors = numpy_support.numpy_to_vtk(
+                rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
+            )
+            vtk_colors.SetName("Colors")
+            polydata.GetPointData().SetScalars(vtk_colors)
+
+        elif color is not None:
+            rgb = np.tile(color, (xyz.shape[0], 1))
+            rgb = rgb.astype(np.uint8)
+            print(rgb.shape)
             vtk_colors = numpy_support.numpy_to_vtk(
                 rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
             )

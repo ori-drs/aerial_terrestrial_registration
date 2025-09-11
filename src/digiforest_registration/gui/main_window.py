@@ -71,12 +71,15 @@ class MainWindow(QtWidgets.QMainWindow):
             else self.image_viewer.delete_image()
         )
 
+        self.mls_color = np.array([252, 175, 62])
         self.outputTreeWidget = FileTreeWidget(
             root_path=self.args.mls_registered_cloud_folder
         )
         self.tabOutputs.layout().addWidget(self.outputTreeWidget)
         self.outputTreeWidget.fileChecked.connect(
-            lambda filename: self.vtk_viewer.load_pointcloud(filename, self.cloud_io)
+            lambda filename: self.vtk_viewer.load_pointcloud(
+                filename, self.cloud_io, self.mls_color
+            )
         )
 
         self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
