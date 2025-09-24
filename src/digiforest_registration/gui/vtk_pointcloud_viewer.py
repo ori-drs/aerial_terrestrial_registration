@@ -50,6 +50,23 @@ class VTKPointCloud(QtWidgets.QWidget):
             self.renderer.RemoveActor(self._actors[filename])
             self.vtk_widget.GetRenderWindow().Render()
 
+    def set_color(self, filename: str, color):
+        if filename in self._actors:
+            actor = self._actors[filename]
+
+            mapper = actor.GetMapper()
+            polydata = mapper.GetInput()
+            num_points = polydata.GetNumberOfPoints()
+
+            rgb = np.tile(color, (num_points, 1))
+            rgb = rgb.astype(np.uint8)
+            vtk_colors = numpy_support.numpy_to_vtk(
+                rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
+            )
+            vtk_colors.SetName("Colors")
+            actor.GetMapper().GetInput().GetPointData().SetScalars(vtk_colors)
+            self.vtk_widget.GetRenderWindow().Render()
+
     def load_pointcloud(self, filename: str, cloud_io: CloudIO, color=None):
         self.dialog = WaitingDialog()
         self.dialog.show()

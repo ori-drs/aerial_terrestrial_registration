@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QDialog, QApplication
+from PyQt5.QtWidgets import QDialog, QApplication, QColorDialog
 from PyQt5.QtCore import QThread
 
 from digiforest_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
@@ -101,6 +101,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actionRunRegistration.triggered.connect(self.start_registration)
         self.actionRunOptimization.triggered.connect(self.start_optimization)
         self.actionReset3D.triggered.connect(self.vtk_viewer.reset_camera)
+        self.actionColors.triggered.connect(self.select_cloud_color)
         self.actionAbout.triggered.connect(self.on_about)
         self.actionQuit.triggered.connect(self.close)
 
@@ -136,6 +137,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.inputTreeWidget.add_file(self.args.uav_cloud)
 
         self.outputTreeWidget.update_root_path(self.args.mls_registered_cloud_folder)
+
+    def select_cloud_color(self):
+        color = QColorDialog.getColor()
+        if not color.isValid():
+            return
+
+        # set color of all selected clouds
+        selected_files = self.inputTreeWidget.selected_items()
+        for filename in selected_files:
+            if filename.endswith(".ply"):
+                self.vtk_viewer.set_color(filename, color.getRgb()[:3])
 
     def start_registration(self):
         dlg = RegistrationFileFolderDialog(self.args)

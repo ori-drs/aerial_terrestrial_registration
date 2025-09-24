@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTreeView
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 import os
+from typing import List
 
 
 class FileTreeWidget(QWidget):
@@ -106,3 +107,23 @@ class FileTreeWidget(QWidget):
             item.setCheckState(Qt.Unchecked)
         for i in range(item.rowCount()):
             self.uncheck_item(item.child(i), except_item)
+
+    def checked_items(self, root=None) -> List[str]:
+        "Returns a list of all the checked items"
+        if root is None:
+            root = self.model.invisibleRootItem()
+        items = []
+        if root.checkState() == Qt.Checked:
+            items.append(root.data(Qt.UserRole))
+        for i in range(root.rowCount()):
+            items.extend(self.checked_items(root.child(i)))
+        return items
+
+    def selected_items(self) -> List[str]:
+        "Returns a list of all the selected items"
+        selected_indexes = self.tree.selectedIndexes()
+        items = []
+        for index in selected_indexes:
+            item = self.model.itemFromIndex(index)
+            items.append(item.data(Qt.UserRole))
+        return items

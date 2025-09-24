@@ -94,6 +94,12 @@
     <addaction name="actionRunOptimization"/>
     <addaction name="actionReset3D"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+        <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionColors"/>
+   </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>&amp;Help</string>
@@ -101,6 +107,7 @@
     <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -133,6 +140,11 @@
   <action name="actionReset3D">
    <property name="text">
     <string>Reset 3D Camera</string>
+   </property>
+  </action>
+  <action name="actionColors">
+   <property name="text">
+    <string>Colors</string>
    </property>
   </action>
   <action name="actionAbout">
