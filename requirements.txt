@@ -19,3 +19,4 @@ gtsam
 scikit-image
 trimesh
 PyQt5
+vtk

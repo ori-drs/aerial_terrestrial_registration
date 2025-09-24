@@ -33,6 +33,7 @@ dependencies = [
   "scikit-image",
   "trimesh",
   "PyQt5",
+  "vtk",
   "digiforest_analysis @ git+https://github.com/ori-drs/digiforest_drs.git@voronoi-segmentation-fix-install#subdirectory=digiforest_analysis",
 ]
 
