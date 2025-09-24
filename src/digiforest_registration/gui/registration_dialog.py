@@ -15,6 +15,7 @@ from digiforest_registration.utils import get_tiles_conf_file
 from PyQt5.QtCore import Qt
 import struct
 import os
+import numpy as np
 
 
 def read_first_point_from_ply(filename: str):
@@ -133,7 +134,9 @@ class RegistrationFileFolderDialog(QDialog):
         first_point = read_first_point_from_ply(uav_file)
 
         if self._is_new_offset_needed(first_point, self.args.offset):
-            dlg = GlobalShiftScaleDialog(self.args, first_point)
+            new_offset = self._suggested_offset(first_point, self.args.offset)
+            self.args.offset = new_offset
+            dlg = GlobalShiftScaleDialog(self.args, first_point, new_offset)
             return_value = dlg.exec_()
 
             if return_value == QDialog.Rejected:
@@ -168,6 +171,8 @@ class RegistrationFileFolderDialog(QDialog):
         return super().accept()
 
     def _is_new_offset_needed(self, point, offset):
+        """
+        Return True whether an offset need to be applied to the input clouds"""
         if offset is not None:
             max_offset = max(
                 point[0] + offset[0], point[1] + offset[1], point[2] + offset[2]
@@ -178,6 +183,19 @@ class RegistrationFileFolderDialog(QDialog):
                 return False
 
         return True
+
+    def _suggested_offset(self, point, offset):
+        max_offset = 1e4
+        if offset is not None:
+            suggested_offset = np.array(
+                [
+                    -point[0] if point[0] + offset[0] > max_offset else offset[0],
+                    -point[1] if point[1] + offset[1] > max_offset else offset[1],
+                    -point[2] if point[2] + offset[2] > max_offset else offset[2],
+                ]
+            )
+            return suggested_offset
+        return None
 
     def browse_file(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -202,7 +220,7 @@ class RegistrationFileFolderDialog(QDialog):
 
 
 class GlobalShiftScaleDialog(QDialog):
-    def __init__(self, args, pt):
+    def __init__(self, args, pt, offset):
         super().__init__()
         self.args = args
         self.pt = pt
@@ -245,9 +263,9 @@ class GlobalShiftScaleDialog(QDialog):
         center_layout.addWidget(QLabel("Offset"), 0, 1)
 
         center_layout.addWidget(QLabel("+ Shift"), 1, 0)
-        self.line_edit_offset_x = QLineEdit(f"{self.args.offset[0]:.1f}")
-        self.line_edit_offset_y = QLineEdit(f"{self.args.offset[1]:.1f}")
-        self.line_edit_offset_z = QLineEdit(f"{self.args.offset[2]:.1f}")
+        self.line_edit_offset_x = QLineEdit(f"{offset[0]:.1f}")
+        self.line_edit_offset_y = QLineEdit(f"{offset[1]:.1f}")
+        self.line_edit_offset_z = QLineEdit(f"{offset[2]:.1f}")
         self.line_edit_offset_x.editingFinished.connect(self.offset_updated)
         self.line_edit_offset_y.editingFinished.connect(self.offset_updated)
         self.line_edit_offset_z.editingFinished.connect(self.offset_updated)
