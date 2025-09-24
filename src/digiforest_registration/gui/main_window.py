@@ -144,7 +144,11 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         # set color of all selected clouds
-        selected_files = self.inputTreeWidget.selected_items()
+        selected_files = (
+            self.inputTreeWidget.selected_items()
+            + self.logTreeWidget.selected_items()
+            + self.outputTreeWidget.selected_items()
+        )
         for filename in selected_files:
             if filename.endswith(".ply"):
                 self.vtk_viewer.set_color(filename, color.getRgb()[:3])

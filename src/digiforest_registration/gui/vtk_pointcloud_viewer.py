@@ -102,7 +102,6 @@ class VTKPointCloud(QtWidgets.QWidget):
         elif color is not None:
             rgb = np.tile(color, (xyz.shape[0], 1))
             rgb = rgb.astype(np.uint8)
-            print(rgb.shape)
             vtk_colors = numpy_support.numpy_to_vtk(
                 rgb, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR
             )
