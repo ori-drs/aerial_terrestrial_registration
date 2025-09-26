@@ -114,5 +114,8 @@ We provide a small [dataset](https://drive.google.com/drive/u/0/folders/13oNJS5q
 ## Troubleshooting
 
 * If a registration isn't successful, and you would like to understand why, set **`debug`** to `True` in your configuration file. The program will display additional information about each step of the algorithm (refer to the paper for a detailed explanation of each step).
-
+* When running the GUI, if you encounter this error : `QObject::moveToThread: Current thread is not the object's thread`, try to reinstall `opencv-python` :
+```sh
+pip install --no-binary opencv-python opencv-python --reinstall
+```
 

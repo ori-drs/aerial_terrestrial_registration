@@ -28,7 +28,7 @@ dependencies = [
   "open3d>=0.17.0",
   "pytest",
   "networkx",
-  "opencv-python",
+  "opencv-python-headless",
   "gtsam",
   "scikit-image",
   "trimesh",
