@@ -82,6 +82,12 @@ class MainWindow(QtWidgets.QMainWindow):
             )
         )
 
+        self.outputTreeWidget.fileUnChecked.connect(
+            lambda filename: self.vtk_viewer.delete_pointcloud(filename)
+            if filename.endswith(".ply")
+            else self.image_viewer.delete_image()
+        )
+
         self.inputTreeWidget = FileTreeWidget(root_path=self.args.mls_cloud_folder)
         self.inputTreeWidget.add_file(self.args.uav_cloud)
         self.tabInputs.layout().addWidget(self.inputTreeWidget)
