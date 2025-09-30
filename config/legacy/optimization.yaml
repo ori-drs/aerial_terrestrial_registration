@@ -1,6 +1,0 @@
-mls_cloud_folder: 
-offset: [0.0,0.,0.0]
-pose_graph_file: 
-output_folder: 
-debug: False
-load_clouds: False

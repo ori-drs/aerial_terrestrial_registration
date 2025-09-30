@@ -1,7 +1,0 @@
-uav_cloud: /data/digiforest/evo/2023-05-19-16-13-03-exp02/uav_for_exp02_in_map.ply
-mls_cloud_folder: /data/digiforest/evo/2023-05-19-16-13-03-exp02/tiles_in_map
-offset: [0, 0, 0]
-output_folder: /data/digiforest/evo/2023-05-19-16-13-03-exp02/transformed_tiles_in_map
-crop_mls_cloud: False
-debug: False
-save_pose_graph: False
