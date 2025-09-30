@@ -91,7 +91,7 @@ This command takes one input cloud, translates it using the `offset` provided (s
 Inside the `config` folder, you can find a configuration file `registration-pipeline.yaml` containing all the parameters that you need to set. Edit the parameters that you need and run the registration with :
  
 ```sh
-registration_script --config ../config/registration-pipeline.yaml 
+registration_script --config ./config/registration-pipeline.yaml 
 ```
 
 At the end of execution, it will display the final icp fitness score for each MLS clouds and whether the registration is considered as successful or not for these individual clouds. A registration is considered successful solely on this fitness score and the **`icp_fitness_score_threshold`** set in your yaml file.
@@ -102,7 +102,15 @@ Inside the `config` folder, there is the file `optimization.yaml` containing all
 Run the optimization with:
 
 ```sh
-optimization --config ../config/registration-pipeline.yaml
+optimization --config ./config/registration-pipeline.yaml
+```
+
+### Execution of the registration pipeline using the GUI
+
+We also developed a GUI to run the registration and optimization steps. You can find a quick tutorial here.
+
+```sh
+registration_gui --config ./config/registration-pipeline.yaml
 ```
 
 ### Example dataset
