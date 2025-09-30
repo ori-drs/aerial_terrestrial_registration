@@ -42,3 +42,6 @@ registration_script = "digiforest_registration.registration_script:main"
 optimization = "digiforest_registration.optimization:main"
 registration_gui = "digiforest_registration.registration_gui:main"
 tiling = "digiforest_registration.tiling:main"
+
+[tool.setuptools.package-data]
+digiforest_registration = ["gui/*.ui"]
