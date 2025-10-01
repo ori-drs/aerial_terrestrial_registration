@@ -2,27 +2,26 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QDialog, QApplication, QColorDialog
 from PyQt5.QtCore import QThread
 
-from digiforest_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
-from digiforest_registration.gui.image_viewer import ImageWidget
-from digiforest_registration.gui.registration_pipeline_worker import (
+from aerial_terrestrial_registration.gui.vtk_pointcloud_viewer import VTKPointCloud
+from aerial_terrestrial_registration.gui.image_viewer import ImageWidget
+from aerial_terrestrial_registration.gui.registration_pipeline_worker import (
     RegistrationPipelineWorker,
 )
-from digiforest_registration.gui.optimization_pipeline_worker import (
+from aerial_terrestrial_registration.gui.optimization_pipeline_worker import (
     OptimizationPipelineWorker,
 )
-from digiforest_registration.gui.log_tree_widget import FileTreeWidget
-from digiforest_registration.gui.registration_dialog import (
+from aerial_terrestrial_registration.gui.log_tree_widget import FileTreeWidget
+from aerial_terrestrial_registration.gui.registration_dialog import (
     RegistrationFileFolderDialog,
 )
-from digiforest_registration.gui.optimization_dialog import (
+from aerial_terrestrial_registration.gui.optimization_dialog import (
     OptimizationFileFolderDialog,
 )
-from digiforest_registration.utils import ExperimentLogger
+from aerial_terrestrial_registration.utils import ExperimentLogger
+from aerial_terrestrial_registration.utils.cloud_io import CloudIO
 
 import os
 import numpy as np
-
-from digiforest_registration.utils.cloud_io import CloudIO
 
 
 class MainWindow(QtWidgets.QMainWindow):

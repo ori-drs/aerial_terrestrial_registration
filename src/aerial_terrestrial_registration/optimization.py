@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-from digiforest_registration.optimization.io import (
+from aerial_terrestrial_registration.optimization.io import (
     load_pose_graph,
     write_pose_graph,
     save_optimized_pointclouds,
 )
-from digiforest_registration.optimization.graph_optimization import (
+from aerial_terrestrial_registration.optimization.graph_optimization import (
     PoseGraphOptimization,
 )
-from digiforest_registration.utils import (
+from aerial_terrestrial_registration.utils import (
     CloudIO,
     parse_inputs,
     check_optimization_inputs_validity,
@@ -35,7 +35,7 @@ def main():
     if not isinstance(numeric_level, int):
         raise ValueError(f"Invalid log level: {args.log_level}")
     logging.basicConfig(level=numeric_level, format="%(levelname)s: %(message)s")
-    logger = logging.getLogger("digiforest_registration")
+    logger = logging.getLogger("aerial_terrestrial_registration")
 
     # data loader
     offset = None

@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 import numpy as np
 
-from digiforest_registration.optimization.io import (
+from aerial_terrestrial_registration.optimization.io import (
     write_tiles_to_pose_graph_file,
     write_aerial_transforms_to_pose_graph_file,
 )
-from digiforest_registration.utils import CloudIO, TileConfigReader
+from aerial_terrestrial_registration.utils import CloudIO, TileConfigReader
 
 
 def save_registered_clouds(

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-from digiforest_registration.registration.registration import (
+from aerial_terrestrial_registration.registration.registration import (
     Registration,
     RegistrationResult,
 )
-from digiforest_registration.utils import CloudIO
-from digiforest_registration.utils import (
+from aerial_terrestrial_registration.utils import CloudIO
+from aerial_terrestrial_registration.utils import (
     crop_cloud,
     crop_cloud_to_size,
     parse_inputs,
     check_registration_inputs_validity,
     get_tiles_conf_file,
 )
-from digiforest_registration.utils import ExperimentLogger
-from digiforest_registration.registration.registration_io import (
+from aerial_terrestrial_registration.utils import ExperimentLogger
+from aerial_terrestrial_registration.registration.registration_io import (
     save_registered_clouds,
     save_posegraph,
 )
@@ -41,7 +41,7 @@ def main():
     if not isinstance(numeric_level, int):
         raise ValueError(f"Invalid log level: {args.log_level}")
     logging.basicConfig(level=numeric_level, format="%(levelname)s: %(message)s")
-    logger = logging.getLogger("digiforest_registration")
+    logger = logging.getLogger("aerial_terrestrial_registration")
 
     # Loading the data
     if args.offset is not None and len(args.offset) == 3:

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "digiforest_registration"
+name = "aerial_terrestrial_registration"
 version = "0.1.0"
 description = "A Python package for digiforest registration"
 authors = [
@@ -38,10 +38,10 @@ dependencies = [
 ]
 
 [project.scripts]
-registration_script = "digiforest_registration.registration_script:main"
-optimization = "digiforest_registration.optimization:main"
-registration_gui = "digiforest_registration.registration_gui:main"
-tiling = "digiforest_registration.tiling:main"
+registration_script = "aerial_terrestrial_registration.registration_script:main"
+optimization = "aerial_terrestrial_registration.optimization:main"
+registration_gui = "aerial_terrestrial_registration.registration_gui:main"
+tiling = "aerial_terrestrial_registration.tiling:main"
 
 [tool.setuptools.package-data]
-digiforest_registration = ["gui/*.ui"]
+aerial_terrestrial_registration = ["gui/*.ui"]

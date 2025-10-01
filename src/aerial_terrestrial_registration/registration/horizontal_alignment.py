@@ -1,10 +1,13 @@
-from digiforest_registration.registration.height_image import (
+from aerial_terrestrial_registration.registration.height_image import (
     HeightImage,
     display_correspondences,
     draw_correspondences,
 )
-from digiforest_registration.registration.graph import Graph, CorrespondenceGraph
-from digiforest_registration.registration.tree_trunk_segmentation import (
+from aerial_terrestrial_registration.registration.graph import (
+    Graph,
+    CorrespondenceGraph,
+)
+from aerial_terrestrial_registration.registration.tree_trunk_segmentation import (
     TreeTrunkSegmentation,
 )
 

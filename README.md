@@ -1,4 +1,4 @@
-# DigiForest Registration
+# Aerial Terrestrial Registration
 
 <p align="center">
   <img src="./media/motivation-big.png" alt="Motivation" width="600"/>
@@ -15,7 +15,7 @@ There are two ways to install the repository : either manually by cloning it or 
 
 Clone the repository and install it :
 ```sh
-cd digiforest_registration
+cd aerial_terrestrial_registration
 pip install -e .
 ```
 
@@ -23,7 +23,7 @@ pip install -e .
 
 Download the wheel file and install it:
 ```sh
-pip install ./digiforest_registration-0.1.0-py3-none-any.whl
+pip install ./aerial_terrestrial_registration-0.1.0-py3-none-any.whl
 ```
 
 

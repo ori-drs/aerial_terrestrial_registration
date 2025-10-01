@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 )
 import os
 
-from digiforest_registration.gui.registration_dialog import (
+from aerial_terrestrial_registration.gui.registration_dialog import (
     read_first_point_from_ply,
     GlobalShiftScaleDialog,
 )

@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
-from digiforest_registration.utils import get_tiles_conf_file
+from aerial_terrestrial_registration.utils import get_tiles_conf_file
 from PyQt5.QtCore import Qt
 import struct
 import os

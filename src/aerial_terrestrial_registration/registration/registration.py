@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-from digiforest_registration.registration.vertical_alignment import VerticalRegistration
-from digiforest_registration.registration.horizontal_alignment import (
+from aerial_terrestrial_registration.registration.vertical_alignment import (
+    VerticalRegistration,
+)
+from aerial_terrestrial_registration.registration.horizontal_alignment import (
     HorizontalRegistration,
 )
-from digiforest_registration.registration.icp import icp
-from digiforest_registration.utils import euler_to_rotation_matrix
-from digiforest_registration.utils import crop_cloud
-from digiforest_registration.utils import ExperimentLogger
-from digiforest_registration.utils import CloudIO
+from aerial_terrestrial_registration.registration.icp import icp
+from aerial_terrestrial_registration.utils import euler_to_rotation_matrix
+from aerial_terrestrial_registration.utils import crop_cloud
+from aerial_terrestrial_registration.utils import ExperimentLogger
+from aerial_terrestrial_registration.utils import CloudIO
 
 import numpy as np
 import open3d as o3d

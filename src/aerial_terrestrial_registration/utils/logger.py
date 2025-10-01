@@ -3,7 +3,7 @@ import shutil
 import cv2
 import logging
 
-from digiforest_registration.utils import CloudIO
+from aerial_terrestrial_registration.utils import CloudIO
 
 
 class ExperimentLogger:
@@ -15,7 +15,7 @@ class ExperimentLogger:
         self._version = version if version is not None else self._get_next_version()
         self._root = Path(base_dir) / f"version_{self._version}"
         self._root.mkdir(parents=True, exist_ok=True)
-        self.logger = logging.getLogger("digiforest_registration")
+        self.logger = logging.getLogger("aerial_terrestrial_registration")
 
     def current_logging_directory(self) -> str:
         return str(self._root)

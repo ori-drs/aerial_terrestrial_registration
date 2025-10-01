@@ -1,5 +1,5 @@
-from digiforest_registration.optimization.pose_graph import PoseGraph
-import digiforest_registration.optimization.visualization as vis
+from aerial_terrestrial_registration.optimization.pose_graph import PoseGraph
+import aerial_terrestrial_registration.optimization.visualization as vis
 import gtsam
 import open3d as o3d
 import logging

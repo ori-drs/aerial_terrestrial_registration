@@ -1,18 +1,18 @@
 from PyQt5.QtCore import QObject, pyqtSignal
-from digiforest_registration.utils import (
+from aerial_terrestrial_registration.utils import (
     check_optimization_inputs_validity,
     CloudIO,
 )
-from digiforest_registration.optimization.graph_optimization import (
+from aerial_terrestrial_registration.optimization.graph_optimization import (
     PoseGraphOptimization,
 )
-from digiforest_registration.optimization.io import (
+from aerial_terrestrial_registration.optimization.io import (
     load_pose_graph,
     write_pose_graph,
     save_optimized_pointclouds,
 )
 from pathlib import Path
-from digiforest_registration.utils import ExperimentLogger
+from aerial_terrestrial_registration.utils import ExperimentLogger
 from multiprocessing import Queue, Process
 from logging.handlers import QueueHandler, QueueListener
 import threading

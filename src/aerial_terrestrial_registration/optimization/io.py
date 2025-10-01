@@ -2,9 +2,9 @@ import numpy as np
 import gtsam
 from pathlib import Path
 import shutil
-from digiforest_registration.optimization.pose_graph import PoseGraph
-from digiforest_registration.utils import CloudIO
-from digiforest_registration.utils import (
+from aerial_terrestrial_registration.optimization.pose_graph import PoseGraph
+from aerial_terrestrial_registration.utils import CloudIO
+from aerial_terrestrial_registration.utils import (
     rotation_matrix_to_quat,
     get_tile_filename,
     get_payload_cloud_timestamp,

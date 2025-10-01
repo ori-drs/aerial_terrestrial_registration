@@ -3,7 +3,7 @@ import os
 import argparse
 from pathlib import Path
 from typing import Tuple
-from digiforest_registration.utils import is_cloud_name
+from aerial_terrestrial_registration.utils import is_cloud_name
 
 
 def check_registration_inputs_validity(args) -> Tuple[str, str, str]:

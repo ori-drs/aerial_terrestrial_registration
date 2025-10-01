@@ -1,8 +1,8 @@
 import sys
 
 from PyQt5.QtWidgets import QApplication
-from digiforest_registration.gui.main_window import MainWindow
-from digiforest_registration.utils import parse_inputs
+from aerial_terrestrial_registration.gui.main_window import MainWindow
+from aerial_terrestrial_registration.utils import parse_inputs
 
 
 def main():

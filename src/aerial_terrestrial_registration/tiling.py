@@ -5,7 +5,7 @@ import argparse
 import csv
 from pathlib import Path
 
-from digiforest_registration.utils import CloudIO
+from aerial_terrestrial_registration.utils import CloudIO
 
 
 @dataclass

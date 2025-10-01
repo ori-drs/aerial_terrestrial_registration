@@ -1,6 +1,6 @@
 import numpy as np
 from digiforest_analysis.tasks import GroundSegmentation
-from digiforest_registration.utils import CloudIO
+from aerial_terrestrial_registration.utils import CloudIO
 import open3d as o3d
 
 

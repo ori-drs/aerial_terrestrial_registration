@@ -1,21 +1,21 @@
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal
-from digiforest_registration.utils import (
+from aerial_terrestrial_registration.utils import (
     check_registration_inputs_validity,
     get_tiles_conf_file,
     CloudIO,
 )
-from digiforest_registration.utils import crop_cloud, crop_cloud_to_size
+from aerial_terrestrial_registration.utils import crop_cloud, crop_cloud_to_size
 
-from digiforest_registration.registration.registration import (
+from aerial_terrestrial_registration.registration.registration import (
     Registration,
     RegistrationResult,
 )
-from digiforest_registration.registration.registration_io import (
+from aerial_terrestrial_registration.registration.registration_io import (
     save_registered_clouds,
     save_posegraph,
 )
-from digiforest_registration.utils import ExperimentLogger
+from aerial_terrestrial_registration.utils import ExperimentLogger
 from multiprocessing import Queue, Process
 from logging.handlers import QueueHandler, QueueListener
 import threading
@@ -178,6 +178,11 @@ class RegistrationPipelineWorker(QObject):
                     successes.append(
                         (mls_cloud_filename.name, (best_icp_fitness_score))
                     )
+
+            self.logger.info(f"Total number of failures: {len(failures)}")
+            self.logger.info(f"Total number of clouds: {len(mls_cloud_filenames)}")
+            self.logger.info(f"Failures: {failures}")
+            self.logger.info(f"Successes: {successes}")
 
             # end of the processing
             if not args.tiles and not args.save_pose_graph:

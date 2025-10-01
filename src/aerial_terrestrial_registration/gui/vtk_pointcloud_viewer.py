@@ -3,7 +3,7 @@ from vtk.util import numpy_support
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QApplication
 
-from digiforest_registration.utils import CloudIO
+from aerial_terrestrial_registration.utils import CloudIO
 
 try:
     from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
