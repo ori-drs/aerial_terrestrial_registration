@@ -4,12 +4,15 @@
   <img src="./media/motivation-big.png" alt="Motivation" width="600"/>
 </p>
 
-The goal of this project is to merge above-canopy aerial and ground point clouds of forests. The aerial point clouds (typically coming from an UAV) are assumed to be of higher accuracy than the ground point clouds. Typically, ground Mobile Laser Scanning (MLS) systems may suffer from drift over the length of its trajectory.
-This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
+The goal of this project is to merge above-canopy aerial and ground point clouds of forests. The aerial point clouds (typically coming from an UAV) are assumed to provide the reference map to which we wish to precisely register ground point clouds from a Mobile Laser Scanning (MLS) system.
+
+Typically, ground MLS systems suffer from some drift over the length of its trajectory resulting in global inconsistency. Our approach addresses this problem by gently deforming the MLS point cloud to match the aerial scan.
+
+This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896) which was published at IROS 2024.
 
 ## Setup
 The code has been tested on Ubuntu 20.04 and Python 3.8.
-There are two ways to install the repository : either manually by cloning it or by installing a wheel file from github's Releases.
+There are two ways to install the repository : either manually by cloning it or by installing a wheel file from our github repos' releases.
 
 ### Manual installation
 
@@ -107,11 +110,19 @@ optimization --config ./config/registration-pipeline.yaml
 
 ### Execution of the registration pipeline using the GUI
 
-We also developed a GUI to run the registration and optimization steps. You can find a quick tutorial [here](https://youtu.be/tZY4_wXtsvw).
+We also developed a GUI to run the registration and optimization steps. 
 
 ```sh
 registration_gui --config ./config/registration-pipeline.yaml
 ```
+
+You can watch a tutorial video for the GUI [here](https://youtu.be/tZY4_wXtsvw).
+
+<a href="https://youtu.be/tZY4_wXtsvw">
+  <img src="./media/yt-hqdefault.jpg" alt="Gui Demo" width="600"/>
+</a>
+<p align="center">
+</p>
 
 ### Example dataset
 We provide a small [dataset](https://drive.google.com/drive/u/0/folders/13oNJS5qsoNYkJzNBXBWpAf0FpkaFOr-H) that you can download to test the registration. It consists of 6 tiles clouds and a UAV cloud.
