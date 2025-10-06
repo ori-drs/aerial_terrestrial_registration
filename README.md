@@ -107,7 +107,7 @@ optimization --config ./config/registration-pipeline.yaml
 
 ### Execution of the registration pipeline using the GUI
 
-We also developed a GUI to run the registration and optimization steps. You can find a quick tutorial here.
+We also developed a GUI to run the registration and optimization steps. You can find a quick tutorial [here](https://youtu.be/tZY4_wXtsvw).
 
 ```sh
 registration_gui --config ./config/registration-pipeline.yaml
