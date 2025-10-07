@@ -8,7 +8,7 @@ The goal of this project is to merge above-canopy aerial and ground point clouds
 This repository contains the implementation of our paper **Markerless Aerial-Terrestrial Co-Registration of Forest Point Clouds using a Deformable Pose Graph** [[Paper]](https://arxiv.org/abs/2410.09896)
 
 ## Setup
-The code has been tested on Ubuntu 20.04 and Python 3.8.
+The code has been tested on Ubuntu 20.04 and 22.04 using Python 3.8.
 There are two ways to install the repository : either manually by cloning it or by installing a wheel file from github's Releases.
 
 ### Manual installation
