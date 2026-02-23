@@ -151,9 +151,9 @@ class HorizontalRegistration:
             # find tree trunks
             tree_trunk_segmentation = TreeTrunkSegmentation()
             mls_pts = tree_trunk_segmentation.find_tree_trunks(
-                self.cloud, self.cloud_ground_plane
+                self.mls_cloud, self.mls_cloud_ground_plane
             )
-            bounding_box = self.cloud.get_axis_aligned_bounding_box()
+            bounding_box = self.mls_cloud.get_axis_aligned_bounding_box()
             # convert to pixel coordinates
             mls_height_pts = np.zeros((mls_pts.shape[0], 2), dtype=np.int32)
             for i in range(mls_pts.shape[0]):
