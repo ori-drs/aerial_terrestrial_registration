@@ -8,5 +8,5 @@ save_pose_graph: True
 log_level: DEBUG
 load_clouds: True
 tiles: True
-icp_fitness_score_threshold: 0.85
+icp_fitness_score_threshold: 0.90
 noise_matrix: [1e+06, 0, 0, 0, 0, 0, 1e+06, 0, 0, 0, 0, 1e+06, 0, 0, 0, 10000, 0, 0, 10000, 0, 10000]
